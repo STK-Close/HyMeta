@@ -1,31 +1,31 @@
-// Opens the built app in a real browser at phone, tablet and desktop sizes, in light and dark,
-// clicks through every main flow and reports anything broken.
-// Run: node tests/check.js [page] [screenshot folder] [only, e.g. phone-light]
+// Starts HyMeta's own server with a pretend CurseForge, then opens the app in a real browser at
+// phone, tablet and desktop sizes, in light and dark, clicks through every main flow and reports
+// anything broken. First with sample mods (no key), then with live-style mods (key set).
+// Run: node tests/check.js [screenshot folder] [only, e.g. phone-light]
 const { chromium } = require("playwright");
 const path = require("path");
 const fs = require("fs");
-const page = path.resolve(process.argv[2] || path.join(__dirname, "../web/index.html"));
-const out = process.argv[3] ? path.resolve(process.argv[3]) : null;
-const only = process.argv[4] || "";
+const { start } = require("../scripts/dev-server");
+const out = process.argv[2] ? path.resolve(process.argv[2]) : null;
+const only = process.argv[3] || "";
 if (out) fs.mkdirSync(out, { recursive: true });
-const url = "file://" + page;
+const PASSWORD = "open-sesame-123";
+let url = "", expecting401 = false; // the wrong-password attempt is meant to be refused
 const sizes = { phone: [390, 844], tablet: [820, 1180], desktop: [1366, 900] };
 
-(async () => {
-  const b = await chromium.launch();
-  const problems = [];
-  for (const scheme of ["light", "dark"]) for (const [name, [w, h]] of Object.entries(sizes)) {
-    const tag = `${name}-${scheme}`;
-    if (only && only !== tag) continue;
-    const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: name !== "desktop" });
-    const p = await ctx.newPage();
-    const bad = (m) => problems.push(`${tag} ${m}`);
-    p.on("console", (m) => { if (m.type() === "error") bad("console: " + m.text()); });
-    p.on("pageerror", (e) => bad("page error: " + e.message));
-    const go = async (hash) => { await p.goto(url + "#" + hash); await p.waitForTimeout(220); };
-    const shot = async (n) => { if (out) await p.screenshot({ path: `${out}/${tag}-${n}.png`, fullPage: true }); };
+async function signIn(p, bad) {
+  await p.goto(url); await p.waitForTimeout(300);
+  if (!(await p.locator("#pw").count())) { bad("the app was shown without asking for the password"); return; }
+  if (await p.locator("#view").count()) bad("the app's page was sent before sign-in");
+  expecting401 = true;
+  await p.fill("#pw", "wrong-guess"); await p.click('button[type="submit"]'); await p.waitForSelector("#err:not([hidden])");
+  expecting401 = false;
+  if (await p.locator("#view").count()) bad("a wrong password was accepted");
+  await p.fill("#pw", PASSWORD); await p.click('button[type="submit"]'); await p.waitForSelector("#view .page");
+}
 
-    const audit = async (view) => {
+function makeAudit(p, bad) {
+  return async (view) => {
       const found = await p.evaluate(() => {
         const res = [];
         const lum = (c) => { const m = c.match(/[\d.]+/g).map(Number); const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(m[0]) + 0.7152 * f(m[1]) + 0.0722 * f(m[2]); };
@@ -64,12 +64,31 @@ const sizes = { phone: [390, 844], tablet: [820, 1180], desktop: [1366, 900] };
       });
       [...new Set(found)].forEach((x) => bad(`${view}: ${x}`));
     };
+}
+
+(async () => {
+  const b = await chromium.launch();
+  let server = await start({ pretend: true, password: PASSWORD, key: "" });
+  url = server.url;
+  const problems = [];
+  for (const scheme of ["light", "dark"]) for (const [name, [w, h]] of Object.entries(sizes)) {
+    const tag = `${name}-${scheme}`;
+    if (only && only !== tag) continue;
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: name !== "desktop" });
+    const p = await ctx.newPage();
+    const bad = (m) => problems.push(`${tag} ${m}`);
+    p.on("console", (m) => { if (m.type() === "error" && !(expecting401 && /401/.test(m.text()))) bad("console: " + m.text()); });
+    p.on("pageerror", (e) => bad("page error: " + e.message));
+    const go = async (hash) => { await p.goto(url + "#" + hash); await p.waitForTimeout(220); };
+    const shot = async (n) => { if (out) await p.screenshot({ path: `${out}/${tag}-${n}.png`, fullPage: true }); };
+
+    const audit = makeAudit(p, bad);
     const count = (sel) => p.locator(sel).count();
     p.setDefaultTimeout(6000);
     try {
 
-    // home
-    await p.goto(url); await p.waitForTimeout(700);
+    // sign in, then home
+    await signIn(p, bad); await p.waitForTimeout(500);
     await audit("home"); await shot("home");
     if (await count(".top .hex, .top .face")) bad("home: troll is in the top bar");
     if (await count("#view > .page > .hex")) bad("home: troll greeting is back at the top of the page");
@@ -190,9 +209,70 @@ const sizes = { phone: [390, 844], tablet: [820, 1180], desktop: [1366, 900] };
     await audit("you, switched theme"); await p.selectOption("#theme", "device");
     await p.click('[data-action="reset"]'); await p.click('[data-action="reset"]'); await p.waitForTimeout(200);
     await p.click("#tier-free"); await go("saved"); await audit("saved, free view"); await go("build"); await audit("build, free view");
-    } catch (e) { bad("stopped early, a step could not be done: " + e.message.split("\n")[0]); }
+    } catch (e) { bad("stopped early, a step could not be done: " + e.message.split("\n").slice(0, 4).join(" ").replace(/\s+/g, " ").slice(0, 260)); }
     await ctx.close();
   }
+  server.close();
+
+  // ---------- live mods: the same server with a key set, still talking to the pretend CurseForge ----------
+  server = await start({ pretend: true, password: PASSWORD, key: "pretend-key" });
+  url = server.url;
+  for (const [tag, w, h, scheme] of [["live-phone-light", 390, 844, "light"], ["live-desktop-dark", 1366, 900, "dark"]]) {
+    if (only && only !== tag) continue;
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: w < 500 });
+    const p = await ctx.newPage();
+    const bad = (m) => problems.push(`${tag} ${m}`);
+    await p.route("https://media.forgecdn.net/**", (r) => r.fulfill({ status: 200, contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="#888"/></svg>' }));
+    p.on("console", (m) => { if (m.type() === "error" && !(expecting401 && /401/.test(m.text()))) bad("console: " + m.text()); });
+    p.on("pageerror", (e) => bad("page error: " + e.message));
+    const leaked = new Set();
+    p.on("response", async (r) => { if (!r.url().startsWith(url)) return; try { if ((await r.text()).includes("pretend-key")) leaked.add(new URL(r.url()).pathname); } catch (e) {} });
+    p.setDefaultTimeout(6000);
+    const audit = makeAudit(p, bad), count = (sel) => p.locator(sel).count();
+    const go = async (hash) => { await p.goto(url + "#" + hash); await p.waitForTimeout(350); };
+    try {
+      // data routes refuse visitors who have not signed in
+      const locked = await ctx.request.get(url + "api/pack?id=cozy-farmer");
+      if (locked.status() !== 401) bad("mod data was served without signing in (status " + locked.status() + ")");
+      await signIn(p, bad);
+      await p.waitForSelector(".notice:has-text('live mods')");
+      await p.waitForSelector("#h-spot"); await p.waitForTimeout(400);
+      await audit("live home"); if (out) await p.screenshot({ path: `${out}/${tag}-home.png`, fullPage: true });
+      if (await count(".tag-sample")) bad("live home still shows sample mods");
+      if (!(await count('section[aria-labelledby="h-spot"] img.tile-img'))) bad("spotlight mod has no logo");
+      // the free playpack: real-style mods, logos, authors, links and helper mods
+      await p.waitForSelector('.hero-side .chip:has-text("mods")'); // the free playpack has finished loading
+      await p.click('[data-action="play"]'); await p.click('[data-mode="here"]'); await p.waitForSelector("#ticks li");
+      const inPack = await count("#ticks li"); if (inPack < 6) bad("free playpack has too few mods: " + inPack);
+      await p.keyboard.press("Escape");
+      await go("pack-cozy-farmer"); await p.waitForSelector(".mod");
+      await audit("live pack"); if (out) await p.screenshot({ path: `${out}/${tag}-pack.png`, fullPage: true });
+      const text = await p.textContent("#view");
+      if (/Sexy/.test(text)) bad("a mod with a blocked word was shown");
+      if (!/Sneaky/.test(text)) bad("expected mod is missing from the playpack");
+      if (await p.evaluate(() => window.__hacked) || await count("#view img[onerror]")) bad("a mod name was treated as code");
+      if (!(await count("#g-help"))) bad("helper mods were not found for a mod that needs one");
+      if (/Pretend Helper Lib/.test(await p.textContent("#g-core"))) bad("a helper mod was listed as a main pick");
+      if (!/By pretend_author/.test(text)) bad("mod author is missing");
+      const href = await p.getAttribute(".mod a.linkbtn", "href"); if (!/^https:\/\/www\.curseforge\.com\/hytale\/mods\//.test(href)) bad("mod link does not go to its CurseForge page: " + href);
+      // locked playpacks never fetch their mods in the free view
+      const before = server.calls.length; await go("pack-dungeon-gremlin"); await p.waitForTimeout(300);
+      if (server.calls.length !== before || await count(".mod")) bad("a locked playpack fetched its mods for a free player");
+      // member: save a mod, reload, it is fetched again by id
+      await p.click("#tier-member"); await p.waitForSelector(".mod"); await p.click('[data-action="savemod"]');
+      await p.reload(); await p.waitForSelector("#view .page"); await go("saved"); await p.click('[data-tab="mods"]'); await p.waitForSelector("#view .mod");
+      await audit("live saved mods");
+      // build: live search
+      await go("build"); await p.waitForSelector(".pickrow"); await audit("live build");
+      await p.fill("#bq", "fishing"); await p.waitForFunction(() => document.querySelectorAll(".pickrow").length === 7);
+      await p.check(".pickrow input"); await p.click("#bq-clear"); await p.waitForFunction(() => document.querySelectorAll(".pickrow").length > 7);
+      if (!/1 picked/.test(await p.textContent("#b-status"))) bad("live build lost the picked mod");
+      if (out) await p.screenshot({ path: `${out}/${tag}-build.png`, fullPage: true });
+      if (leaked.size) bad("the CurseForge key was sent to the browser by " + [...leaked].join(", "));
+    } catch (e) { bad("stopped early, a step could not be done: " + e.message.split("\n").slice(0, 4).join(" ").replace(/\s+/g, " ").slice(0, 260)); }
+    await ctx.close();
+  }
+  server.close();
   await b.close();
   console.log(problems.length ? problems.join("\n") : "NO PROBLEMS");
   process.exit(problems.length ? 1 : 0);

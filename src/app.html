@@ -191,6 +191,7 @@ details.fold[open]>summary::after{content:"\2212"}
 
 /* build */
 .grid2{display:grid;gap:12px}
+.tile.tile-img{padding:0;object-fit:cover;background:var(--bg3)}
 .picks{padding:0 16px;display:grid;grid-template-columns:minmax(0,1fr);column-gap:24px}
 .pickrow{display:grid;grid-template-columns:24px 40px minmax(0,1fr);gap:10px;align-items:center;min-height:56px;padding:6px 0;border-bottom:1px solid var(--line-soft);cursor:pointer}
 .pickrow .tile{width:40px;height:40px;padding:7px;border-radius:8px}
@@ -348,6 +349,7 @@ function px(rows, colors){
 function glyph(name, color){ return px(GLYPH[name] || GLYPH.star, { "#": color || "currentColor" }); }
 function hexFace(){ return px(HEXFACE, HEXCOL); }
 function tile(m){
+  if (m.logo) return '<img class="tile tile-img" src="' + esc(m.logo) + '" alt="" loading="lazy" decoding="async">';
   return '<span class="tile" style="background:linear-gradient(145deg,hsl(' + m.hue + ' 62% 44%),hsl(' + ((m.hue + 40) % 360) + ' 58% 26%))">' + glyph(m.icon, "#fffdf2") + "</span>";
 }
 function rng(seed){
@@ -512,7 +514,7 @@ var S = {
   tier: store.get("tier", "free"), mood: store.get("mood", "cheeky"), theme: store.get("theme", "device"),
   saved: store.get("saved", []), savedMods: store.get("savedMods", []), stamps: store.get("stamps", []), mine: store.get("mine", []),
   hidden: store.get("hidden", []), blocked: store.get("blocked", []),
-  q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false,
+  q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false, bres: [], bbusy: false, spot: null,
   draft: { name:"", blurb:"", mods:[] }, dirty: false, justStamped: null, open: {}
 };
 var hostTheme = document.documentElement.getAttribute("data-theme");
@@ -527,7 +529,52 @@ function allPacks(){ return PACKS.concat(COMMUNITY, S.mine); }
 function findPack(id){ return allPacks().filter(function(p){ return p.id === id; })[0]; }
 function isMine(p){ return S.mine.indexOf(p) > -1; }
 function isLocked(p){ return S.tier === "free" && p.id !== FEATURED; }
-function modCount(p){ return p.core.length + p.spice.length; }
+function modCount(p){ return p.core.length + p.spice.length + (p.helpers ? p.helpers.length : 0); }
+function allMods(p){ return p.core.concat(p.spice, p.helpers || []).filter(function(i){ return MOD[i]; }); }
+function rows(ids){ return ids.map(function(i){ return MOD[i]; }).filter(Boolean).map(modRow).join(""); }
+
+/* ---------- live mods (only when the page is served by HyMeta's own server) ---------- */
+var LIVE = false, fetching = {}, bTimer;
+function api(path){ return fetch(path, { credentials:"same-origin" }).then(function(r){ if (!r.ok) throw new Error("status " + r.status); return r.json(); }); }
+function fmtNum(n){ return n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "K" : String(n); }
+function fmtDate(iso){ var d = new Date(iso); return isNaN(d) ? "" : ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()] + " " + d.getDate() + ", " + String(d.getFullYear()).slice(2); }
+function safeUrl(u, prefix){ return typeof u === "string" && u.indexOf(prefix) === 0 ? u : ""; }
+function isLiveId(i){ return /^cf\d+$/.test(i); }
+function adopt(m){
+  MOD[m.id] = { id:m.id, live:true, name:String(m.name || ""), by:String(m.by || ""), blurb:String(m.blurb || ""), tags:(m.tags || []).slice(0, 3).map(String),
+    dl:fmtNum(+m.downloads || 0), upd:fmtDate(m.updated), logo:safeUrl(m.logo, "https://media.forgecdn.net/"), url:safeUrl(m.url, "https://www.curseforge.com/"), icon:"star", hue:215 };
+  return m.id;
+}
+function ready(p){ return !LIVE || !!p.ready || !!p.by; }
+function nMods(p){ return ready(p) ? modCount(p) + " mods" : ""; }
+function loadPack(p){
+  if (!LIVE || !p || p.by || p.ready || fetching[p.id]) return;
+  fetching[p.id] = true; p.failed = false;
+  api("api/pack?id=" + encodeURIComponent(p.id)).then(function(d){ p.core = d.core.map(adopt); p.spice = d.spice.map(adopt); p.helpers = (d.helpers || []).map(adopt); p.ready = true; })
+    .catch(function(){ p.failed = true; })
+    .then(function(){ delete fetching[p.id]; if (current === "pack-" + p.id || (current === "home" && p.id === FEATURED)) render(false); });
+}
+function loadMissing(){
+  var want = S.savedMods.concat.apply(S.savedMods, S.mine.map(function(p){ return p.core; })).filter(function(i){ return isLiveId(i) && !MOD[i]; });
+  if (!want.length) return;
+  api("api/mods?ids=" + want.slice(0, 50).join(",")).then(function(d){ d.mods.forEach(adopt); render(false); }).catch(function(){});
+}
+function liveSearch(){
+  clearTimeout(bTimer); S.bbusy = true;
+  bTimer = setTimeout(function(){
+    api("api/search?q=" + encodeURIComponent(S.bq.trim())).then(function(d){ S.bres = d.mods.map(adopt); }).catch(function(){ S.bres = []; })
+      .then(function(){ S.bbusy = false; var l = $("#b-list"); if (l) l.innerHTML = pickList(); });
+  }, 350);
+}
+function goLive(){
+  LIVE = true;
+  PACKS.forEach(function(p){ p.core = []; p.spice = []; p.helpers = []; p.ready = false; });
+  COMMUNITY.length = 0;
+  S.savedMods = S.savedMods.filter(isLiveId); S.saved = S.saved.filter(findPack); S.mine = S.mine.filter(function(p){ return p.core.every(isLiveId); });
+  loadPack(findPack(FEATURED)); loadMissing();
+  api("api/spotlight").then(function(d){ if (d.mod){ S.spot = adopt(d.mod); if (current === "home") render(false); } }).catch(function(){});
+  render(false);
+}
 function say(key){ return LINES[key][S.mood]; }
 function hex(line){
   return '<div class="hex"><div class="face">' + hexFace() + '</div><div class="say"><p class="who">Hex says</p><p class="line">' + esc(line) + "</p></div></div>";
@@ -541,7 +588,7 @@ function pk(p){
     '<span class="pk-body"><span class="pk-name">' + esc(p.name) + '</span><span class="pk-blurb">' + esc(p.blurb) + "</span>" +
     '<span class="chips">' + dareChip(p) + (exp ? '<span class="chip chip-exp pk-exp">Experimental</span>' : "") +
     (p.status === "pending" ? '<span class="chip">' + ic("clock") + "In review</span>" : "") +
-    (isLocked(p) ? lockChip() : '<span class="chip">' + modCount(p) + " mods</span>") + "</span></span></a>";
+    (isLocked(p) ? lockChip() : (nMods(p) ? '<span class="chip">' + nMods(p) + "</span>" : "")) + "</span></span></a>";
 }
 function shelf(list, three){ return '<div class="shelf' + (three ? " shelf-3" : "") + '">' + list.map(pk).join("") + "</div>"; }
 function savedShelf(list){
@@ -566,17 +613,17 @@ function head(id, title, href, label){
 
 /* ---------- views ---------- */
 function vHome(){
-  var p = findPack(FEATURED), n = modCount(p), comm = communityPacks().slice(0, 3);
+  var p = findPack(FEATURED), n = modCount(p), comm = communityPacks().slice(0, 3), spot = LIVE ? MOD[S.spot] : MOD[SPOTLIGHT];
   return '<div class="page">' +
-    '<p class="notice small">Preview. Every mod, number and picture is a placeholder until CurseForge is connected.</p>' +
+    '<p class="notice small">' + (LIVE ? "Private test. These are live mods from CurseForge. The playpacks are early recipes, not final picks." : "Preview. Every mod, number and picture is a placeholder until CurseForge is connected.") + "</p>" +
     '<section class="card hero" aria-labelledby="h-week">' +
       '<div class="hero-art">' + art(p.art, true) +
         '<div class="hero-top"><span class="badge">' + ic("star") + 'Free this week</span><span class="badge badge-dark">' + ic("clock") + nextDrop() + "</span></div>" +
         '<div class="hero-title"><h1 id="h-week" tabindex="-1"><span class="sr">This week\'s free playpack: </span>' + esc(p.name) + "</h1></div></div>" +
       '<div class="hero-body"><div class="sec"><p class="lede">' + esc(p.blurb) + "</p>" + hex(p.pitch[S.mood]) + warnBox(p) + "</div>" +
-        '<div class="hero-side"><div class="chips">' + dareChip(p) + '<span class="chip">' + n + " mods</span></div>" +
+        '<div class="hero-side"><div class="chips">' + dareChip(p) + (nMods(p) ? '<span class="chip">' + nMods(p) + "</span>" : "") + "</div>" +
         '<button type="button" class="btn btn-primary btn-big btn-full" data-action="play" data-id="' + p.id + '">' + ic("play") + "Play this pack</button>" +
-        '<a class="btn btn-ghost btn-full" href="#pack-' + p.id + '">See the ' + n + " mods</a></div></div></section>" +
+        '<a class="btn btn-ghost btn-full" href="#pack-' + p.id + '">' + (ready(p) ? "See the " + n + " mods" : "See the mods") + "</a></div></div></section>" +
     '<section class="sec" aria-labelledby="h-shelf">' + head("h-shelf", "Also this week", "#explore", "See all") +
       '<p class="muted">' + (S.tier === "free" ? "Free players can read about these. Members get the " + term("mod", "mods") + " and the links." : "All yours. Open any " + term("playpack", "playpack") + " to see its mods.") + "</p>" +
       shelf(TEASERS.map(findPack), true) + "</section>" +
@@ -585,7 +632,7 @@ function vHome(){
         var c = PACKS.filter(function(x){ return x.family === f[0]; }).length;
         return '<button type="button" class="style-tile" data-action="family" data-family="' + f[0] + '">' + art(f[0]) + '<span class="style-name"><strong>' + f[1] + '</strong><span class="small">' + c + (c === 1 ? " pack" : " packs") + "</span></span></button>";
       }).join("") + "</div></section>" +
-    '<section class="sec" aria-labelledby="h-spot">' + head("h-spot", "Mod spotlight") + '<p class="muted">One ' + term("mod", "mod") + ' Hex will not stop talking about this week.</p><div class="card list">' + modRow(MOD[SPOTLIGHT]) + "</div></section>" +
+    (!spot ? "" : '<section class="sec" aria-labelledby="h-spot">' + head("h-spot", "Mod spotlight") + '<p class="muted">One ' + term("mod", "mod") + ' Hex will not stop talking about this week.</p><div class="card list">' + modRow(spot) + "</div></section>") +
     '<section class="sec" aria-labelledby="h-dare">' + head("h-dare", "Pick your " + term("dare", "dare level")) +
       '<div class="dares">' + [1, 2, 3].map(function(d){
         var c = PACKS.filter(function(x){ return x.dare === d; }).length;
@@ -597,17 +644,18 @@ function vHome(){
 
 function modRow(m){
   var saved = S.savedMods.indexOf(m.id) > -1;
-  return '<div class="mod">' + tile(m) + "<div><h4>" + esc(m.name) + '<span class="tag-sample">Sample</span></h4>' +
-    '<p class="small muted">By sample author</p><p>' + esc(m.blurb) + "</p>" +
+  return '<div class="mod">' + tile(m) + "<div><h4>" + esc(m.name) + (m.live ? "" : '<span class="tag-sample">Sample</span>') + "</h4>" +
+    '<p class="small muted">By ' + (m.live ? esc(m.by || "an unnamed author") : "sample author") + "</p><p>" + esc(m.blurb) + "</p>" +
     '<div class="meta small"><span class="chips">' + m.tags.map(function(t){ return '<span class="chip">' + esc(t) + "</span>"; }).join("") + "</span>" +
     "<span>" + ic("down") + '<span class="sr">Downloads: </span>' + m.dl + "</span><span>" + ic("clock") + '<span class="sr">Updated: </span>' + m.upd + "</span></div>" +
-    '<a class="linkbtn" href="https://www.curseforge.com/hytale" target="_blank" rel="noopener">View on CurseForge' + ic("ext") + '<span class="sr"> (opens in a new tab)</span></a></div>' +
+    '<a class="linkbtn" href="' + esc(m.url || "https://www.curseforge.com/hytale") + '" target="_blank" rel="noopener">View on CurseForge' + ic("ext") + '<span class="sr"> (opens in a new tab)</span></a></div>' +
     (S.tier === "member" ? '<button type="button" class="iconbtn" data-action="savemod" data-id="' + m.id + '" data-fk="sm-' + m.id + '" aria-pressed="' + saved + '" aria-label="' + (saved ? "Saved. Remove " : "Save ") + esc(m.name) + '">' + ic("heart") + "</button>" : "<span></span>") +
     "</div>";
 }
 function vPack(id){
   var p = findPack(id);
   if (!p || !shown(p)) return '<div class="page"><h1 tabindex="-1">That playpack is not on the shelf</h1><p>It may have been removed.</p><div><a class="btn btn-primary" href="#explore">Browse playpacks</a></div></div>';
+  if (!isLocked(p)) loadPack(p);
   var locked = isLocked(p), n = modCount(p), saved = S.saved.indexOf(p.id) > -1, stamped = S.stamps.indexOf(p.id) > -1, mine = isMine(p);
   var line = locked ? say("locked") : (p.pitch ? p.pitch[S.mood] : say("community"));
   var acts = locked
@@ -615,11 +663,16 @@ function vPack(id){
     : '<button type="button" class="btn btn-primary btn-big" data-action="play" data-id="' + p.id + '" data-fk="play">' + ic("play") + "Play this pack</button>" +
       (S.tier === "member" ? '<button type="button" class="btn btn-ghost btn-big" data-action="save" data-id="' + p.id + '" data-fk="save" aria-pressed="' + saved + '">' + ic("heart") + (saved ? "Saved" : "Save") + "</button>" : "");
   var body = locked
-    ? '<div class="panel"><h2>' + n + " mods are hidden</h2><p>Members see every " + term("mod", "mod") + " in this " + term("playpack", "playpack") + ", with links to " + term("curseforge", "CurseForge") + ".</p>" +
+    ? '<div class="panel"><h2>' + (ready(p) ? n + " mods are hidden" : "The mods are hidden") + "</h2><p>Members see every " + term("mod", "mod") + " in this " + term("playpack", "playpack") + ", with links to " + term("curseforge", "CurseForge") + ".</p>" +
       '<div class="row"><button type="button" class="btn btn-ghost" data-action="join">See what members get</button><a class="btn btn-ghost" href="#home">Back to the free playpack</a></div></div>'
+    : !ready(p)
+    ? '<section class="sec" aria-labelledby="h-mods"><h2 id="h-mods">What is inside</h2><div class="panel" id="pack-wait" role="status">' + (p.failed
+        ? '<p>CurseForge did not answer, so the mods could not be fetched.</p><button type="button" class="btn btn-ghost" data-action="retry" data-id="' + p.id + '" data-fk="retry">Try again</button>'
+        : "<p>Fetching the mods from CurseForge.</p>") + "</div></section>"
     : '<section class="sec" aria-labelledby="h-mods"><h2 id="h-mods">What is inside</h2><div class="card mods">' +
-        fold("g-core", "The essentials (" + p.core.length + ")", p.core.map(function(i){ return modRow(MOD[i]); }).join(""), true) +
-        (p.spice.length ? fold("g-spice", "The spice (" + p.spice.length + ")", p.spice.map(function(i){ return modRow(MOD[i]); }).join(""), false) : "") + "</div></section>" +
+        fold("g-core", "The essentials (" + p.core.length + ")", rows(p.core), true) +
+        (p.spice.length ? fold("g-spice", "The spice (" + p.spice.length + ")", rows(p.spice), false) : "") +
+        (p.helpers && p.helpers.length ? fold("g-help", "Helpers these mods need (" + p.helpers.length + ")", '<p class="small muted" style="padding-bottom:10px">Some mods cannot run without a helper mod. Hex found them so you do not have to.</p>' + rows(p.helpers), false) : "") + "</div></section>" +
       '<section class="sec" aria-labelledby="h-stamp"><h2 id="h-stamp">Played it?</h2>' +
       (stamped
         ? '<div class="stamps"><div class="stamp' + (S.justStamped === p.id ? " new" : "") + '"><span class="ink">' + glyph(p.icon) + '</span><span class="small"><strong>Survived</strong></span></div></div>' + hex(say("stamped"))
@@ -635,7 +688,7 @@ function vPack(id){
       '<div class="hero-top">' + (p.kind === "Experimental" ? '<span class="badge badge-exp">' + ic("warn") + "Experimental</span>" : "") + (locked ? '<span class="badge badge-dark">' + ic("lock") + "Members</span>" : "") + "</div>" +
       '<div class="hero-title"><h1 tabindex="-1">' + esc(p.name) + "</h1></div></div>" +
     '<div class="hero-body"><div class="sec"><p class="lede">' + esc(p.blurb) + "</p>" + (p.by ? '<p class="small muted">Shared by ' + esc(p.by) + "</p>" : "") + hex(line) + warnBox(p) + "</div>" +
-    '<div class="hero-side"><div class="chips">' + dareChip(p) + '<span class="chip">' + n + ' mods</span><span class="chip">' + esc(FAMILY[p.family] || p.kind) + "</span>" + (p.status === "pending" ? '<span class="chip">' + ic("clock") + "In review</span>" : "") + '</div><div class="actions">' + acts + "</div></div></div></section></div>" +
+    '<div class="hero-side"><div class="chips">' + dareChip(p) + (nMods(p) ? '<span class="chip">' + nMods(p) + "</span>" : "") + '<span class="chip">' + esc(FAMILY[p.family] || p.kind) + "</span>" + (p.status === "pending" ? '<span class="chip">' + ic("clock") + "In review</span>" : "") + '</div><div class="actions">' + acts + "</div></div></div></section></div>" +
     body + care + "</div>";
 }
 
@@ -645,7 +698,7 @@ function matches(p){
   if (f === "exp" && p.kind !== "Experimental") return false;
   if (/^[123]$/.test(f) && p.dare !== +f) return false;
   if (!q) return true;
-  var hay = (p.name + " " + p.blurb + " " + p.core.concat(p.spice).map(function(i){ return MOD[i].name + " " + MOD[i].tags.join(" "); }).join(" ")).toLowerCase();
+  var hay = (p.name + " " + p.blurb + " " + allMods(p).map(function(i){ return MOD[i].name + " " + MOD[i].tags.join(" "); }).join(" ")).toLowerCase();
   return hay.indexOf(q) > -1;
 }
 function resultsHtml(){
@@ -702,19 +755,26 @@ function buildComment(){
 }
 function pickList(){
   var q = S.bq.trim().toLowerCase();
+  if (LIVE){
+    var live = (S.bonly ? S.draft.mods : S.bres).map(function(i){ return MOD[i]; }).filter(Boolean);
+    if (!live.length) return '<div class="empty" role="status"><p>' + (S.bbusy ? "Searching CurseForge." : S.bonly ? "You have not picked any mods yet." : "No mods match. Try another word.") + "</p></div>";
+    return live.map(pickRow).join("");
+  }
   var list = MODS.filter(function(m){
     if (S.bonly && S.draft.mods.indexOf(m.id) < 0) return false;
     if (S.bcat !== "all" && m.tags.indexOf(S.bcat) < 0) return false;
     return !q || (m.name + " " + m.blurb + " " + m.tags.join(" ")).toLowerCase().indexOf(q) > -1;
   });
   if (!list.length) return '<div class="empty"><p>' + (S.bonly && !S.draft.mods.length ? "You have not picked any mods yet." : "No mods match.") + '</p><button type="button" class="btn btn-ghost" data-action="bclear">Show every mod</button></div>';
-  return list.map(function(m){
-    return '<label class="pickrow"><input type="checkbox" name="mods" value="' + m.id + '"' + (S.draft.mods.indexOf(m.id) > -1 ? " checked" : "") + ">" + tile(m) +
-      "<span><strong>" + esc(m.name) + '</strong><br><span class="small muted">' + esc(m.tags.join(", ")) + "</span></span></label>";
-  }).join("");
+  return list.map(pickRow).join("");
+}
+function pickRow(m){
+  return '<label class="pickrow"><input type="checkbox" name="mods" value="' + esc(m.id) + '"' + (S.draft.mods.indexOf(m.id) > -1 ? " checked" : "") + ">" + tile(m) +
+    "<span><strong>" + esc(m.name) + '</strong><br><span class="small muted">' + esc(m.tags.join(", ")) + "</span></span></label>";
 }
 function buildStatus(){ return '<p><strong>' + S.draft.mods.length + ' picked</strong> <span class="muted">Pick 3 to 20.</span></p>' + hex(buildComment()); }
 function vBuild(){
+  if (LIVE && S.tier !== "free" && !S.bres.length && !S.bbusy) liveSearch();
   if (S.tier === "free") return lockedPanel("Build your own playpack", "Members can pick their own mods, name the result and share it with the community.");
   return '<div class="page"><div class="sec"><h1 tabindex="-1">Build your own playpack</h1><p class="muted">Pick the mods, give it a name and send it for review. Once approved, other members can see it.</p></div>' +
     (S.mine.length ? '<section class="sec" aria-labelledby="h-mine">' + head("h-mine", "Your playpacks") + shelf(S.mine) + "</section>" : "") +
@@ -722,8 +782,8 @@ function vBuild(){
     '<div class="grid2"><div class="field"><label for="b-name">Name</label><input type="text" id="b-name" maxlength="40" value="' + esc(S.draft.name) + '" placeholder="For example, Swamp wizard"></div>' +
     '<div class="field"><label for="b-blurb">One line about how it plays</label><input type="text" id="b-blurb" maxlength="90" value="' + esc(S.draft.blurb) + '"></div></div>' +
     '<fieldset style="border:0;padding:0;margin:0;min-width:0" class="sec"><legend class="legend sr">Mods</legend><h2 aria-hidden="true">Mods</h2>' +
-    '<div class="toolbar">' + searchBox("bq", "bqclear", "Search mods", "Search mods, for example fishing", S.bq) +
-    '<label class="sr" for="bcat">Filter by category</label><select id="bcat">' + options([["all","Every category"]].concat(CATS.map(function(c){ return [c, c]; })), S.bcat) + "</select>" +
+    '<div class="toolbar">' + searchBox("bq", "bqclear", "Search mods", LIVE ? "Search every Hytale mod on CurseForge" : "Search mods, for example fishing", S.bq) +
+    (LIVE ? "" : '<label class="sr" for="bcat">Filter by category</label><select id="bcat">' + options([["all","Every category"]].concat(CATS.map(function(c){ return [c, c]; })), S.bcat) + "</select>") +
     '<label class="check"><input type="checkbox" id="bonly"' + (S.bonly ? " checked" : "") + ">Only show picked</label></div>" +
     '<div id="b-status" class="sec" role="status">' + buildStatus() + "</div>" +
     '<div class="card picks" id="b-list">' + pickList() + "</div></fieldset>" +
@@ -809,7 +869,7 @@ sheet.addEventListener("close", function(){ if (opener && document.contains(open
 sheet.addEventListener("click", function(e){ if (e.target === sheet) closeSheet(); });
 
 function playBody(p, mode){
-  var n = modCount(p), ids = p.core.concat(p.spice);
+  var ids = allMods(p), n = ids.length;
   var seg = '<div class="seg seg-wide" role="group" aria-label="Where do you play?">' +
     '<button type="button" data-action="playmode" data-mode="here" data-id="' + p.id + '" aria-pressed="' + (mode === "here") + '">On this computer</button>' +
     '<button type="button" data-action="playmode" data-mode="send" data-id="' + p.id + '" aria-pressed="' + (mode === "send") + '">Send to my computer</button></div>';
@@ -827,6 +887,7 @@ function playBody(p, mode){
 }
 function openPlay(id, mode){
   var p = findPack(id); if (!p) return;
+  if (!ready(p)){ loadPack(p); toast("Still fetching the mods. Try again in a moment."); return; }
   var switching = !!mode;
   if (!mode) mode = (window.matchMedia && matchMedia("(pointer: coarse)").matches) ? "send" : "here";
   openSheet("Play " + esc(p.name), playBody(p, mode));
@@ -916,7 +977,8 @@ document.addEventListener("click", function(e){
   else if (a === "approve"){ p = findPack(id); if (p){ p.status = "approved"; store.set("mine", S.mine); render(false); toast("Approved. Other members can see it now."); } }
   else if (a === "stamp"){ if (S.stamps.indexOf(id) < 0) S.stamps.push(id); store.set("stamps", S.stamps); S.justStamped = id; render(false); toast("Stamp collected"); }
   else if (a === "clear"){ S.q = ""; S.filter = "all"; S.fam = "all"; render(false); var q = $("#q"); if (q) q.focus(); }
-  else if (a === "bqclear"){ S.bq = ""; var bq = $("#bq"); bq.value = ""; $("#bq-clear").hidden = true; $("#b-list").innerHTML = pickList(); bq.focus(); }
+  else if (a === "bqclear"){ S.bq = ""; var bq = $("#bq"); bq.value = ""; $("#bq-clear").hidden = true; if (LIVE) liveSearch(); $("#b-list").innerHTML = pickList(); bq.focus(); }
+  else if (a === "retry"){ p = findPack(id); loadPack(p); render(false); }
   else if (a === "bclear"){ S.bq = ""; S.bcat = "all"; S.bonly = false; render(false); var bq2 = $("#bq"); if (bq2) bq2.focus(); }
   else if (a === "copy"){
     var text = b.getAttribute("data-text"), ok = function(){ toast("Code copied"); }, fail = function(){ var r = document.createRange(); r.selectNodeContents($("#code")); var s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Code selected. Copy it from here."); };
@@ -942,7 +1004,7 @@ document.addEventListener("click", function(e){
 document.addEventListener("input", function(e){
   var t = e.target;
   if (t.id === "q"){ S.q = t.value; $("#q-clear").hidden = !S.q; $("#results").innerHTML = resultsHtml(); }
-  else if (t.id === "bq"){ S.bq = t.value; $("#bq-clear").hidden = !S.bq; $("#b-list").innerHTML = pickList(); }
+  else if (t.id === "bq"){ S.bq = t.value; $("#bq-clear").hidden = !S.bq; if (LIVE) liveSearch(); $("#b-list").innerHTML = pickList(); }
   else if (t.id === "b-name"){ S.draft.name = t.value; S.dirty = true; }
   else if (t.id === "b-blurb"){ S.draft.blurb = t.value; S.dirty = true; }
 });
@@ -991,5 +1053,6 @@ $("#mark").innerHTML = px(PACKMARK, { "#":"#1d1503", "o":"#7a5200" });
 applyTheme();
 current = routeName();
 render(false);
+if (document.querySelector('meta[name="hymeta-server"]')) api("api/health").then(function(d){ if (d && d.live) goLive(); }).catch(function(){});
 })();
 </script>

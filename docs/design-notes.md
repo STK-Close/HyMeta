@@ -43,6 +43,15 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 - A grown-up question sits in front of the membership purchase.
 - Shared playpacks reject links, emails and phone numbers, and can be reported or their author blocked.
 
+## How the test site works (Claude's call)
+- Hosted on Vercel, behind one shared password, hidden from search engines.
+- The app page is only handed out after sign-in, and every data route checks the sign-in too.
+- Mods are fetched live from CurseForge and nothing is stored, to stay inside their rules while permission is pending.
+- Each playpack is a recipe of live searches. The essentials take the most popular matches. The spice reaches further down the list and shifts weekly, so lesser-known mods get a turn.
+- Helper mods that a pick cannot run without are found automatically and listed in their own group.
+- Mods whose name or description contains a blocked word never appear.
+- Free players never trigger a fetch for a locked playpack. Real enforcement arrives with accounts.
+
 ## Not decided
 - How one-tap installing will really work for Hytale through CurseForge.
 - Whether a paid app is allowed under the CurseForge API terms.
