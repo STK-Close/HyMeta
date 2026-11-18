@@ -41,7 +41,7 @@ const sizes = { phone: [390, 844], tablet: [820, 1180], desktop: [1366, 900] };
           if (!own) continue;
           const label = el.textContent.trim().slice(0, 24);
           if (parseFloat(cs.fontSize) < 13) res.push(`text under 13px (${cs.fontSize}): ${label}`);
-          if (el.closest(".hero-art, .pk-art, .tile")) continue;
+          if (el.closest(".hero-art, .pk-art, .tile, .style-tile")) continue;
           const bg = bgOf(el); if (!bg) continue;
           const cr = ratio(cs.color, bg);
           if (cr < 4.5) res.push(`low text contrast ${cr.toFixed(2)}: ${label}`);
@@ -81,6 +81,14 @@ const sizes = { phone: [390, 844], tablet: [820, 1180], desktop: [1366, 900] };
     await audit("play sheet"); if (out) await p.screenshot({ path: `${out}/${tag}-play.png` });
     await p.click('[data-mode="send"]'); await audit("send sheet"); await p.keyboard.press("Escape");
 
+    // artwork loads, and playstyle tiles filter the shelf
+    const broken = await p.evaluate(async () => { const imgs = [...document.querySelectorAll("img.art")]; imgs.forEach((i) => { i.loading = "eager"; }); await Promise.all(imgs.map((i) => i.decode().catch(() => {}))); return imgs.filter((i) => !i.naturalWidth).length + (imgs.length < 10 ? 100 : 0); });
+    if (broken) bad("home: artwork is missing or did not load (" + broken + ")");
+    if (await count(".style-tile") !== 7) bad("home: expected 7 playstyle tiles");
+    if (!(await count("#h-spot"))) bad("home: mod spotlight is missing");
+    await p.click('[data-family="magic"]'); await p.waitForTimeout(220);
+    if (await p.inputValue("#fam") !== "magic" || await count("#results .pk") !== 1) bad("playstyle tile did not filter to the 1 magic pack");
+    await go("home");
     // dare tiles filter the shelf
     await p.click('[data-dare="3"]'); await p.waitForTimeout(220);
     if (await p.inputValue("#filter") !== "3" || await count("#results .pk") !== 3) bad("dare tile did not filter to 3 packs");
@@ -128,6 +136,8 @@ const sizes = { phone: [390, 844], tablet: [820, 1180], desktop: [1366, 900] };
     if (!/2 picked/.test(await p.textContent("#b-status"))) bad("picked count is wrong: " + (await p.textContent("#b-status")).slice(0, 30));
     await p.check("#bonly"); if (await count(".pickrow") !== 2) bad("only show picked should list 2 mods");
     await p.uncheck("#bonly"); await shot("build");
+    const capped = await p.evaluate(() => { const boxes = [...document.querySelectorAll('input[name="mods"]')]; boxes.forEach((b) => { if (!b.checked) b.click(); }); const n = boxes.filter((b) => b.checked).length; boxes.forEach((b) => { if (b.checked && b.value !== "hook" && b.value !== "spell") b.click(); }); return n; });
+    if (capped !== 20) bad("a playpack should stop at 20 mods, it allowed " + capped);
     await p.fill("#b-name", "Swamp <b>wizard</b>");
     await p.click('.tabs a[href="#home"]'); await p.waitForTimeout(250);
     if (!(await count("dialog[open]"))) bad("no warning before losing an unsaved playpack");
@@ -135,9 +145,17 @@ const sizes = { phone: [390, 844], tablet: [820, 1180], desktop: [1366, 900] };
     if (await p.inputValue("#b-name") !== "Swamp <b>wizard</b>") bad("draft was lost after choosing to keep building");
     await p.fill("#b-blurb", "call me on 5551234567"); await p.click('#build button[type="submit"]');
     if (!/links, emails and phone/.test(await p.textContent("#b-err"))) bad("personal details were allowed in a shared playpack");
-    await p.fill("#b-blurb", "Swampy"); await p.click('#build button[type="submit"]'); await p.waitForTimeout(300);
-    if (!/pack-mine-/.test(p.url())) bad("sharing did not open the new playpack");
+    await p.fill("#b-blurb", "Swampy"); await p.click('#build button[type="submit"]');
+    if (!/at least three mods/.test(await p.textContent("#b-err"))) bad("a playpack with only 2 mods was accepted");
+    await p.check('input[value="wand"]'); await p.click('#build button[type="submit"]'); await p.waitForTimeout(300);
+    if (!/pack-mine-/.test(p.url())) bad("sending for review did not open the new playpack");
     if (await count("#view b")) bad("typed text was treated as code");
+    if (!(await count("#review-note"))) bad("new playpack is not marked as waiting for review");
+    const mineUrl = p.url().split("#")[1];
+    await go("explore"); if (await count(`a[href="#${mineUrl}"]`)) bad("a playpack still in review is shown to the community");
+    await go(mineUrl); await audit("my playpack, in review"); await p.click('[data-action="approve"]');
+    await go("explore"); if (!(await count(`a[href="#${mineUrl}"]`))) bad("an approved playpack is not shown to the community");
+    await go(mineUrl);
     await p.click('[data-action="del"]'); await p.click('[data-action="del"]'); await p.waitForTimeout(250);
     if (!/explore/.test(p.url())) bad("two-tap delete failed");
 
@@ -150,13 +168,19 @@ const sizes = { phone: [390, 844], tablet: [820, 1180], desktop: [1366, 900] };
 
     // you: settings, legal, account deletion, theme switch
     await go("you"); await audit("you"); await shot("you");
+    await p.click('#f-acct > summary'); await p.click('[data-action="signin"]');
+    if (!/ages 13 and up/.test(await p.textContent("#sheet"))) bad("sign-in does not state the 13 and up rule");
+    await p.keyboard.press("Escape"); await p.click('#f-acct > summary');
     for (const id of ["f-look", "f-acct", "f-mem", "f-legal", "f-reset"]) await p.click(`#${id} > summary`);
     await audit("you, everything open");
     if (!(await count('[data-action="unblock"]'))) bad("blocked member is not listed");
     if (!(await count('[data-action="delacct"]'))) bad("no way to delete the account");
     for (const d of ["support", "privacy", "terms", "rules", "credits"]) {
       await p.click(`[data-doc="${d}"]`); await audit("doc " + d);
-      if (d !== "support" && d !== "rules" && !/Lumina Art House, LLC/.test(await p.textContent("#sheet"))) bad(`${d} does not name Lumina Art House, LLC`);
+      const docText = await p.textContent("#sheet");
+      if (d !== "support" && d !== "rules" && !/Lumina Art House, LLC/.test(docText)) bad(`${d} does not name Lumina Art House, LLC`);
+      if (d === "terms" && !/State of Florida/.test(docText)) bad("terms do not name Florida law");
+      if (/Riot/.test(docText)) bad(`${d} mentions Riot Games`);
       await p.keyboard.press("Escape");
     }
     if (!/Lumina Art House, LLC/.test(await p.textContent(".foot"))) bad("footer copyright missing");

@@ -12,7 +12,7 @@ Status key: **Designed** = already in the preview. **Build** = needs the real ap
 
 | Apple requires | Status |
 | --- | --- |
-| A way to filter objectionable material | **Designed** in part: links, emails and phone numbers are rejected. **Build**: a real word filter and a person reviewing reports. |
+| A way to filter objectionable material | **Designed**: every shared playpack waits for a person to approve it before other members see it, and links, emails and phone numbers are rejected. **Build**: a real word filter and the review inbox. |
 | A way to report offensive content, with timely responses | **Designed**: "Report this playpack" on every shared pack, with a 24 hour promise. **Build**: the inbox the reports go to. **You**: someone to answer them. |
 | A way to block abusive users | **Designed**: "Block this member", plus a list of blocked members under You, Account. |
 | Published contact information | **Designed**: Help and contact page. **You**: a support email address. |
@@ -23,7 +23,7 @@ Status key: **Designed** = already in the preview. **Build** = needs the real ap
 | --- | --- |
 | Do not use the Kids Category unless the app meets its stricter rules | Recommendation: do **not** list in the Kids Category. List as a general app that is safe for younger players. |
 | Do not suggest children are the main audience in the name, icon, screenshots or description of a non-Kids app | **You / Build**: keep this in mind when writing the store listing. |
-| Follow children's privacy law when collecting data from a minor | **You**: have a lawyer confirm the plan for players under 13. The preview assumes a parent sets up the account. |
+| Follow children's privacy law when collecting data from a minor | **Designed**: accounts and sharing are for ages 13 and up, and anyone can browse without an account. **You**: have a lawyer confirm this plan. |
 | Store listing must suit a 4+ rating | **Build**: screenshots and description stay clean. |
 | Parental gate before purchases | Only required inside the Kids Category. **Designed** anyway: a grown-up question before the membership purchase. |
 
@@ -52,6 +52,7 @@ Status key: **Designed** = already in the preview. **Build** = needs the real ap
 | Apple requires | Status |
 | --- | --- |
 | Permission to use third-party trademarks and copyrighted work | **You**: check Hypixel Studios' rules for fan projects, including the "Hy" in the name. **Designed**: "unofficial, not affiliated" on every page, and no Hytale art, logo or fonts. |
+| Rights to the artwork used in the app and the store listing (2.3.9) | **You**: the playpack artwork was generated in Perplexity. Check their terms allow commercial use. |
 | Content from another service must be allowed by that service's terms | **You**: confirm with CurseForge that a paid app may show mod names, logos and links through their official API. This is the biggest open risk. |
 
 ## A real app, finished (guidelines 2.1, 2.3, 4.2)
@@ -73,4 +74,5 @@ Status key: **Designed** = already in the preview. **Build** = needs the real ap
 5. Written confirmation from CurseForge that a paid app is allowed.
 6. A look at Hypixel Studios' fan content rules, or permission from them.
 7. A lawyer's review of the privacy policy, terms and the plan for players under 13.
-8. A Mac with Xcode, or a cloud build service, to produce and upload the iPhone app.
+8. A check of Perplexity's terms to confirm the artwork can be used commercially.
+9. A Mac with Xcode, or a cloud build service, to produce and upload the iPhone app.

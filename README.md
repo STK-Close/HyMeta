@@ -17,7 +17,7 @@ See `docs/app-store-checklist.md` for what Apple needs and what is done.
 | Folder | What it holds |
 | --- | --- |
 | `src/app.html` | The app itself, as one page. This is the file to edit. |
-| `web/` | The finished web page, icons and settings, built from `src/app.html`. |
+| `web/` | The finished web page, icons, artwork (`web/images/`) and settings, built from `src/app.html`. |
 | `store/` | The 1024 pixel App Store icon. |
 | `docs/` | The Apple approval checklist and the design decisions. |
 | `scripts/` | Small helpers that build the page and draw the icons. |

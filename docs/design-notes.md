@@ -16,12 +16,29 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 - Membership costs $3.99 a month or $24.99 a year. No weekly plan and no free trial at launch.
 - Saved playpacks can be removed with the heart right in the Saved area, the same as saved mods.
 
+## Carried over from the first HyMeta (built in Perplexity, March and April 2026)
+- Seven playstyle families: combat, building, survival, creatures and farming, magic, exploration, a bit of everything.
+- The eight pieces of blocky artwork: one landscape and one scene per family. They are the banner art for playpacks and the playstyle tiles.
+- Mod spotlight: one featured mod on the home screen.
+- Shared playpacks hold 3 to 20 mods and wait for a person to approve them before other members see them.
+- Accounts and sharing are for ages 13 and up. Anyone can browse.
+- Florida law governs the terms.
+- Theme ideas for the weekly generator: Monster hunter, Rising stars, Pet paradise, Hidden gems, Speedrunner's toolkit, Medieval life, Total overhaul, Social butterfly, Lore master. It made two or three new packs a week and avoided themes used recently.
+
+## Left behind from the first HyMeta
+- The $1.49 price, daily rotation and Stripe payments.
+- "All sales are final" and account deletion by email, which Apple does not accept.
+- The mention of Riot Games, which has no connection to Hytale.
+- The engine itself. Only the screens were recoverable without paying for Perplexity Pro.
+
 ## Claude's call
 - Host name: Hex, a troll cousin of Heckle. Three moods (gentle, cheeky, unhinged), all clean.
 - Logo: a pixel backpack, for "playpack". Placeholder quality, to be redrawn.
 - Dare levels: cozy, spicy, send help.
 - Stamp card: one stamp per playstyle survived, with ranks.
 - Look: a game storefront at night. One key-art banner per screen, compact rows on phones, a tight grid on wide screens. Navy and gold base, hot pink only for warnings and experimental packs. Nothing taken from Hytale.
+- Each playpack keeps a small pixel crest in the corner of its artwork, so packs that share a picture can still be told apart.
+- Two pictures are each used by two playpacks (creatures and building) until more artwork exists. The spider, factory and hermit packs most need their own.
 - Phones cannot run Hytale, so the phone offers "Send to my computer" and the computer offers "Add all mods".
 - A grown-up question sits in front of the membership purchase.
 - Shared playpacks reject links, emails and phone numbers, and can be reported or their author blocked.
@@ -29,4 +46,5 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 ## Not decided
 - How one-tap installing will really work for Hytale through CurseForge.
 - Whether a paid app is allowed under the CurseForge API terms.
-- Rules for players under 13.
+- Whether the artwork made in Perplexity may be used commercially.
+- Whether Lumina Art House owns the hymeta.gg web address.

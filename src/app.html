@@ -126,8 +126,8 @@ input[type="text"],input[type="search"],select{font:400 1rem var(--body);min-hei
 /* key art banner */
 .hero{overflow:hidden}
 .hero-art{position:relative;aspect-ratio:16/10;max-width:100%;background:var(--art-bg);color:var(--art-ink)}
-.hero-art>svg{position:absolute;inset:0;width:100%;height:100%;display:block}
-.hero-art::after{content:"";position:absolute;inset:38% 0 0 0;background:linear-gradient(to bottom,rgba(9,11,24,0),rgba(9,11,24,.92))}
+.hero-art>img.art,.pk-art>img.art,.style-tile>img.art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.hero-art::after{content:"";position:absolute;inset:30% 0 0 0;background:linear-gradient(to bottom,rgba(9,11,24,0),rgba(9,11,24,.94))}
 .hero-top{position:absolute;inset:12px 12px auto 12px;display:flex;flex-wrap:wrap;gap:6px;z-index:1}
 .hero-title{position:absolute;inset:auto 16px 12px 16px;z-index:1}
 .hero-title h1{font-size:clamp(1.75rem,6.4vw,3rem);text-shadow:0 2px 0 rgba(9,11,24,.7)}
@@ -139,7 +139,8 @@ input[type="text"],input[type="search"],select{font:400 1rem var(--body);min-hei
 .pk{display:grid;grid-template-columns:104px minmax(0,1fr);background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;overflow:hidden;color:var(--fg);text-decoration:none;
   box-shadow:0 2px 0 var(--edge),0 12px 22px -18px var(--shade);min-width:0}
 .pk-art{position:relative;display:block;min-height:104px;background:var(--art-bg)}
-.pk-art>svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.crest{position:absolute;left:6px;bottom:6px;width:28px;height:28px;border-radius:7px;background:var(--art-veil);padding:5px;z-index:1;display:block}
+.crest svg{width:100%;height:100%;display:block}
 .pk-body{display:flex;flex-direction:column;gap:4px;padding:10px 12px;min-width:0}
 .pk-name{font:700 1.0625rem/1.2 var(--display)}
 .pk-blurb{font-size:.875rem;line-height:1.4;color:var(--muted)}
@@ -151,6 +152,12 @@ input[type="text"],input[type="search"],select{font:400 1rem var(--body);min-hei
 .pk-wrap .pk-body{padding-right:60px}
 .pk-wrap .pk:hover{transform:none}
 
+.styles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.style-tile{position:relative;overflow:hidden;min-height:84px;border-radius:12px;border:1.5px solid var(--line);background:var(--art-bg);color:var(--art-ink);cursor:pointer;padding:0;text-align:left;
+  box-shadow:0 2px 0 var(--edge),0 12px 22px -18px var(--shade);display:flex;align-items:flex-end}
+.style-tile:last-child{grid-column:span 2}
+.style-name{position:relative;z-index:1;display:flex;flex-direction:column;width:100%;padding:22px 12px 8px;background:linear-gradient(to bottom,rgba(9,11,24,0),rgba(9,11,24,.92) 55%);font:400 1rem var(--body)}
+.style-name strong{font:700 1.0625rem/1.2 var(--display)}
 .dares{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .dare{min-height:88px;padding:10px 12px;text-align:left;cursor:pointer;color:var(--fg);font:400 1rem var(--body);display:flex;flex-direction:column;gap:2px;justify-content:center}
 .dare .fl{display:flex;gap:1px}
@@ -222,6 +229,8 @@ dialog::backdrop{background:rgba(8,10,22,.72)}
 @media (min-width:640px){
   .shelf{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
   .shelf-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .styles{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .style-tile{min-height:110px}
   .pk{display:flex;flex-direction:column}
   .pk:hover{transform:translateY(-2px)}
   .pk-art{aspect-ratio:16/9;min-height:0}
@@ -345,33 +354,8 @@ function rng(seed){
   var s = 7; for (var i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) >>> 0;
   return function(){ s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
 }
-var sceneCount = 0;
-function scene(p, hero){
-  var r = rng(p.id), id = "sky" + (++sceneCount), o = "", i, x;
-  o += '<svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" aria-hidden="true" shape-rendering="crispEdges">';
-  o += '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + p.sky[0] + '"/><stop offset="1" stop-color="' + p.sky[1] + '"/></linearGradient></defs>';
-  o += '<rect width="160" height="90" fill="url(#' + id + ')"/>';
-  for (i = 0; i < 30; i++) o += '<rect x="' + Math.floor(r() * 160) + '" y="' + Math.floor(r() * 46) + '" width="1" height="1" fill="#ffffff" opacity="' + (0.35 + r() * 0.6).toFixed(2) + '"/>';
-  var mx = hero ? 30 + Math.floor(r() * 40) : 104 + Math.floor(r() * 10), my = hero ? 26 : 20;
-  o += '<circle cx="' + mx + '" cy="' + my + '" r="8" fill="' + p.moon + '"/><circle cx="' + (mx + 4) + '" cy="' + (my - 3) + '" r="6.5" fill="' + p.sky[0] + '" opacity=".35"/>';
-  [[52, 10, 0], [64, 12, 1], [76, 9, 2]].forEach(function(L){
-    var h = L[0] + r() * 6;
-    for (x = 0; x < 160; x += 8){
-      h += (r() - 0.5) * L[1]; h = Math.max(L[0] - 10, Math.min(L[0] + 12, h));
-      var top = Math.round(h / 2) * 2;
-      o += '<rect x="' + x + '" y="' + top + '" width="8.2" height="' + (90 - top) + '" fill="' + p.hills[L[2]] + '"/>';
-      if (L[2] === 2 && r() > 0.72) o += '<rect x="' + (x + 3) + '" y="' + (top + 4) + '" width="2" height="2" fill="#ffd27a"/>';
-    }
-  });
-  var g = GLYPH[p.icon], s = hero ? 4 : 5, ox = hero ? 114 : 60, oy = hero ? 16 : 22;
-  [[1, 1, "#0b0e1a", 0.55], [0, 0, "#fffdf2", 1]].forEach(function(lay){
-    g.forEach(function(row, y){
-      for (var gx = 0; gx < row.length; gx++) if (row[gx] === "#")
-        o += '<rect x="' + (ox + gx * s + lay[0] * 2) + '" y="' + (oy + y * s + lay[1] * 2) + '" width="' + (s + 0.1) + '" height="' + (s + 0.1) + '" fill="' + lay[2] + '" opacity="' + lay[3] + '"/>';
-    });
-  });
-  return o + "</svg>";
-}
+var ART = { combat:"pack-combat", building:"pack-building", survival:"pack-survival", creatures:"pack-creatures", magic:"pack-magic", exploration:"pack-exploration", everything:"pack-everything", hero:"hymeta-hero" };
+function art(key, big){ return '<img class="art" src="images/' + (big ? "" : "thumb-") + (ART[key] || ART.hero) + '.jpg" alt="" decoding="async"' + (big ? "" : ' loading="lazy"') + ">"; }
 
 /* ---------- sample data (placeholders until CurseForge is connected) ---------- */
 function M(id, name, blurb, tags, dl, upd, icon, hue){ return { id:id, name:name, blurb:blurb, tags:tags, dl:dl, upd:upd, icon:icon, hue:hue }; }
@@ -417,76 +401,86 @@ var MOD = {}; MODS.forEach(function(m){ MOD[m.id] = m; });
 
 var NIGHT = ["#232a5c","#3d3f86"], HILLS = ["#2a3466","#1f2750","#151b3a"];
 var PACKS = [
-  { id:"cozy-farmer", name:"The cozy farmer", kind:"Standard", dare:1, icon:"leaf", sky:["#20315f","#3f6b7d"], moon:"#ffe9a8", hills:["#2f5a5c","#234647","#17302f"],
+  { id:"cozy-farmer", family:"creatures", art:"creatures", name:"The cozy farmer", kind:"Standard", dare:1, icon:"leaf", sky:["#20315f","#3f6b7d"], moon:"#ffe9a8", hills:["#2f5a5c","#234647","#17302f"],
     blurb:"Plant things. Pet things. Watch the rain. Nothing bad happens.",
     warning:"May cause you to name every chicken. One of them is plotting something.",
     pitch:{ gentle:"Soft soil, gentle rain and animals that love you. A slow week, on purpose.",
             cheeky:"Plant a turnip. Just one. You can stop any time. That is what the last farmer said.",
             unhinged:"FARMING. So peaceful. So calm. Do not ask what the scarecrow does at night. It is on a break." },
     core:["sprout","barn","rain","pantry"], spice:["scare","cabin"] },
-  { id:"dungeon-gremlin", name:"Dungeon gremlin", kind:"Standard", dare:3, icon:"sword", sky:["#2b1d4f","#5a2a5c"], moon:"#ffb4c8", hills:["#3a2a5e","#2a1e47","#1a1230"],
+  { id:"dungeon-gremlin", family:"combat", art:"combat", name:"Dungeon gremlin", kind:"Standard", dare:3, icon:"sword", sky:["#2b1d4f","#5a2a5c"], moon:"#ffb4c8", hills:["#3a2a5e","#2a1e47","#1a1230"],
     blurb:"Go down. Hit things. Carry out more treasure than is sensible.",
     warning:"Contains loud noises, sudden bosses and at least one chest that hits back.",
     pitch:{ gentle:"Deeper caves and fairer fights. Bring a friend and a torch.",
             cheeky:"The loot is at the bottom. The stairs back up are your problem.",
             unhinged:"DOWN YOU GO. I rang the boss bell already. It knows your name now. Whoops." },
     core:["delve","shield","ledger"], spice:["boss","trap","chorus"] },
-  { id:"master-builder", name:"Master builder", kind:"Standard", dare:1, icon:"house", sky:["#1d3565","#476a9c"], moon:"#fff3c4", hills:["#34508a","#27406f","#1a2c50"],
+  { id:"master-builder", family:"building", art:"building", name:"Master builder", kind:"Standard", dare:1, icon:"house", sky:["#1d3565","#476a9c"], moon:"#fff3c4", hills:["#34508a","#27406f","#1a2c50"],
     blurb:"More blocks, tiny furniture and roofs that finally look right.",
     warning:"You will start one small cottage. You will finish a city. Tell your family you love them.",
     pitch:{ gentle:"Everything you need to build something you are proud of.",
             cheeky:"One more window, you said. That was six hours ago.",
             unhinged:"BUILD. BUILD UNTIL THE HORIZON IS YOURS. Then add a tasteful little bench." },
     core:["block","furn","scaf"], spice:["glass","cabin"] },
-  { id:"the-wanderer", name:"The wanderer", kind:"Standard", dare:2, icon:"compass", sky:["#1c2f5a","#7a5a6e"], moon:"#ffd9a0", hills:["#4a4470","#373258","#23203c"],
+  { id:"the-wanderer", family:"exploration", art:"exploration", name:"The wanderer", kind:"Standard", dare:2, icon:"compass", sky:["#1c2f5a","#7a5a6e"], moon:"#ffd9a0", hills:["#4a4470","#373258","#23203c"],
     blurb:"Pack light, walk far and never get lost unless you want to.",
     warning:"Side effects include wandering off mid sentence and coming back with a strange hat.",
     pitch:{ gentle:"Maps, trails and campfires. The world is big and it is waiting.",
             cheeky:"It is just over that hill. So is the next thing. I may have fibbed about the distance.",
             unhinged:"WALK. Keep walking. I moved your house while you were gone. It is a game now." },
     core:["atlas","trail","far"], spice:["camp","rain"] },
-  { id:"too-many-legs", name:"Too many legs", kind:"Experimental", dare:3, icon:"spider", sky:["#261a45","#144a52"], moon:"#b8ffe9", hills:["#28405a","#1c2f45","#11202f"],
+  { id:"too-many-legs", family:"creatures", art:"hero", name:"Too many legs", kind:"Experimental", dare:3, icon:"spider", sky:["#261a45","#144a52"], moon:"#b8ffe9", hills:["#28405a","#1c2f45","#11202f"],
     blurb:"Caves full of spiders, webs that change the weather and silk worth a fortune.",
     warning:"This playpack may make you shiver if you are scared of spiders. It may make you shiver if you are not.",
     pitch:{ gentle:"A brave one. There are spiders, yes, but they are mostly busy.",
             cheeky:"They are more scared of you than you are of them. I made that up.",
             unhinged:"LEGS. SO MANY LEGS. I counted them and then I had to lie down. You will love it." },
     core:["legs","web","chorus"], spice:["silk","trap"] },
-  { id:"wizard-dropout", name:"Wizard school dropout", kind:"Standard", dare:2, icon:"bolt", sky:["#2a1c5e","#4a3a9a"], moon:"#d7c8ff", hills:["#3b3182","#2b2465","#1b1744"],
+  { id:"wizard-dropout", family:"magic", art:"magic", name:"Wizard school dropout", kind:"Standard", dare:2, icon:"bolt", sky:["#2a1c5e","#4a3a9a"], moon:"#d7c8ff", hills:["#3b3182","#2b2465","#1b1744"],
     blurb:"Spells that mostly work, a wand with opinions and a familiar who judges you.",
     warning:"Eyebrows not guaranteed. Neither is the roof.",
     pitch:{ gentle:"A little magic, a loyal companion and plenty of room to experiment.",
             cheeky:"Read the spell twice before you cast it. Or do not. I am not your teacher.",
             unhinged:"MAGIC. Point the wand away from your face. No, the other end. Too late. Lovely color though." },
     core:["spell","wand","fam"], spice:["chorus","atlas"] },
-  { id:"beast-friend", name:"Beast friend", kind:"Standard", dare:1, icon:"paw", sky:["#1e3a5c","#5b7a5a"], moon:"#fff0b8", hills:["#3c6150","#2c4a3d","#1b3028"],
+  { id:"beast-friend", family:"creatures", art:"creatures", name:"Beast friend", kind:"Standard", dare:1, icon:"paw", sky:["#1e3a5c","#5b7a5a"], moon:"#fff0b8", hills:["#3c6150","#2c4a3d","#1b3028"],
     blurb:"Tame it, saddle it, feed it snacks. Leave with a small parade behind you.",
     warning:"You will try to pet something that should not be petted. Count your fingers after.",
     pitch:{ gentle:"Make friends with almost anything. Snacks help.",
             cheeky:"It followed you home. So did the other nine. You live in a zoo now.",
             unhinged:"PET EVERYTHING. The big one too. Especially the big one. It looks hungry for FRIENDSHIP." },
     core:["whisper","saddle","treat"], spice:["barn","fam"] },
-  { id:"factory-goblin", name:"Factory goblin", kind:"Standard", dare:2, icon:"gear", sky:["#1f2a4a","#6a4a3a"], moon:"#ffc98a", hills:["#4a3d4a","#362c38","#221c26"],
+  { id:"factory-goblin", family:"building", art:"building", name:"Factory goblin", kind:"Standard", dare:2, icon:"gear", sky:["#1f2a4a","#6a4a3a"], moon:"#ffc98a", hills:["#4a3d4a","#362c38","#221c26"],
     blurb:"Belts, gears and machines that sort your chests while you sleep.",
     warning:"It starts with one conveyor belt. It ends with you explaining a flowchart to your cat.",
     pitch:{ gentle:"Let the machines carry the boring bits so you can enjoy the rest.",
             cheeky:"You will never carry a potato by hand again. You will also never sleep again.",
             unhinged:"THE FACTORY MUST GROW. Feed it. Feed it your whole weekend. It says thank you." },
     core:["belt","wheel","sort"], spice:["scaf","ledger"] },
-  { id:"hard-mode-hermit", name:"Hard mode hermit", kind:"Standard", dare:3, icon:"skull", sky:["#161c3a","#3a4a6a"], moon:"#e6f0ff", hills:["#36456a","#283452","#182036"],
+  { id:"hard-mode-hermit", family:"survival", art:"survival", name:"Hard mode hermit", kind:"Standard", dare:3, icon:"skull", sky:["#161c3a","#3a4a6a"], moon:"#e6f0ff", hills:["#36456a","#283452","#182036"],
     blurb:"Hunger, cold and one single life. For players who think the game is too kind.",
     warning:"Tears are a normal part of the process. So is starting over. And over.",
     pitch:{ gentle:"A real challenge for patient players. Go slowly and you will be fine.",
             cheeky:"One life. Use it wisely. Or use it in the first four minutes, like everyone else.",
             unhinged:"ONE LIFE. NO SNACKS. NO MERCY. I have started a little memorial garden for your worlds." },
-    core:["hunger","cold","onelife"], spice:["trap","camp"] }
+    core:["hunger","cold","onelife"], spice:["trap","camp"] },
+  { id:"whole-circus", family:"everything", art:"everything", name:"The whole circus", kind:"Standard", dare:2, icon:"star", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"A bit of every playstyle at once. Farm, fight, build and wander, all before lunch.",
+    warning:"Contains all of the above. Side effects include doing six things badly and loving it.",
+    pitch:{ gentle:"A little of everything, for players who cannot choose. No need to.",
+            cheeky:"Farm in the morning, fight a boss at lunch, redecorate by tea. Bring a planner.",
+            unhinged:"EVERYTHING. ALL AT ONCE. I poured every drawer into one pot and stirred it with a sword." },
+    core:["sprout","shield","block","atlas"], spice:["spell","whisper","sort"] }
 ];
+var FAMILIES = [["combat","Combat"],["building","Building"],["survival","Survival"],["creatures","Creatures and farming"],["magic","Magic"],["exploration","Exploration"],["everything","A bit of everything"]];
+var FAMILY = {}; FAMILIES.forEach(function(f){ FAMILY[f[0]] = f[1]; });
+var SPOTLIGHT = "atlas";
 var COMMUNITY = [
-  { id:"potato-empire", name:"Grandma's potato empire", kind:"Community", by:"Sample member A", dare:1, icon:"potion", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+  { id:"potato-empire", family:"creatures", art:"building", name:"Grandma's potato empire", kind:"Community", by:"Sample member A", dare:1, icon:"potion", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
     blurb:"Potatoes. Only potatoes. A whole economy of potatoes.", warning:"You will dream in potato.", pitch:null, core:["sprout","pantry","sort"], spice:[] },
-  { id:"fish-and-nothing-else", name:"Fish and nothing else", kind:"Community", by:"Sample member B", dare:1, icon:"fish", sky:["#16305a","#2f6a8a"], moon:"#dff6ff", hills:["#2b5a80","#1f4666","#12304a"],
+  { id:"fish-and-nothing-else", family:"exploration", art:"exploration", name:"Fish and nothing else", kind:"Community", by:"Sample member B", dare:1, icon:"fish", sky:["#16305a","#2f6a8a"], moon:"#dff6ff", hills:["#2b5a80","#1f4666","#12304a"],
     blurb:"A rod, a quiet lake and a weather forecast. That is the entire plan.", warning:"The fish know.", pitch:null, core:["hook","rain","pantry"], spice:[] },
-  { id:"cat-parade", name:"The cat parade", kind:"Community", by:"Sample member C", dare:1, icon:"paw", sky:["#2a2152","#6a4a7a"], moon:"#ffd9ec", hills:["#4a3a70","#372b58","#231b3c"],
+  { id:"cat-parade", family:"creatures", art:"creatures", name:"The cat parade", kind:"Community", by:"Sample member C", dare:1, icon:"paw", sky:["#2a2152","#6a4a7a"], moon:"#ffd9ec", hills:["#4a3a70","#372b58","#231b3c"],
     blurb:"Tame every cat you meet. Feed them. March.", warning:"They are in charge now.", pitch:null, core:["whisper","treat","fam"], spice:[] }
 ];
 var FEATURED = "cozy-farmer", TEASERS = ["too-many-legs","dungeon-gremlin","master-builder"];
@@ -518,7 +512,7 @@ var S = {
   tier: store.get("tier", "free"), mood: store.get("mood", "cheeky"), theme: store.get("theme", "device"),
   saved: store.get("saved", []), savedMods: store.get("savedMods", []), stamps: store.get("stamps", []), mine: store.get("mine", []),
   hidden: store.get("hidden", []), blocked: store.get("blocked", []),
-  q: "", filter: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false,
+  q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false,
   draft: { name:"", blurb:"", mods:[] }, dirty: false, justStamped: null, open: {}
 };
 var hostTheme = document.documentElement.getAttribute("data-theme");
@@ -528,7 +522,7 @@ function applyTheme(){
   else el.setAttribute("data-theme", S.theme);
 }
 function shown(p){ return S.hidden.indexOf(p.id) < 0 && (!p.by || S.blocked.indexOf(p.by) < 0); }
-function communityPacks(){ return COMMUNITY.concat(S.mine).filter(shown); }
+function communityPacks(){ return COMMUNITY.concat(S.mine.filter(function(p){ return p.status !== "pending"; })).filter(shown); }
 function allPacks(){ return PACKS.concat(COMMUNITY, S.mine); }
 function findPack(id){ return allPacks().filter(function(p){ return p.id === id; })[0]; }
 function isMine(p){ return S.mine.indexOf(p) > -1; }
@@ -543,9 +537,10 @@ function dareChip(p){ return '<span class="chip">' + flames(p.dare) + '<span><sp
 function lockChip(){ return '<span class="chip chip-lock">' + ic("lock") + "Members</span>"; }
 function pk(p){
   var exp = p.kind === "Experimental";
-  return '<a class="pk" href="#pack-' + p.id + '"><span class="pk-art">' + scene(p) + (exp ? '<span class="tapeflag" aria-hidden="true">Experimental</span>' : "") + "</span>" +
+  return '<a class="pk" href="#pack-' + p.id + '"><span class="pk-art">' + art(p.art) + '<span class="crest">' + glyph(p.icon, "#fffdf2") + "</span>" + (exp ? '<span class="tapeflag" aria-hidden="true">Experimental</span>' : "") + "</span>" +
     '<span class="pk-body"><span class="pk-name">' + esc(p.name) + '</span><span class="pk-blurb">' + esc(p.blurb) + "</span>" +
     '<span class="chips">' + dareChip(p) + (exp ? '<span class="chip chip-exp pk-exp">Experimental</span>' : "") +
+    (p.status === "pending" ? '<span class="chip">' + ic("clock") + "In review</span>" : "") +
     (isLocked(p) ? lockChip() : '<span class="chip">' + modCount(p) + " mods</span>") + "</span></span></a>";
 }
 function shelf(list, three){ return '<div class="shelf' + (three ? " shelf-3" : "") + '">' + list.map(pk).join("") + "</div>"; }
@@ -575,7 +570,7 @@ function vHome(){
   return '<div class="page">' +
     '<p class="notice small">Preview. Every mod, number and picture is a placeholder until CurseForge is connected.</p>' +
     '<section class="card hero" aria-labelledby="h-week">' +
-      '<div class="hero-art">' + scene(p, true) +
+      '<div class="hero-art">' + art(p.art, true) +
         '<div class="hero-top"><span class="badge">' + ic("star") + 'Free this week</span><span class="badge badge-dark">' + ic("clock") + nextDrop() + "</span></div>" +
         '<div class="hero-title"><h1 id="h-week" tabindex="-1"><span class="sr">This week\'s free playpack: </span>' + esc(p.name) + "</h1></div></div>" +
       '<div class="hero-body"><div class="sec"><p class="lede">' + esc(p.blurb) + "</p>" + hex(p.pitch[S.mood]) + warnBox(p) + "</div>" +
@@ -585,6 +580,12 @@ function vHome(){
     '<section class="sec" aria-labelledby="h-shelf">' + head("h-shelf", "Also this week", "#explore", "See all") +
       '<p class="muted">' + (S.tier === "free" ? "Free players can read about these. Members get the " + term("mod", "mods") + " and the links." : "All yours. Open any " + term("playpack", "playpack") + " to see its mods.") + "</p>" +
       shelf(TEASERS.map(findPack), true) + "</section>" +
+    '<section class="sec" aria-labelledby="h-style">' + head("h-style", "Pick your playstyle") +
+      '<div class="styles">' + FAMILIES.map(function(f){
+        var c = PACKS.filter(function(x){ return x.family === f[0]; }).length;
+        return '<button type="button" class="style-tile" data-action="family" data-family="' + f[0] + '">' + art(f[0]) + '<span class="style-name"><strong>' + f[1] + '</strong><span class="small">' + c + (c === 1 ? " pack" : " packs") + "</span></span></button>";
+      }).join("") + "</div></section>" +
+    '<section class="sec" aria-labelledby="h-spot">' + head("h-spot", "Mod spotlight") + '<p class="muted">One ' + term("mod", "mod") + ' Hex will not stop talking about this week.</p><div class="card list">' + modRow(MOD[SPOTLIGHT]) + "</div></section>" +
     '<section class="sec" aria-labelledby="h-dare">' + head("h-dare", "Pick your " + term("dare", "dare level")) +
       '<div class="dares">' + [1, 2, 3].map(function(d){
         var c = PACKS.filter(function(x){ return x.dare === d; }).length;
@@ -625,21 +626,22 @@ function vPack(id){
         : '<p class="muted">Collect a stamp for every playstyle you try.</p><div><button type="button" class="btn btn-ghost" data-action="stamp" data-id="' + p.id + '" data-fk="stamp">' + ic("star") + "Stamp my card</button></div>") +
       "</section>";
   var care = "";
-  if (mine) care = '<section class="sec"><h2>Your playpack</h2><div><button type="button" class="btn btn-danger" data-action="del" data-id="' + p.id + '">Delete my playpack</button></div></section>';
+  if (mine) care = '<section class="sec"><h2>Your playpack</h2>' + (p.status === "pending" ? '<div class="panel" id="review-note"><p><strong>Waiting for review.</strong> Only you can see this playpack until a person approves it. We review within 24 hours.</p><button type="button" class="btn btn-ghost" data-action="approve" data-id="' + p.id + '" data-fk="approve">Approve it now (preview only)</button></div>' : '<p class="muted">Approved. Other members can see it.</p>') + '<div><button type="button" class="btn btn-danger" data-action="del" data-id="' + p.id + '">Delete my playpack</button></div></section>';
   else if (p.by) care = '<section class="sec" aria-labelledby="h-care"><h2 id="h-care">Something wrong?</h2><p class="muted">We review every report within 24 hours.</p><div class="row">' +
     '<button type="button" class="btn btn-ghost" data-action="report" data-id="' + p.id + '">' + ic("flag") + "Report this playpack</button>" +
     '<button type="button" class="btn btn-danger" data-action="block" data-id="' + p.id + '">' + ic("block") + "Block this member</button></div></section>";
   return '<div class="page"><div class="sec"><a class="linkbtn" href="#explore">' + ic("back") + "All playpacks</a>" +
-    '<section class="card hero"><div class="hero-art">' + scene(p, true) +
+    '<section class="card hero"><div class="hero-art">' + art(p.art, true) +
       '<div class="hero-top">' + (p.kind === "Experimental" ? '<span class="badge badge-exp">' + ic("warn") + "Experimental</span>" : "") + (locked ? '<span class="badge badge-dark">' + ic("lock") + "Members</span>" : "") + "</div>" +
       '<div class="hero-title"><h1 tabindex="-1">' + esc(p.name) + "</h1></div></div>" +
     '<div class="hero-body"><div class="sec"><p class="lede">' + esc(p.blurb) + "</p>" + (p.by ? '<p class="small muted">Shared by ' + esc(p.by) + "</p>" : "") + hex(line) + warnBox(p) + "</div>" +
-    '<div class="hero-side"><div class="chips">' + dareChip(p) + '<span class="chip">' + n + ' mods</span><span class="chip">' + esc(p.kind) + '</span></div><div class="actions">' + acts + "</div></div></div></section></div>" +
+    '<div class="hero-side"><div class="chips">' + dareChip(p) + '<span class="chip">' + n + ' mods</span><span class="chip">' + esc(FAMILY[p.family] || p.kind) + "</span>" + (p.status === "pending" ? '<span class="chip">' + ic("clock") + "In review</span>" : "") + '</div><div class="actions">' + acts + "</div></div></div></section></div>" +
     body + care + "</div>";
 }
 
 function matches(p){
   var q = S.q.trim().toLowerCase(), f = S.filter;
+  if (S.fam !== "all" && p.family !== S.fam) return false;
   if (f === "exp" && p.kind !== "Experimental") return false;
   if (/^[123]$/.test(f) && p.dare !== +f) return false;
   if (!q) return true;
@@ -663,6 +665,7 @@ function options(list, cur){ return list.map(function(o){ return '<option value=
 function vExplore(){
   return '<div class="page"><div class="sec"><h1 tabindex="-1">Every playpack</h1><p class="muted">Pick how you want to play. Hex has done the digging.</p>' +
     '<div class="toolbar">' + searchBox("q", "clear", "Search playpacks and mods", "Search, for example farming", S.q) +
+    '<label class="sr" for="fam">Filter by playstyle</label><select id="fam">' + options([["all","Any playstyle"]].concat(FAMILIES), S.fam) + "</select>" +
     '<label class="sr" for="filter">Filter by dare level</label><select id="filter">' +
     options([["all","Any dare level"],["1","Cozy"],["2","Spicy"],["3","Send help"],["exp","Experimental"]], S.filter) + "</select></div></div>" +
     '<div class="page" id="results">' + resultsHtml() + "</div></div>";
@@ -689,11 +692,13 @@ function vSaved(){
 var CATS = (function(){ var s = {}; MODS.forEach(function(m){ m.tags.forEach(function(t){ s[t] = 1; }); }); return Object.keys(s).sort(); })();
 function buildComment(){
   var n = S.draft.mods.length;
-  if (n === 0) return "An empty playpack. Minimalist. Pick at least two mods.";
+  if (n === 0) return "An empty playpack. Minimalist. Pick at least three mods.";
   if (n === 1) return "One mod is not a playpack. It is a mod with ambitions.";
-  if (n <= 4) return n + " mods. Tidy. Sensible. I am a little disappointed.";
-  if (n <= 8) return n + " mods. Now we are cooking.";
-  return n + " mods. Bold. Something will explode. I will bring snacks.";
+  if (n === 2) return "Two mods. Almost a playpack. One more.";
+  if (n <= 5) return n + " mods. Tidy. Sensible. I am a little disappointed.";
+  if (n <= 12) return n + " mods. Now we are cooking.";
+  if (n < 20) return n + " mods. Bold. Something will explode. I will bring snacks.";
+  return "Twenty mods. That is the limit. I am impressed and a little afraid.";
 }
 function pickList(){
   var q = S.bq.trim().toLowerCase();
@@ -708,10 +713,11 @@ function pickList(){
       "<span><strong>" + esc(m.name) + '</strong><br><span class="small muted">' + esc(m.tags.join(", ")) + "</span></span></label>";
   }).join("");
 }
-function buildStatus(){ return '<p><strong>' + S.draft.mods.length + " picked</strong></p>" + hex(buildComment()); }
+function buildStatus(){ return '<p><strong>' + S.draft.mods.length + ' picked</strong> <span class="muted">Pick 3 to 20.</span></p>' + hex(buildComment()); }
 function vBuild(){
   if (S.tier === "free") return lockedPanel("Build your own playpack", "Members can pick their own mods, name the result and share it with the community.");
-  return '<div class="page"><div class="sec"><h1 tabindex="-1">Build your own playpack</h1><p class="muted">Pick the mods, give it a name and share it with other members.</p></div>' +
+  return '<div class="page"><div class="sec"><h1 tabindex="-1">Build your own playpack</h1><p class="muted">Pick the mods, give it a name and send it for review. Once approved, other members can see it.</p></div>' +
+    (S.mine.length ? '<section class="sec" aria-labelledby="h-mine">' + head("h-mine", "Your playpacks") + shelf(S.mine) + "</section>" : "") +
     '<form id="build" class="page" novalidate>' +
     '<div class="grid2"><div class="field"><label for="b-name">Name</label><input type="text" id="b-name" maxlength="40" value="' + esc(S.draft.name) + '" placeholder="For example, Swamp wizard"></div>' +
     '<div class="field"><label for="b-blurb">One line about how it plays</label><input type="text" id="b-blurb" maxlength="90" value="' + esc(S.draft.blurb) + '"></div></div>' +
@@ -722,8 +728,8 @@ function vBuild(){
     '<div id="b-status" class="sec" role="status">' + buildStatus() + "</div>" +
     '<div class="card picks" id="b-list">' + pickList() + "</div></fieldset>" +
     '<p id="b-err" class="err" role="alert" hidden></p>' +
-    '<div class="row"><button type="submit" class="btn btn-primary btn-big">Share with the community</button></div>' +
-    '<p class="small muted">Shared playpacks follow the community rules. Leave out names, links and anything personal.</p></form></div>';
+    '<div class="row"><button type="submit" class="btn btn-primary btn-big">Send for review</button></div>' +
+    '<p class="small muted">A person checks every playpack before other members see it. Leave out names, links and anything personal.</p></form></div>';
 }
 
 function rank(){
@@ -769,7 +775,6 @@ function render(focusHeading){
   }).join("");
   $("#tier-free").setAttribute("aria-pressed", S.tier === "free");
   $("#tier-member").setAttribute("aria-pressed", S.tier === "member");
-  sceneCount = 0;
   var v = $("#view"), isPack = r.indexOf("pack-") === 0;
   v.innerHTML = r === "explore" ? vExplore() : r === "saved" ? vSaved() : r === "build" ? vBuild() : r === "you" ? vYou() : isPack ? vPack(r.slice(5)) : vHome();
   $("#main").classList.toggle("has-actions", !!$(".actions", v));
@@ -861,15 +866,15 @@ function openGate(){
 }
 var DOCS = {
   support:["Help and contact", "<p>Stuck, or spotted something wrong? Write to us and a real person will answer.</p><p><strong>Email:</strong> to be added before release.</p><p>To report a shared playpack, open it and tap Report this playpack. We review every report within 24 hours.</p>"],
-  privacy:["Privacy policy", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What we keep</h3><p>If you make an account we keep your sign-in email, the playpacks and mods you save, your stamps and anything you choose to share. Purchases are handled by Apple. We never see your card details.</p><h3>What we never do</h3><p>We do not sell or share your data. We do not show ads. We do not track you across other apps or websites.</p><h3>Children</h3><p>HyMeta is made to be safe for younger players. Children under 13 need a parent or guardian to set up an account. We collect no more than the app needs to work.</p><h3>Your choices</h3><p>You can delete your account, and everything in it, at any time from You, Account, Delete my account. Deleted data is removed within 30 days.</p><h3>Contact</h3><p>Lumina Art House, LLC. Contact email to be added before release.</p>"],
-  terms:["Terms of use", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What HyMeta is</h3><p>HyMeta is an unofficial guide to Hytale mods. It suggests sets of mods and links to their CurseForge pages. It is not made, endorsed or supported by Hypixel Studios, CurseForge or Overwolf.</p><h3>Mods belong to their creators</h3><p>Every mod, name and logo shown belongs to the person who made it. Mods are downloaded from CurseForge under its own terms. We cannot promise that any mod works, or that mods work together.</p><h3>Membership</h3><p>Membership is an auto-renewing subscription bought through Apple, at $3.99 a month or $24.99 a year. It renews until you cancel in your Apple Account settings. Refunds are handled by Apple.</p><h3>Sharing</h3><p>Anything you share must follow the community rules. We may remove content or close accounts that break them.</p><h3>Owner</h3><p>HyMeta is owned and run by Lumina Art House, LLC. &copy; 2026 Lumina Art House, LLC. All rights reserved.</p>"],
-  rules:["Community rules", "<p>Shared playpacks are seen by other players, including children. Keep it friendly.</p><ul class=\"perks\"><li>Be kind. No insults, bullying or hate.</li><li>Keep it clean. No swearing or grown-up content.</li><li>Stay private. No real names, links, emails, phone numbers or addresses.</li><li>Be honest. No scams, spam or pretending to be someone else.</li></ul><p>Break the rules and your playpack is removed. Do it again and your account is closed.</p><p>See something wrong? Open the playpack and tap Report this playpack, or block the member who shared it. We review every report within 24 hours.</p>"],
+  privacy:["Privacy policy", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What we keep</h3><p>If you make an account we keep your sign-in email, the playpacks and mods you save, your stamps and anything you choose to share. Purchases are handled by Apple. We never see your card details.</p><h3>What we never do</h3><p>We do not sell or share your data. We do not show ads. We do not track you across other apps or websites.</p><h3>Children</h3><p>HyMeta is kept clean so it is safe for younger players to browse. Accounts and sharing are for ages 13 and up. We do not knowingly collect personal information from children under 13, and we delete it if we find any.</p><h3>Your choices</h3><p>You can delete your account, and everything in it, at any time from You, Account, Delete my account. Deleted data is removed within 30 days.</p><h3>Contact</h3><p>Lumina Art House, LLC. Contact email to be added before release.</p>"],
+  terms:["Terms of use", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What HyMeta is</h3><p>HyMeta is an unofficial guide to Hytale mods. It suggests sets of mods and links to their CurseForge pages. It is not made, endorsed or supported by Hypixel Studios, CurseForge or Overwolf.</p><h3>Mods belong to their creators</h3><p>Every mod, name and logo shown belongs to the person who made it. Mods are downloaded from CurseForge under its own terms. We cannot promise that any mod works, or that mods work together.</p><h3>Membership</h3><p>Membership is an auto-renewing subscription bought through Apple, at $3.99 a month or $24.99 a year. It renews until you cancel in your Apple Account settings. Refunds are handled by Apple.</p><h3>Accounts</h3><p>You must be 13 or older to make an account or share a playpack.</p><h3>Sharing</h3><p>Anything you share must follow the community rules. A person reviews every playpack before other members see it. We may remove content or close accounts that break the rules.</p><h3>Governing law</h3><p>These terms are governed by the laws of the State of Florida, United States.</p><h3>Owner</h3><p>HyMeta is owned and run by Lumina Art House, LLC. &copy; 2026 Lumina Art House, LLC. All rights reserved.</p>"],
+  rules:["Community rules", "<p>Shared playpacks are seen by other players, including children. Keep it friendly.</p><ul class=\"perks\"><li>Be kind. No insults, bullying or hate.</li><li>Keep it clean. No swearing or grown-up content.</li><li>Stay private. No real names, links, emails, phone numbers or addresses.</li><li>Be honest. No scams, spam or pretending to be someone else.</li></ul><p>A person checks every playpack before other members can see it. Break the rules and your playpack is removed. Do it again and your account is closed.</p><p>See something wrong? Open the playpack and tap Report this playpack, or block the member who shared it. We review every report within 24 hours.</p>"],
   credits:["Copyright and credits", "<p>&copy; 2026 Lumina Art House, LLC. All rights reserved.</p><p>HyMeta is an unofficial fan app. Hytale is a trademark of Hypixel Studios. CurseForge is a trademark of Overwolf. HyMeta is not affiliated with or endorsed by either company.</p><p>Every mod belongs to its creator. Mod names, logos and details come from CurseForge.</p><p>In this preview, all mods, authors, download counts and artwork are placeholders.</p>"]
 };
 function openDoc(k){ var d = DOCS[k]; if (d) openSheet(d[0], '<div class="doc">' + d[1] + '</div><div><button type="button" class="btn btn-ghost" data-action="close">Close</button></div>'); }
 function openTerm(t){ var g = GLOSS[t]; if (g) openSheet(g[0], "<p>" + g[1] + '</p><div><button type="button" class="btn btn-ghost" data-action="close">Got it</button></div>'); }
 function openLeave(){
-  openSheet("Leave without sharing?", "<p>Your playpack has not been shared. If you leave now, it will be lost.</p>" +
+  openSheet("Leave without sending?", "<p>Your playpack has not been sent for review. If you leave now, it will be lost.</p>" +
     '<div class="row"><button type="button" class="btn btn-primary" data-action="close">Keep building</button><button type="button" class="btn btn-danger" data-action="leave">Leave and lose it</button></div>');
 }
 function openReport(id){
@@ -880,7 +885,7 @@ function openReport(id){
 function openSignin(){
   openSheet("Sign in", "<p>An account keeps your saved playpacks, mods and stamps on every device.</p>" +
     '<div class="row"><button type="button" class="btn btn-ghost" data-action="soon">Sign in with Apple</button><button type="button" class="btn btn-ghost" data-action="soon">Sign in with email</button></div>' +
-    '<p class="small muted">Under 13? Ask a parent or guardian to set up your account. Preview only. Sign-in is not connected yet.</p>');
+    '<p class="small muted">Accounts are for ages 13 and up. You can browse without one. Preview only. Sign-in is not connected yet.</p>');
 }
 var toastTimer;
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.hidden = true; }, 3200); }
@@ -906,9 +911,11 @@ document.addEventListener("click", function(e){
   else if (a === "save"){ var on = toggle(S.saved, "saved", id); render(false); toast(on ? "Playpack saved" : "Removed from saved"); }
   else if (a === "savemod"){ var on2 = toggle(S.savedMods, "savedMods", id); render(false); toast(on2 ? "Mod saved" : "Removed from saved"); }
   else if (a === "savedtab"){ S.savedTab = b.getAttribute("data-tab"); render(false); }
-  else if (a === "dare"){ S.filter = b.getAttribute("data-dare"); S.q = ""; location.hash = "explore"; }
+  else if (a === "dare"){ S.filter = b.getAttribute("data-dare"); S.fam = "all"; S.q = ""; location.hash = "explore"; }
+  else if (a === "family"){ S.fam = b.getAttribute("data-family"); S.filter = "all"; S.q = ""; location.hash = "explore"; }
+  else if (a === "approve"){ p = findPack(id); if (p){ p.status = "approved"; store.set("mine", S.mine); render(false); toast("Approved. Other members can see it now."); } }
   else if (a === "stamp"){ if (S.stamps.indexOf(id) < 0) S.stamps.push(id); store.set("stamps", S.stamps); S.justStamped = id; render(false); toast("Stamp collected"); }
-  else if (a === "clear"){ S.q = ""; S.filter = "all"; render(false); var q = $("#q"); if (q) q.focus(); }
+  else if (a === "clear"){ S.q = ""; S.filter = "all"; S.fam = "all"; render(false); var q = $("#q"); if (q) q.focus(); }
   else if (a === "bqclear"){ S.bq = ""; var bq = $("#bq"); bq.value = ""; $("#bq-clear").hidden = true; $("#b-list").innerHTML = pickList(); bq.focus(); }
   else if (a === "bclear"){ S.bq = ""; S.bcat = "all"; S.bonly = false; render(false); var bq2 = $("#bq"); if (bq2) bq2.focus(); }
   else if (a === "copy"){
@@ -934,20 +941,22 @@ document.addEventListener("click", function(e){
 });
 document.addEventListener("input", function(e){
   var t = e.target;
-  if (t.id === "q"){ S.q = t.value; $("#q-clear").hidden = !S.q; sceneCount = 0; $("#results").innerHTML = resultsHtml(); }
+  if (t.id === "q"){ S.q = t.value; $("#q-clear").hidden = !S.q; $("#results").innerHTML = resultsHtml(); }
   else if (t.id === "bq"){ S.bq = t.value; $("#bq-clear").hidden = !S.bq; $("#b-list").innerHTML = pickList(); }
   else if (t.id === "b-name"){ S.draft.name = t.value; S.dirty = true; }
   else if (t.id === "b-blurb"){ S.draft.blurb = t.value; S.dirty = true; }
 });
 document.addEventListener("change", function(e){
   var t = e.target;
-  if (t.id === "filter"){ S.filter = t.value; sceneCount = 0; $("#results").innerHTML = resultsHtml(); }
+  if (t.id === "filter"){ S.filter = t.value; $("#results").innerHTML = resultsHtml(); }
+  else if (t.id === "fam"){ S.fam = t.value; $("#results").innerHTML = resultsHtml(); }
   else if (t.id === "bcat"){ S.bcat = t.value; $("#b-list").innerHTML = pickList(); }
   else if (t.id === "bonly"){ S.bonly = t.checked; $("#b-list").innerHTML = pickList(); }
   else if (t.id === "theme"){ S.theme = t.value; store.set("theme", S.theme); applyTheme(); }
   else if (t.name === "mood"){ S.mood = t.value; store.set("mood", S.mood); $("#mood-sample").innerHTML = hex(say("greet")); }
   else if (t.name === "mods"){
     var i = S.draft.mods.indexOf(t.value);
+    if (t.checked && i < 0 && S.draft.mods.length >= 20){ t.checked = false; toast("A playpack holds up to 20 mods"); return; }
     if (t.checked && i < 0) S.draft.mods.push(t.value); else if (!t.checked && i > -1) S.draft.mods.splice(i, 1);
     S.dirty = true; $("#b-status").innerHTML = buildStatus();
   }
@@ -966,13 +975,13 @@ document.addEventListener("submit", function(e){
   }
   else if (f.id === "build"){
     var berr = $("#b-err"), name = S.draft.name.trim(), blurb = S.draft.blurb.trim(), personal = /(https?:|www\.|@|\.(com|net|org|gg)\b|\d{7,})/i;
-    var msg = !name ? "Give your playpack a name." : personal.test(name + " " + blurb) ? "Leave out links, emails and phone numbers." : S.draft.mods.length < 2 ? "Pick at least two mods." : "";
-    if (msg){ berr.textContent = msg; berr.hidden = false; (S.draft.mods.length < 2 && name && !personal.test(name + " " + blurb) ? $("#bq") : $("#b-name")).focus(); return; }
+    var msg = !name ? "Give your playpack a name." : personal.test(name + " " + blurb) ? "Leave out links, emails and phone numbers." : S.draft.mods.length < 3 ? "Pick at least three mods." : "";
+    if (msg){ berr.textContent = msg; berr.hidden = false; (S.draft.mods.length < 3 && name && !personal.test(name + " " + blurb) ? $("#bq") : $("#b-name")).focus(); return; }
     var first = MOD[S.draft.mods[0]];
-    var np = { id:"mine-" + Date.now().toString(36), name:name, kind:"Community", by:"you", dare:S.draft.mods.length > 6 ? 2 : 1, icon:first.icon, sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    var np = { id:"mine-" + Date.now().toString(36), name:name, kind:"Community", by:"you", status:"pending", family:"everything", art:first.icon === "paw" ? "creatures" : first.icon === "sword" ? "combat" : first.icon === "bolt" ? "magic" : first.icon === "house" ? "building" : first.icon === "compass" ? "exploration" : "hero", dare:S.draft.mods.length > 6 ? 2 : 1, icon:first.icon, sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
       blurb:blurb || "A playpack built by a member.", warning:"Built by a member. Hex has not checked under the floorboards.", pitch:null, core:S.draft.mods.slice(), spice:[] };
     S.mine.push(np); store.set("mine", S.mine); S.dirty = false; S.draft = { name:"", blurb:"", mods:[] }; S.bq = ""; S.bcat = "all"; S.bonly = false;
-    toast("Shared with the community"); location.hash = "pack-" + np.id;
+    toast("Sent for review"); location.hash = "pack-" + np.id;
   }
 });
 window.addEventListener("beforeunload", function(e){ if (S.dirty){ e.preventDefault(); e.returnValue = ""; } });
