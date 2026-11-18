@@ -93,7 +93,7 @@ const sizes = { phone: [390, 844], tablet: [820, 1180], desktop: [1366, 900] };
     // membership: disclosure, grown-up gate, then member view
     await p.click('.actions [data-action="join"]');
     const joinText = await p.textContent("#sheet");
-    for (const need of ["renews automatically", "Restore purchases", "Terms of use", "Privacy policy"]) if (!joinText.includes(need)) bad("membership sheet is missing: " + need);
+    for (const need of ["$3.99", "$24.99", "renews automatically", "Restore purchases", "Terms of use", "Privacy policy"]) if (!joinText.includes(need)) bad("membership sheet is missing: " + need);
     await audit("membership sheet");
     await p.click('[data-action="gate"]'); await audit("gate");
     await p.fill("#gate-in", "1"); await p.click('#gate button[type="submit"]');
@@ -105,10 +105,12 @@ const sizes = { phone: [390, 844], tablet: [820, 1180], desktop: [1366, 900] };
 
     // save a playpack and a mod, collect a stamp
     await p.click('[data-action="save"]'); await p.click('[data-action="savemod"]'); await p.click('[data-action="stamp"]'); await p.waitForTimeout(550);
-    await go("saved"); await audit("saved playpacks");
+    await go("saved"); await audit("saved playpacks"); await shot("saved-packs");
     if (await count("#view .pk") !== 1) bad("saved playpacks list is wrong");
     await p.click('[data-tab="mods"]'); await audit("saved mods"); await shot("saved-mods");
     if (await count("#view .mod") !== 1) bad("saved mods list is wrong");
+    await p.click('[data-tab="packs"]'); await p.click(".pk-heart"); await p.waitForTimeout(150);
+    if (await count("#view .pk") !== 0 || !(await count("#view .panel"))) bad("heart in Saved did not remove the playpack");
 
     // explore search
     await go("explore"); await audit("explore"); await shot("explore");

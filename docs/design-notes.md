@@ -13,6 +13,8 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 - Saved has two areas: playpacks and mods.
 - Building a playpack needs a mod search.
 - Light mode cards must stand clearly apart from the page.
+- Membership costs $3.99 a month or $24.99 a year. No weekly plan and no free trial at launch.
+- Saved playpacks can be removed with the heart right in the Saved area, the same as saved mods.
 
 ## Claude's call
 - Host name: Hex, a troll cousin of Heckle. Three moods (gentle, cheeky, unhinged), all clean.
@@ -25,7 +27,6 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 - Shared playpacks reject links, emails and phone numbers, and can be reported or their author blocked.
 
 ## Not decided
-- Price, and monthly versus yearly.
 - How one-tap installing will really work for Hytale through CurseForge.
 - Whether a paid app is allowed under the CurseForge API terms.
 - Rules for players under 13.

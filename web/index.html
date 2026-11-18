@@ -164,6 +164,10 @@ input[type="text"],input[type="search"],select{font:400 1rem var(--body);min-hei
 .pk .chips{margin-top:auto;padding-top:4px}
 .tapeflag{position:absolute;left:-4px;top:10px;transform:rotate(-3deg);background:var(--tape);color:var(--tape-ink);font:900 .8125rem var(--display);padding:4px 10px 3px;box-shadow:0 2px 0 var(--tape-ink);z-index:1}
 .pk .tapeflag{display:none}
+.pk-wrap{position:relative;display:grid;min-width:0}
+.pk-heart{position:absolute;top:8px;right:8px;z-index:1}
+.pk-wrap .pk-body{padding-right:60px}
+.pk-wrap .pk:hover{transform:none}
 
 .dares{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .dare{min-height:88px;padding:10px 12px;text-align:left;cursor:pointer;color:var(--fg);font:400 1rem var(--body);display:flex;flex-direction:column;gap:2px;justify-content:center}
@@ -243,6 +247,7 @@ dialog::backdrop{background:rgba(8,10,22,.72)}
   .pk-name{font-size:1.125rem}
   .pk .tapeflag{display:block}
   .pk-exp{display:none}
+  .pk-wrap .pk-body{padding-right:14px}
   .grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
   .picks{grid-template-columns:repeat(2,minmax(0,1fr))}
   .hero-art{aspect-ratio:21/9}
@@ -563,6 +568,11 @@ function pk(p){
     (isLocked(p) ? lockChip() : '<span class="chip">' + modCount(p) + " mods</span>") + "</span></span></a>";
 }
 function shelf(list, three){ return '<div class="shelf' + (three ? " shelf-3" : "") + '">' + list.map(pk).join("") + "</div>"; }
+function savedShelf(list){
+  return '<div class="shelf">' + list.map(function(p){
+    return '<div class="pk-wrap">' + pk(p) + '<button type="button" class="iconbtn pk-heart" data-action="save" data-id="' + p.id + '" data-fk="sp-' + p.id + '" aria-pressed="true" aria-label="Saved. Remove ' + esc(p.name) + '">' + ic("heart") + "</button></div>";
+  }).join("") + "</div>";
+}
 function warnBox(p){ return '<div class="warn">' + ic("warn") + "<p><strong>Hex's warning.</strong> " + esc(p.warning) + "</p></div>"; }
 function nextDrop(){
   var now = new Date(), d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -684,7 +694,7 @@ function lockedPanel(title, text){
 function vSaved(){
   if (S.tier === "free") return lockedPanel("Saved", "Members can save favorite playpacks and favorite mods, and find them here.");
   var packs = S.saved.map(findPack).filter(function(p){ return p && shown(p); }), mods = S.savedMods.map(function(i){ return MOD[i]; }).filter(Boolean), tab = S.savedTab, body;
-  if (tab === "packs") body = packs.length ? shelf(packs)
+  if (tab === "packs") body = packs.length ? savedShelf(packs)
     : hex(say("savedEmpty")) + '<div class="panel"><p>Tap Save on any playpack and it lands here.</p><a class="btn btn-primary" href="#explore">Browse playpacks</a></div>';
   else body = mods.length ? '<div class="card list">' + mods.map(modRow).join("") + "</div>"
     : '<div class="panel"><p>Tap the heart beside any mod to keep it here, even if you do not want the whole playpack.</p><a class="btn btn-primary" href="#explore">Browse playpacks</a></div>';
@@ -756,7 +766,7 @@ function vYou(){
     fold("f-acct", "Account", '<p>You are not signed in. This preview keeps your choices on this device only.</p>' +
       '<div class="row"><button type="button" class="btn btn-ghost" data-action="signin">Sign in</button><button type="button" class="btn btn-danger" data-action="delacct">Delete my account</button></div>' +
       "<h3>Blocked members</h3>" + blocked, false) +
-    fold("f-mem", "Membership", "<p>You are looking at the " + (S.tier === "member" ? "member" : "free") + " view.</p>" +
+    fold("f-mem", "Membership", "<p>Membership is $3.99 a month or $24.99 a year. You are looking at the " + (S.tier === "member" ? "member" : "free") + " view.</p>" +
       '<div class="row"><button type="button" class="btn btn-ghost" data-action="join">See what members get</button><button type="button" class="btn btn-ghost" data-action="restore">Restore purchases</button></div>', false) +
     fold("f-legal", "Help and legal", '<div style="display:flex;flex-direction:column;align-items:flex-start">' +
       [["support","Help and contact"],["privacy","Privacy policy"],["terms","Terms of use"],["rules","Community rules"],["credits","Copyright and credits"]].map(function(d){
@@ -783,7 +793,7 @@ function render(focusHeading){
   v.innerHTML = r === "explore" ? vExplore() : r === "saved" ? vSaved() : r === "build" ? vBuild() : r === "you" ? vYou() : isPack ? vPack(r.slice(5)) : vHome();
   $("#main").classList.toggle("has-actions", !!$(".actions", v));
   if (focusHeading){ window.scrollTo(0, 0); var h = $("h1", v); if (h) h.focus({ preventScroll:true }); }
-  else if (keep){ var el = $('[data-fk="' + keep + '"]', v); if (el) el.focus({ preventScroll:true }); }
+  else if (keep){ var el = $('[data-fk="' + keep + '"]', v) || $("h1", v); if (el) el.focus({ preventScroll:true }); }
   S.justStamped = null;
 }
 function onRoute(){
@@ -851,7 +861,9 @@ function openJoin(){
   var member = S.tier === "member";
   openSheet("HyMeta membership",
     '<ul class="perks"><li>Every playpack, with all the mods and links</li><li>A new experimental playpack every week</li><li>Save your favorite playpacks and mods</li><li>Build your own playpacks and share them</li></ul>' +
-    "<p><strong>Price:</strong> not decided yet. Monthly and yearly options are planned.</p>" +
+    '<div class="radios" role="radiogroup" aria-label="Choose a plan">' +
+    '<label><input type="radio" name="plan" value="year" checked><span><strong>Yearly, $24.99</strong><br><span class="small muted">About $2.08 a month. Saves 48% compared with paying monthly.</span></span></label>' +
+    '<label><input type="radio" name="plan" value="month"><span><strong>Monthly, $3.99</strong><br><span class="small muted">Billed every month.</span></span></label></div>' +
     '<p class="small muted">Payment is charged to your Apple Account when you confirm. Membership renews automatically unless you cancel at least 24 hours before the end of the current period. You can manage or cancel it at any time in your Apple Account settings.</p>' +
     '<div class="row">' + (member
       ? '<button type="button" class="btn btn-ghost" data-action="tier" data-tier="free">Switch to the free view</button>'
@@ -869,7 +881,7 @@ function openGate(){
 var DOCS = {
   support:["Help and contact", "<p>Stuck, or spotted something wrong? Write to us and a real person will answer.</p><p><strong>Email:</strong> to be added before release.</p><p>To report a shared playpack, open it and tap Report this playpack. We review every report within 24 hours.</p>"],
   privacy:["Privacy policy", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What we keep</h3><p>If you make an account we keep your sign-in email, the playpacks and mods you save, your stamps and anything you choose to share. Purchases are handled by Apple. We never see your card details.</p><h3>What we never do</h3><p>We do not sell or share your data. We do not show ads. We do not track you across other apps or websites.</p><h3>Children</h3><p>HyMeta is made to be safe for younger players. Children under 13 need a parent or guardian to set up an account. We collect no more than the app needs to work.</p><h3>Your choices</h3><p>You can delete your account, and everything in it, at any time from You, Account, Delete my account. Deleted data is removed within 30 days.</p><h3>Contact</h3><p>Lumina Art House, LLC. Contact email to be added before release.</p>"],
-  terms:["Terms of use", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What HyMeta is</h3><p>HyMeta is an unofficial guide to Hytale mods. It suggests sets of mods and links to their CurseForge pages. It is not made, endorsed or supported by Hypixel Studios, CurseForge or Overwolf.</p><h3>Mods belong to their creators</h3><p>Every mod, name and logo shown belongs to the person who made it. Mods are downloaded from CurseForge under its own terms. We cannot promise that any mod works, or that mods work together.</p><h3>Membership</h3><p>Membership is an auto-renewing subscription bought through Apple. It renews until you cancel in your Apple Account settings. Refunds are handled by Apple.</p><h3>Sharing</h3><p>Anything you share must follow the community rules. We may remove content or close accounts that break them.</p><h3>Owner</h3><p>HyMeta is owned and run by Lumina Art House, LLC. &copy; 2026 Lumina Art House, LLC. All rights reserved.</p>"],
+  terms:["Terms of use", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What HyMeta is</h3><p>HyMeta is an unofficial guide to Hytale mods. It suggests sets of mods and links to their CurseForge pages. It is not made, endorsed or supported by Hypixel Studios, CurseForge or Overwolf.</p><h3>Mods belong to their creators</h3><p>Every mod, name and logo shown belongs to the person who made it. Mods are downloaded from CurseForge under its own terms. We cannot promise that any mod works, or that mods work together.</p><h3>Membership</h3><p>Membership is an auto-renewing subscription bought through Apple, at $3.99 a month or $24.99 a year. It renews until you cancel in your Apple Account settings. Refunds are handled by Apple.</p><h3>Sharing</h3><p>Anything you share must follow the community rules. We may remove content or close accounts that break them.</p><h3>Owner</h3><p>HyMeta is owned and run by Lumina Art House, LLC. &copy; 2026 Lumina Art House, LLC. All rights reserved.</p>"],
   rules:["Community rules", "<p>Shared playpacks are seen by other players, including children. Keep it friendly.</p><ul class=\"perks\"><li>Be kind. No insults, bullying or hate.</li><li>Keep it clean. No swearing or grown-up content.</li><li>Stay private. No real names, links, emails, phone numbers or addresses.</li><li>Be honest. No scams, spam or pretending to be someone else.</li></ul><p>Break the rules and your playpack is removed. Do it again and your account is closed.</p><p>See something wrong? Open the playpack and tap Report this playpack, or block the member who shared it. We review every report within 24 hours.</p>"],
   credits:["Copyright and credits", "<p>&copy; 2026 Lumina Art House, LLC. All rights reserved.</p><p>HyMeta is an unofficial fan app. Hytale is a trademark of Hypixel Studios. CurseForge is a trademark of Overwolf. HyMeta is not affiliated with or endorsed by either company.</p><p>Every mod belongs to its creator. Mod names, logos and details come from CurseForge.</p><p>In this preview, all mods, authors, download counts and artwork are placeholders.</p>"]
 };

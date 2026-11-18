@@ -33,7 +33,7 @@ Status key: **Designed** = already in the preview. **Build** = needs the real ap
 | --- | --- |
 | Unlocking features must use Apple in-app purchase | **Build**. Apple keeps a share of each sale. |
 | A way to restore purchases | **Designed**: "Restore purchases" on the membership sheet and under You. **Build**: make it work. |
-| Say clearly what the price buys before asking | **Designed**: perks list, renewal wording, links to Terms and Privacy. **You**: the price. |
+| Say clearly what the price buys before asking | **Designed**: perks list, both prices ($3.99 a month, $24.99 a year), renewal wording, links to Terms and Privacy. |
 | Subscription lasts at least seven days and gives ongoing value | Planned: monthly and yearly, with a new playpack every week. |
 | Mention the subscription in the store description and screenshots | **Build**: store listing. |
 | Apple's standard subscription wording (Schedule 2 of the developer agreement) | **Build**: not read yet, check before submitting. |
@@ -68,7 +68,7 @@ Status key: **Designed** = already in the preview. **Build** = needs the real ap
 
 1. An Apple Developer account in the name of Lumina Art House, LLC (the same one as your other apps, if you have it).
 2. A support email address and a public web address for the privacy policy.
-3. The membership price.
+3. Done: the membership price is $3.99 a month or $24.99 a year. Enroll in Apple's Small Business Program so Apple keeps 15% instead of 30%.
 4. Your CurseForge API key, entered through the secure form, never pasted into chat.
 5. Written confirmation from CurseForge that a paid app is allowed.
 6. A look at Hypixel Studios' fan content rules, or permission from them.
