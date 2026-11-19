@@ -22,7 +22,11 @@ password away: strangers see the front door, tap "Come in", and are in. Tick the
 - [x] Privacy policy and terms readable from the front door, without entering the site
       (`/terms.html`, `/privacy.html`, `/rules.html`, `/help.html`, `/credits.html`).
 - [x] Password reset and the weekly email. Built and tested, waiting for an email service to be connected.
-- [ ] The weekly playpack generator and archive (needs CurseForge's answer).
+- [x] The weekly switch: a brand-new free playpack every Monday at 09:00 UTC, twelve weeks' worth, starting
+      16 November 2026 (`WEEKLY` in `src/app.html`, recipes in `lib/recipes.js`, the calendar in `lib/weeks.js`).
+      Nothing is stored, so it does not wait on CurseForge. **The list runs out after the week of 1 February 2027.**
+      After that every playpack takes a turn at being free until more are written.
+- [ ] A record of exactly which mods were in each past week (needs CurseForge's answer).
 - [ ] Decide whether search engines may list the site. It is hidden from them today, even when open.
 - [x] A way to be told when a playpack is waiting for review: an email to the owner, at most one an hour (needs the email service).
 

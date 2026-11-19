@@ -364,7 +364,8 @@ function rng(seed){
   var s = 7; for (var i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) >>> 0;
   return function(){ s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
 }
-var ART = { combat:"pack-combat", building:"pack-building", survival:"pack-survival", creatures:"pack-creatures", magic:"pack-magic", exploration:"pack-exploration", everything:"pack-everything", hero:"hymeta-hero", spiders:"pack-spiders", factory:"pack-factory", hermit:"pack-hermit", farm:"pack-farm" };
+var ART = { combat:"pack-combat", building:"pack-building", survival:"pack-survival", creatures:"pack-creatures", magic:"pack-magic", exploration:"pack-exploration", everything:"pack-everything", hero:"hymeta-hero", spiders:"pack-spiders", factory:"pack-factory", hermit:"pack-hermit", farm:"pack-farm",
+  fishing:"pack-fishing", knights:"pack-knights", catcafe:"pack-catcafe", miner:"pack-miner", potions:"pack-potions", roadtrip:"pack-roadtrip", plushies:"pack-plushies", archer:"pack-archer", garden:"pack-garden", quests:"pack-quests", dinos:"pack-dinos", packrat:"pack-packrat" };
 function art(key, big){ return '<img class="art" src="images/' + (big ? "" : "thumb-") + (ART[key] || ART.hero) + '.jpg" alt="" decoding="async"' + (big ? "" : ' loading="lazy"') + ">"; }
 
 /* ---------- sample data (placeholders until CurseForge is connected) ---------- */
@@ -482,6 +483,115 @@ var PACKS = [
             unhinged:"EVERYTHING. ALL AT ONCE. I poured every drawer into one pot and stirred it with a sword." },
     core:["sprout","shield","block","atlas"], spice:["spell","whisper","sort"] }
 ];
+// The weekly playpacks, in the order they arrive: one makes its debut each week and then stays for good.
+var WEEKLY = [
+  { id:"gone-fishing", family:"creatures", art:"fishing", name:"Gone fishing", kind:"Standard", dare:1, icon:"fish", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"A rod, a boat and a very patient morning. The fish are in no hurry either.",
+    warning:"May cause you to describe a fish with both arms. It was not that big.",
+    pitch:{ gentle:"Still water, a small boat and nowhere to be. Catch something or do not. Both are fine.",
+            cheeky:"Sit in a boat. Stare at water. Call it a hobby. I will be on the dock judging your knots.",
+            unhinged:"THE BIG ONE IS DOWN THERE. I have seen it. It has seen me. We have an understanding." },
+    hint:"Bring a hat and a lot of patience.", core:["hook", "rain", "pantry", "camp"], spice:["atlas"] },
+  { id:"knights-and-dragons", family:"combat", art:"knights", name:"Knights and dragons", kind:"Standard", dare:2, icon:"crown", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"Shiny armor, a proper castle and something large asleep on the roof.",
+    warning:"The dragon is friendly until someone touches its gold. Do not touch its gold.",
+    pitch:{ gentle:"Build a castle, polish your armor and make friends with a dragon. A storybook week.",
+            cheeky:"You wanted a castle. The dragon wanted the same castle. I suggest sharing.",
+            unhinged:"DRAGONS. On the roof. In the moat. One is wearing your helmet. I HAVE NO REGRETS." },
+    hint:"Polish your armor. Something large is coming.", core:["shield", "boss", "block", "glass"], spice:["far"] },
+  { id:"cat-cafe", family:"creatures", art:"catcafe", name:"The cat cafe", kind:"Standard", dare:1, icon:"paw", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"Cats on every shelf, something warm in the oven, and one dog who wandered in.",
+    warning:"The cats own the cafe now. You only work here.",
+    pitch:{ gentle:"A warm kitchen, a soft chair and a cat who has chosen your lap. Stay as long as you like.",
+            cheeky:"Open a cafe. Fill it with cats. Sell nothing, because the cats sat on the menu.",
+            unhinged:"SO MANY CATS. I counted nineteen. There were twelve yesterday. NOBODY IS BRINGING THEM IN." },
+    hint:"It purrs. That is all I am saying.", core:["whisper", "treat", "furn", "pantry"], spice:["cabin"] },
+  { id:"deep-miner", family:"survival", art:"miner", name:"The deep miner", kind:"Standard", dare:2, icon:"chest", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"Go down. Keep going down. Come back up with pockets full of shiny rocks.",
+    warning:"You will say just one more vein at least forty times.",
+    pitch:{ gentle:"Lantern light, steady digging and the quiet sparkle of something worth finding.",
+            cheeky:"It is a hole. You dug it. You live here now. At least the rocks are pretty.",
+            unhinged:"DEEPER. The good rocks are DEEPER. I can hear them. They are calling you by name." },
+    hint:"Pack a lantern. You are going down.", core:["delve", "ledger", "sort", "trap"], spice:["chorus"] },
+  { id:"potion-problem", family:"magic", art:"potions", name:"A potion problem", kind:"Standard", dare:2, icon:"potion", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"Mix things. Bottle things. Find out what the green one does the hard way.",
+    warning:"Label your bottles. The last apprentice did not, and now he is a very small frog.",
+    pitch:{ gentle:"Herbs, bottles and a gently bubbling pot. Careful work, lovely colors.",
+            cheeky:"Drink the blue one. No, the other blue one. Well. It will wear off by Tuesday.",
+            unhinged:"IT IS BUBBLING. It should not be bubbling. I added the mushrooms and now it KNOWS THINGS." },
+    hint:"Do not drink the green one.", core:["spell", "wand", "sprout", "ledger"], spice:["fam"] },
+  { id:"road-trip", family:"exploration", art:"roadtrip", name:"Are we there yet", kind:"Standard", dare:1, icon:"compass", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"Carts, boats, rails and shortcuts. Everything you need to go a very long way.",
+    warning:"Somebody will ask if you are there yet. It will be you.",
+    pitch:{ gentle:"Pack a bag, pick a direction and take the slow road. The view is the point.",
+            cheeky:"A cart, a boat and a train. Three ways to get lost faster.",
+            unhinged:"WE ARE GOING. Where? AWAY. In what? ALL OF THEM. I have tied the boat to the train." },
+    hint:"Pack snacks. It is a long way.", core:["trail", "atlas", "far", "camp"], spice:["saddle"] },
+  { id:"plushie-hoarder", family:"building", art:"plushies", name:"The plushie hoarder", kind:"Standard", dare:1, icon:"heart", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"Soft toys, paintings, statues and music. A room with far too much in it, on purpose.",
+    warning:"There is no such thing as enough plushies. There is only running out of floor.",
+    pitch:{ gentle:"Fill a room with soft, happy things and put on some music. That is the whole week.",
+            cheeky:"You have forty plushies and one bed. The plushies have voted. You sleep on the floor.",
+            unhinged:"MORE. Stack them. STACK THEM HIGHER. The pile is holding the roof up now. Do not remove the shark." },
+    hint:"Soft. Round. Far too many.", core:["furn", "glass", "cabin", "block"], spice:["fam"] },
+  { id:"sharpshooter", family:"combat", art:"archer", name:"Sharpshooter", kind:"Standard", dare:2, icon:"bolt", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"Bows, crossbows and a great many arrows. Stand far away and be very good at it.",
+    warning:"You will miss the first twenty shots. Hex is keeping count. Out loud.",
+    pitch:{ gentle:"A quiet ridge, a steady hand and a target that is not going anywhere.",
+            cheeky:"Why walk over there and hit it when you can stay here and miss it?",
+            unhinged:"BULLSEYE. On the wrong target. In the wrong field. I am still counting it." },
+    hint:"Stand well back.", core:["shield", "trap", "trail", "ledger"], spice:["boss"] },
+  { id:"garden-party", family:"creatures", art:"garden", name:"Garden party", kind:"Standard", dare:1, icon:"leaf", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"Flowers, bees, lanterns and a bench. Nothing needs fighting. Possibly a wasp.",
+    warning:"The bees have been told about the party. All of them are coming.",
+    pitch:{ gentle:"Plant something pretty, hang a lantern and sit down. The bees will handle the rest.",
+            cheeky:"You planted one flower. Now there are four hundred. This is the bees' garden now.",
+            unhinged:"THE ROSES ARE WINNING. They took the bench. They took the gate. I for one welcome them." },
+    hint:"It smells lovely and it buzzes.", core:["sprout", "rain", "cabin", "furn"], spice:["scare"] },
+  { id:"side-quest", family:"everything", art:"quests", name:"Side quest champion", kind:"Standard", dare:2, icon:"star", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"Quests, skills, levels and a whole town of people who need a favor.",
+    warning:"You will forget the main quest. So did everyone else in the village.",
+    pitch:{ gentle:"Help a neighbor, learn a skill, earn a little coin. One small job at a time.",
+            cheeky:"Save the world? Later. First this man needs eleven mushrooms and will not say why.",
+            unhinged:"FORTY QUESTS. All urgent. All from the same goose. I do not think the goose is paying." },
+    hint:"Somebody needs a favor. Everybody needs a favor.", core:["ledger", "boss", "atlas", "shield"], spice:["spell"] },
+  { id:"dino-rider", family:"exploration", art:"dinos", name:"Dino rider", kind:"Standard", dare:2, icon:"paw", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"Dinosaurs. You can ride some of them. The others have not agreed yet.",
+    warning:"Check which end is the front before you climb on.",
+    pitch:{ gentle:"Giant ferns, gentle giants and a slow ride through a very old jungle.",
+            cheeky:"It is as tall as a house and you want to put a saddle on it. I respect the confidence.",
+            unhinged:"IT HAS TEETH THE SIZE OF YOU. Ride it. RIDE IT. It likes you. That is probably what that noise means." },
+    hint:"Large. Scaly. Rideable, allegedly.", core:["whisper", "saddle", "treat", "far"], spice:["barn"] },
+  { id:"pack-rat", family:"survival", art:"packrat", name:"Pack rat", kind:"Standard", dare:1, icon:"chest", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"More chests, bigger bags and labels on everything. You will never throw anything away again.",
+    warning:"You do not need forty stacks of dirt. You will keep forty stacks of dirt.",
+    pitch:{ gentle:"A tidy shelf, a labelled chest and a place for everything. Deeply calming.",
+            cheeky:"You kept the stick. And the other stick. Hex kept a list of your sticks.",
+            unhinged:"KEEP IT ALL. The pebble. The broken boot. ESPECIALLY the boot. We will need it. I had a dream." },
+    hint:"You are going to need more chests.", core:["sort", "ledger", "belt", "pantry"], spice:["scaf"] }
+];
+// ---- the weekly switch ----
+// Week 0 began Monday 16 November 2026 at 09:00 UTC. Each week one playpack is free: a brand-new one
+// while the weekly list lasts, then every playpack takes a turn. The server works out the same thing
+// (lib/weeks.js) and its answer wins once the page hears from it.
+var LAUNCH = Date.UTC(2026, 10, 16, 9), WEEK_MS = 7 * 864e5;
+var ALL_PACKS = PACKS.concat(WEEKLY), BASE_IDS = PACKS.map(function(p){ return p.id; }), ROTA = WEEKLY.map(function(p){ return p.id; });
+function scheduleFor(index){
+  var i = Math.max(0, Math.floor(index) || 0), fresh = i < ROTA.length, cycle = BASE_IDS.concat(ROTA);
+  var free = fresh ? ROTA[i] : cycle[(i - ROTA.length) % cycle.length];
+  var released = BASE_IDS.concat(ROTA.slice(0, Math.min(i + 1, ROTA.length)));
+  var others = released.filter(function(id){ return id !== free; });
+  return { index:i, free:free, fresh:fresh, released:released, nextAt:LAUNCH + (i + 1) * WEEK_MS,
+    teasers:[0, 1, 2].map(function(k){ return others[(i * 3 + k) % others.length]; }) };
+}
+var WEEK, FEATURED, TEASERS;
+function setWeek(w){
+  WEEK = w; FEATURED = w.free; TEASERS = w.teasers;
+  PACKS = ALL_PACKS.filter(function(p){ return w.released.indexOf(p.id) > -1; });
+}
+setWeek(scheduleFor((Date.now() - LAUNCH) / WEEK_MS));
+// next week's playpack stays a secret: only Hex's hint is shown
+function comingNext(){ var n = ALL_PACKS.filter(function(p){ return p.id === ROTA[WEEK.index + 1]; })[0]; return n && WEEK.fresh ? n.hint : ""; }
 var FAMILIES = [["combat","Combat"],["building","Building"],["survival","Survival"],["creatures","Creatures and farming"],["magic","Magic"],["exploration","Exploration"],["everything","A bit of everything"]];
 var FAMILY = {}; FAMILIES.forEach(function(f){ FAMILY[f[0]] = f[1]; });
 var SPOTLIGHT = "atlas";
@@ -493,7 +603,6 @@ var COMMUNITY = [
   { id:"cat-parade", family:"creatures", art:"creatures", name:"The cat parade", kind:"Community", by:"Sample member C", dare:1, icon:"paw", sky:["#2a2152","#6a4a7a"], moon:"#ffd9ec", hills:["#4a3a70","#372b58","#231b3c"],
     blurb:"Tame every cat you meet. Feed them. March.", warning:"They are in charge now.", pitch:null, core:["whisper","treat","fam"], spice:[] }
 ];
-var FEATURED = "cozy-farmer", TEASERS = ["too-many-legs","dungeon-gremlin","master-builder"];
 var DARE = { 1:"Cozy", 2:"Spicy", 3:"Send help" };
 
 var LINES = {
@@ -662,7 +771,7 @@ function openForgot(){
 }
 function goLive(){
   LIVE = true;
-  PACKS.forEach(function(p){ p.core = []; p.spice = []; p.extras = []; p.helpers = []; p.ready = false; });
+  ALL_PACKS.forEach(function(p){ p.core = []; p.spice = []; p.extras = []; p.helpers = []; p.ready = false; });
   COMMUNITY.length = 0;
   S.savedMods = S.savedMods.filter(isLiveId); S.saved = S.saved.filter(findPack); S.mine = S.mine.filter(function(p){ return p.core.every(isLiveId); });
   loadPack(findPack(FEATURED)); loadMissing();
@@ -683,10 +792,10 @@ function flames(n){ var f = ""; for (var i = 0; i < n; i++) f += ic("flame"); re
 function dareChip(p){ return '<span class="chip">' + flames(p.dare) + '<span><span class="sr">Dare level: </span>' + DARE[p.dare] + "</span></span>"; }
 function lockChip(){ return '<span class="chip chip-lock">' + ic("lock") + "Members</span>"; }
 function pk(p){
-  var exp = p.kind === "Experimental";
-  return '<a class="pk" href="#pack-' + p.id + '"><span class="pk-art">' + art(p.art) + '<span class="crest">' + glyph(p.icon, "#fffdf2") + "</span>" + (exp ? '<span class="tapeflag" aria-hidden="true">Experimental</span>' : "") + "</span>" +
+  var exp = p.kind === "Experimental", fresh = WEEK.fresh && p.id === FEATURED;
+  return '<a class="pk" href="#pack-' + p.id + '"><span class="pk-art">' + art(p.art) + '<span class="crest">' + glyph(p.icon, "#fffdf2") + "</span>" + (exp ? '<span class="tapeflag" aria-hidden="true">Experimental</span>' : fresh ? '<span class="tapeflag" aria-hidden="true">New</span>' : "") + "</span>" +
     '<span class="pk-body"><span class="pk-name">' + esc(p.name) + '</span><span class="pk-blurb">' + esc(p.blurb) + "</span>" +
-    '<span class="chips">' + dareChip(p) + (exp ? '<span class="chip chip-exp pk-exp">Experimental</span>' : "") +
+    '<span class="chips">' + dareChip(p) + (exp ? '<span class="chip chip-exp pk-exp">Experimental</span>' : fresh ? '<span class="chip chip-exp pk-new">New this week</span>' : "") +
     (p.status === "pending" ? '<span class="chip">' + ic("clock") + "In review</span>" : "") +
     (isLocked(p) ? lockChip() : (nMods(p) ? '<span class="chip">' + nMods(p) + "</span>" : "")) + "</span></span></a>";
 }
@@ -698,9 +807,7 @@ function savedShelf(list){
 }
 function warnBox(p){ return '<div class="warn">' + ic("warn") + "<p><strong>Hex's warning.</strong> " + esc(p.warning) + "</p></div>"; }
 function nextDrop(){
-  var now = new Date(), d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7));
-  var days = Math.ceil((d - now) / 864e5);
+  var days = Math.ceil((WEEK.nextAt - Date.now()) / 864e5);
   return days <= 1 ? "Next drop tomorrow" : "Next drop in " + days + " days";
 }
 function fold(id, title, body, defOpen, cls){
@@ -723,7 +830,7 @@ function vHome(){
       return '<div class="pk-wrap">' + pk(w) + '<button type="button" class="iconbtn pk-heart" data-action="unqueue" data-id="' + w.id + '" aria-label="Remove ' + esc(w.name) + ' from waiting">' + ic("x") + "</button></div>"; }).join("") + "</div></section>" : "") +
     '<section class="card hero" aria-labelledby="h-week">' +
       '<div class="hero-art">' + art(p.art, true) +
-        '<div class="hero-top"><span class="badge">' + ic("star") + 'Free this week</span><span class="badge badge-dark">' + ic("clock") + nextDrop() + "</span></div>" +
+        '<div class="hero-top"><span class="badge">' + ic("star") + (WEEK.fresh ? "New and free this week" : "Free this week") + '</span><span class="badge badge-dark">' + ic("clock") + nextDrop() + "</span></div>" +
         '<div class="hero-title"><h1 id="h-week" tabindex="-1"><span class="sr">This week\'s free playpack: </span>' + esc(p.name) + "</h1></div></div>" +
       '<div class="hero-body"><div class="sec"><p class="lede">' + esc(p.blurb) + "</p>" + hex(p.pitch[S.mood]) + warnBox(p) + "</div>" +
         '<div class="hero-side"><div class="chips">' + dareChip(p) + (nMods(p) ? '<span class="chip">' + nMods(p) + "</span>" : "") + "</div>" +
@@ -732,6 +839,7 @@ function vHome(){
     '<section class="sec" aria-labelledby="h-shelf">' + head("h-shelf", "Also this week", "#explore", "See all") +
       '<p class="muted">' + (S.tier === "free" ? "Free players can read about these. Members get the " + term("mod", "mods") + " and the links." : "All yours. Open any " + term("playpack", "playpack") + " to see its mods.") + "</p>" +
       shelf(TEASERS.map(findPack), true) + "</section>" +
+    (comingNext() ? '<section class="card pad sec" id="coming" aria-labelledby="h-coming"><h2 id="h-coming">Coming next week</h2><p class="muted">A brand-new playpack arrives every Monday. Hex will only give a hint.</p>' + hex(comingNext()) + "</section>" : "") +
     '<section class="sec" aria-labelledby="h-style">' + head("h-style", "Pick your playstyle") +
       '<div class="styles">' + FAMILIES.map(function(f){
         var c = PACKS.filter(function(x){ return x.family === f[0]; }).length;
@@ -821,6 +929,7 @@ function resultsHtml(){
     return '<div class="panel"><h2>No playpacks match</h2><p>Try a different word, or clear the search to see the whole shelf.</p><button type="button" class="btn btn-ghost" data-action="clear">Clear the search</button></div>';
   var byName = function(x, y){ return x.name.localeCompare(y.name); };
   if (S.sort === "az") o += shelf(a.slice().sort(byName));
+  else if (S.sort === "new") o += shelf(a.slice().sort(function(x, y){ return ROTA.indexOf(y.id) - ROTA.indexOf(x.id) || byName(x, y); }));
   else if (S.sort === "gentle" || S.sort === "wild") o += shelf(a.slice().sort(function(x, y){ return (S.sort === "gentle" ? x.dare - y.dare : y.dare - x.dare) || byName(x, y); }));
   else FAMILIES.forEach(function(f){
     var inFam = a.filter(function(x){ return x.family === f[0]; });
@@ -841,7 +950,7 @@ function vExplore(){
     '<label class="sr" for="fam">Filter by playstyle</label><select id="fam">' + options([["all","Any playstyle"]].concat(FAMILIES), S.fam) + "</select>" +
     '<label class="sr" for="filter">Filter by dare level</label><select id="filter">' +
     options([["all","Any dare level"],["1","Cozy"],["2","Spicy"],["3","Send help"],["exp","Experimental"]], S.filter) + "</select>" +
-    '<label class="sr" for="sort">Sort playpacks</label><select id="sort">' + options([["style","Grouped by playstyle"],["az","A to Z"],["gentle","Gentlest first"],["wild","Wildest first"]], S.sort) + "</select>" +
+    '<label class="sr" for="sort">Sort playpacks</label><select id="sort">' + options([["style","Grouped by playstyle"],["new","Newest first"],["az","A to Z"],["gentle","Gentlest first"],["wild","Wildest first"]], S.sort) + "</select>" +
     '<button type="button" class="btn btn-ghost" data-action="surprise" id="surprise">' + ic("star") + "Surprise me</button></div></div>" +
     '<div class="page" id="results">' + resultsHtml() + "</div></div>";
 }
@@ -1323,6 +1432,6 @@ $("#mark").innerHTML = px(PACKMARK, { "#":"#1d1503", "o":"#7a5200" });
 applyTheme();
 current = routeName();
 render(false);
-if (document.querySelector('meta[name="hymeta-server"]')) api("api/health").then(function(d){ if (d && d.live) goLive(); }).catch(function(){});
+if (document.querySelector('meta[name="hymeta-server"]')) api("api/health").then(function(d){ if (d && d.week && d.week.released){ setWeek(d.week); render(false); } if (d && d.live) goLive(); }).catch(function(){});
 })();
 </script>

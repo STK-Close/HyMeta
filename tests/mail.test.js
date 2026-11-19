@@ -1,7 +1,7 @@
 // Checks password reset, the weekly email and the daily allowance against a throwaway database
 // and a pretend email service. Nothing is really sent.
 // Run: node tests/mail.test.js
-process.env.HYMETA_LOCAL_DB = "1";
+process.env.HYMETA_LOCAL_DB = "1"; process.env.HYMETA_WEEK = "12"; // week 12: The cozy farmer is free
 const { pretendMail } = require("../scripts/dev-server");
 const post = pretendMail();
 const a = require("../lib/accounts"), mail = require("../lib/mail"), news = require("../lib/news"), { query } = require("../lib/db");

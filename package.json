@@ -10,7 +10,7 @@
   "scripts": {
     "build": "node scripts/build.js",
     "start": "node scripts/dev-server.js",
-    "test": "node scripts/build.js && node tests/recipes.test.js && node tests/accounts.test.js && node tests/community.test.js && node tests/handoff.test.js && node tests/billing.test.js && node tests/mail.test.js && node tests/check.js"
+    "test": "node scripts/build.js && node tests/recipes.test.js && node tests/accounts.test.js && node tests/community.test.js && node tests/handoff.test.js && node tests/billing.test.js && node tests/mail.test.js && node tests/weeks.test.js && node tests/check.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.1"

@@ -124,7 +124,9 @@ function pretendMail() {
   return { outbox, state };
 }
 
-function start({ port = 0, pretend = false, password, key, accounts, owners, payments, open, mail } = {}) {
+// `week` pins the week (see lib/weeks.js). Tests use week 12 by default, when The cozy farmer is free.
+function start({ port = 0, pretend = false, password, key, accounts, owners, payments, open, mail, week = 12 } = {}) {
+  if (week === null) delete process.env.HYMETA_WEEK; else process.env.HYMETA_WEEK = String(week);
   for (const k of ["BREVO_API_KEY", "RESEND_API_KEY", "MAIL_FROM", "MAIL_ADDRESS", "SITE_URL", "MAIL_DAILY_CAP"]) delete process.env[k];
   if (mail) { process.env.BREVO_API_KEY = "pretend-mail-key"; process.env.MAIL_FROM = "hello@hymeta.test"; process.env.MAIL_ADDRESS = "1 Pretend Street, Testville, FL 00000"; }
   if (open) process.env.SITE_OPEN = "1"; else delete process.env.SITE_OPEN;

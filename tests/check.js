@@ -171,8 +171,14 @@ function makeAudit(p, bad) {
     if (broken) bad("home: artwork is missing or did not load (" + broken + ")");
     if (await count(".style-tile") !== 7) bad("home: expected 7 playstyle tiles");
     if (!(await count("#h-spot"))) bad("home: mod spotlight is missing");
+    if (await count("#coming")) bad("home: a next playpack is promised after the weekly list has run out");
     await p.click('[data-family="magic"]'); await p.waitForTimeout(220);
-    if (await p.inputValue("#fam") !== "magic" || await count("#results .pk") !== 1) bad("playstyle tile did not filter to the 1 magic pack");
+    const magic = await p.locator("#results .pk .pk-name").allTextContents();
+    if (await p.inputValue("#fam") !== "magic" || magic.slice().sort().join(" | ") !== "A potion problem | Wizard school dropout") bad("playstyle tile did not filter to the 2 magic packs, showed: " + magic.join(" | "));
+    await p.selectOption("#fam", "all"); await p.waitForTimeout(150);
+    if (await count("#results .fam-group .pk") !== 22) bad("explore: all 22 playpacks should be out once the weekly list has run out, found " + await count("#results .fam-group .pk"));
+    if (await count("#results .pk-new")) bad("explore: a playpack is called new after the weekly list has run out");
+    await p.selectOption("#fam", "magic"); await p.waitForTimeout(150);
     await go("home");
     // dare tiles filter the shelf
     await p.click('[data-dare="3"]'); await p.waitForTimeout(220);
@@ -483,6 +489,53 @@ function makeAudit(p, bad) {
       await p.waitForSelector(".mod"); // live mods load for a visitor who never typed a password
       await p.goto(url); await p.waitForSelector("#view .page"); if (await count("#come-in")) bad("a returning visitor is shown the front door again");
       await p.goto(url + "?door=1"); await p.waitForSelector("#come-in");
+    } catch (e) { bad("stopped early, a step could not be done: " + e.message.split("\n").slice(0, 4).join(" ").replace(/\s+/g, " ").slice(0, 260)); }
+    await ctx.close();
+  }
+  server.close();
+
+  // ---------- a new week: week 3, when The deep miner makes its debut ----------
+  // The browser's own clock says a different week, so passing also proves the server's week wins.
+  server = await start({ pretend: true, password: PASSWORD, key: "pretend-key", week: 3 });
+  url = server.url;
+  for (const [tag, w, h, scheme] of [["week-phone-light", 390, 844, "light"], ["week-tablet-dark", 820, 1180, "dark"], ["week-desktop-light", 1366, 900, "light"]]) {
+    if (only && only !== tag) continue;
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: w < 500 });
+    const p = await ctx.newPage(); const bad = (m) => problems.push(`${tag} ${m}`);
+    await p.route("https://media.forgecdn.net/**", (r) => r.fulfill({ status: 200, contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg'/>" }));
+    p.on("console", (m) => { if (m.type() === "error" && !/40[014]/.test(m.text())) bad("console: " + m.text()); }); p.on("pageerror", (e) => bad("page error: " + e.message)); p.setDefaultTimeout(6000);
+    const audit = makeAudit(p, bad), count = (sel) => p.locator(sel).count();
+    const loaded = () => p.evaluate(async () => { const imgs = [...document.querySelectorAll("img.art, .free img")]; imgs.forEach((i) => { i.loading = "eager"; }); await Promise.all(imgs.map((i) => i.complete ? 0 : new Promise((r) => { i.onload = i.onerror = r; }))); return imgs.filter((i) => !i.naturalWidth).map((i) => i.getAttribute("src")); });
+    try {
+      await p.goto(url); await p.waitForSelector("#free-name");
+      if ((await p.textContent("#free-name")) !== "The deep miner" || (await p.textContent("#h-free")) !== "New and free this week") bad("the front door does not show this week's new playpack");
+      if ((await loaded()).length) bad("the front door picture for this week's playpack did not load"); await audit("front door, new week");
+      await signIn(p, bad); await p.waitForFunction(() => /The deep miner/.test(document.querySelector("#h-week").textContent));
+      if (!/New and free this week/.test(await p.textContent(".hero-top"))) bad("home: the new playpack is not marked as new and free");
+      await p.waitForSelector(".hero-side .chip:has-text('mods')"); // its mods arrive from the live recipe
+      const coming = await p.textContent("#coming");
+      if (!/Do not drink the green one/.test(coming)) bad("home: Hex's hint about next week is missing");
+      if (/potion problem/i.test(await p.textContent("#view"))) bad("home: next week's playpack is named before its week");
+      const teasers = await p.locator("#h-shelf ~ .shelf .pk-name, section[aria-labelledby='h-shelf'] .pk-name").allTextContents();
+      if (teasers.length !== 3 || teasers.includes("The deep miner")) bad("home: Also this week should show three other playpacks, showed: " + teasers.join(" | "));
+      const missing = await loaded(); if (missing.length) bad("home: pictures did not load: " + missing.join(", "));
+      await audit("home, new week"); if (out) await p.screenshot({ path: `${out}/${tag}-home.png`, fullPage: true });
+      await p.goto(url + "#explore"); await p.waitForSelector("#results .pk");
+      const names = await p.locator("#results .pk .pk-name").allTextContents();
+      for (const n of ["Gone fishing", "Knights and dragons", "The cat cafe", "The deep miner", "The cozy farmer"]) if (!names.includes(n)) bad("explore: " + n + " should be on the shelf by week 3");
+      for (const n of ["A potion problem", "Are we there yet", "Pack rat"]) if (names.includes(n)) bad("explore: " + n + " is on the shelf before its week");
+      if (names.length !== 14) bad("explore: expected 14 playpacks in week 3, found " + names.length);
+      if (await count("#results .pk-new") !== 1 || !/The deep miner/.test(await p.textContent("#results .pk:has(.pk-new)"))) bad("explore: only this week's playpack should be marked new");
+      await p.selectOption("#sort", "new"); await p.waitForTimeout(150);
+      const newest = await p.locator("#results .pk .pk-name").allTextContents();
+      if (newest.slice(0, 4).join(" | ") !== "The deep miner | The cat cafe | Knights and dragons | Gone fishing") bad("explore: Newest first is in the wrong order: " + newest.slice(0, 5).join(" | "));
+      const lost = await loaded(); if (lost.length) bad("explore: pictures did not load: " + lost.join(", "));
+      await audit("explore, newest first"); if (out) await p.screenshot({ path: `${out}/${tag}-explore.png`, fullPage: true });
+      await p.goto(url + "#pack-potion-problem"); await p.waitForSelector("#view h1");
+      if (!/not on the shelf/.test(await p.textContent("#view h1")) || await count(".mod")) bad("next week's playpack opens when its address is typed in");
+      if ((await ctx.request.get(url + "api/pack?id=potion-problem")).status() !== 404) bad("the server hands out next week's playpack");
+      await p.goto(url + "#pack-gone-fishing"); await p.waitForSelector('.actions [data-action="join"]'); await audit("a past week's playpack"); // members only now
+      if (await count(".pk-new, .badge:has-text('New')")) bad("a past week's playpack is still marked new");
     } catch (e) { bad("stopped early, a step could not be done: " + e.message.split("\n").slice(0, 4).join(" ").replace(/\s+/g, " ").slice(0, 260)); }
     await ctx.close();
   }
