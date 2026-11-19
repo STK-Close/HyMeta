@@ -7,6 +7,9 @@ module.exports = (req, res) => {
   res.setHeader("X-Robots-Tag", "noindex, nofollow");
   res.setHeader("X-Frame-Options", "DENY");
   res.setHeader("Content-Security-Policy", "default-src 'self'; img-src 'self' data: https://media.forgecdn.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
+  // A shared playpack link (/p/<playpack>) is a public page of its own.
+  const shared = query(req).get("p");
+  if (shared !== null) { const out = require("../lib/sharepage").page(req, shared); res.statusCode = out.status; return res.end(out.html); }
   // Private: the app after the password, the front door before it.
   // Open: the front door on a first visit, the app once the visitor has chosen "Come in".
   // Adding ?door=1 shows the front door to anyone, for a preview.

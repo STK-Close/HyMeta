@@ -127,13 +127,27 @@ function makeAudit(p, bad) {
       await p.fill("#pw", PASSWORD); await p.click('#f button[type="submit"]'); await p.waitForSelector("#view .page");
       if (!/#pack-wizard-dropout$/.test(p.url())) bad("after the password the visitor was not taken to the playstyle Hex picked: " + p.url());
       await p.goto(url + "?door=1"); if (!(await count("#h-main")) || await count("#view")) bad("the owner cannot preview the front door once signed in");
+      // a shared link, followed by someone who has never been here: a public page of its own,
+      // then through the password and straight to that playpack
+      const fresh = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: w < 500 }), q = await fresh.newPage(), auditQ = makeAudit(q, bad);
+      q.on("pageerror", (e) => bad("page error: " + e.message)); q.setDefaultTimeout(6000);
+      await q.goto(url + "p/cozy-farmer"); await q.waitForSelector("#pack-name");
+      if ((await q.textContent("#pack-name")) !== "The cozy farmer" || !/Hex says: Plant a turnip/.test(await q.textContent("#hex-line"))) bad("the shared page does not show the playpack and Hex's line");
+      if (await q.evaluate(async () => { const i = document.querySelector("img.pic"); if (!i.complete) await new Promise((r) => { i.onload = i.onerror = r; }); return !i.naturalWidth; })) bad("the shared page picture did not load");
+      await auditQ("shared playpack page"); if (out) await q.screenshot({ path: `${out}/${tag}-shared.png`, fullPage: true });
+      await q.click("#theme-switch"); await auditQ("shared playpack page, other theme"); await q.click("#theme-switch");
+      await q.click("#open-pack"); await q.waitForSelector("#pw");
+      if (await q.locator("#view").count()) bad("a shared link lets a stranger into the app without the password");
+      await q.fill("#pw", PASSWORD); await q.click('#f button[type="submit"]'); await q.waitForSelector("#view .page");
+      if (!/#pack-cozy-farmer$/.test(q.url()) || !/The cozy farmer/.test(await q.textContent("#view h1"))) bad("after the password, a shared link does not land on its playpack: " + q.url());
+      await fresh.close();
     } catch (e) { bad("stopped early, a step could not be done: " + e.message.split("\n").slice(0, 4).join(" ").replace(/\s+/g, " ").slice(0, 260)); }
     await ctx.close();
   }
   for (const scheme of ["light", "dark"]) for (const [name, [w, h]] of Object.entries(sizes)) {
     const tag = `${name}-${scheme}`;
     if (only && only !== tag) continue;
-    const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: name !== "desktop" });
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: name !== "desktop" , permissions: ["clipboard-read", "clipboard-write"], acceptDownloads: true });
     const p = await ctx.newPage();
     const bad = (m) => problems.push(`${tag} ${m}`);
     p.on("console", (m) => { if (m.type() === "error" && !(expecting401 && /40[01]/.test(m.text())) && !/registered handler|curseforge:/i.test(m.text())) bad("console: " + m.text()); });
@@ -193,6 +207,7 @@ function makeAudit(p, bad) {
     if (!(await p.evaluate(async () => { const i = document.querySelector("#art-big"); if (!i.complete) await new Promise((r) => { i.onload = i.onerror = r; }); return i.naturalWidth >= 1200 && /pack-crawlies\.jpg$/.test(i.src); }))) bad("the full size picture did not open");
     await audit("full size picture"); await p.keyboard.press("Escape");
     if (await count(".mod")) bad("locked pack shows its mods to free players");
+    if (await count('.actions [data-action="share"], [data-action="share"]') !== 1) bad("a free player cannot share a playpack");
 
     // membership: disclosure, grown-up gate, then member view
     await p.click('.actions [data-action="join"]');
@@ -216,6 +231,31 @@ function makeAudit(p, bad) {
     await go("pack-too-many-legs");
     // save a playpack and a mod, collect a stamp
     await p.click('[data-action="save"]'); await p.click('[data-action="savemod"]'); await p.click('[data-action="stamp"]'); await p.waitForTimeout(550);
+    // share: a picture card drawn in the browser, a link, and a stamp for players who finished it
+    await p.click('[data-action="share"]'); await p.waitForFunction(() => { const i = document.querySelector("#share-card"); return i && i.naturalWidth === 1080 && i.naturalHeight === 1080; });
+    const cardInfo = (sel) => p.evaluate(async () => { const i = document.querySelector("#share-card"), c = document.createElement("canvas"); c.width = c.height = 1080; const x = c.getContext("2d"); x.drawImage(i, 0, 0);
+      const seen = new Set(); for (let yy = 20; yy < 1080; yy += 40) for (let xx = 20; xx < 1080; xx += 40) { const d = x.getImageData(xx, yy, 1, 1).data; seen.add((d[0] >> 4) + "," + (d[1] >> 4) + "," + (d[2] >> 4)); }
+      const pink = (x0, y0, x1, y1) => { let n = 0; const d = x.getImageData(x0, y0, x1 - x0, y1 - y0).data; for (let k = 0; k < d.length; k += 4) if (d[k] > 215 && d[k + 1] < 140 && d[k + 2] > 120 && d[k + 2] < 210) n++; return n; };
+      const light = (x0, y0, x1, y1) => { let n = 0; const d = x.getImageData(x0, y0, x1 - x0, y1 - y0).data; for (let k = 0; k < d.length; k += 4) if (d[k] > 225 && d[k + 1] > 220 && d[k + 2] > 200) n++; return n; };
+      return { colors: seen.size, stampInk: pink(660, 60, 1080, 330), nameInk: light(40, 440, 1040, 600), bubbleInk: light(230, 640, 1040, 960) }; });
+    const withStamp = await cardInfo();
+    if (withStamp.colors < 60) bad("the share card is blank or nearly blank (" + withStamp.colors + " colors)");
+    if (withStamp.nameInk < 3000) bad("the share card does not show the playpack's name");
+    if (withStamp.bubbleInk < 1500) bad("the share card does not show what Hex says");
+    if (!(await p.isChecked("#share-stamp")) || withStamp.stampInk < 2500) bad("the Survived stamp is missing from the share card of a finished playpack");
+    await audit("share sheet"); await shot("share");
+    const firstSrc = await p.getAttribute("#share-card", "src");
+    await p.uncheck("#share-stamp"); await p.waitForFunction((old) => document.querySelector("#share-card").src !== old, firstSrc);
+    if ((await cardInfo()).stampInk > 300) bad("the Survived stamp stays on the share card after it is switched off");
+    const [download] = await Promise.all([p.waitForEvent("download"), p.click("#share-save")]);
+    if (download.suggestedFilename() !== "hymeta-too-many-legs.jpg") bad("the saved picture has the wrong name: " + download.suggestedFilename());
+    await p.click('[data-action="sharecopy"]'); await p.waitForFunction(() => /Link copied/.test(document.querySelector("#toast").textContent));
+    const copied = await p.evaluate(() => navigator.clipboard.readText());
+    if (copied !== "https://hymeta.vercel.app/p/too-many-legs" && copied !== url + "p/too-many-legs") bad("the copied link is wrong: " + copied);
+    if ((await p.textContent("#share-link")) !== copied) bad("the link shown in the share sheet is not the one that is copied");
+    await p.keyboard.press("Escape");
+    await go("pack-potato-empire"); if (await count('[data-action="share"]')) bad("a playpack built by a member can be shared outside the site");
+    await go("pack-too-many-legs");
     await go("saved"); await audit("saved playpacks"); await shot("saved-packs");
     if (await count("#view .pk") !== 1) bad("saved playpacks list is wrong");
     await p.click('[data-tab="mods"]'); await audit("saved mods"); await shot("saved-mods");

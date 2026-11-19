@@ -142,7 +142,9 @@ function start({ port = 0, pretend = false, password, key, accounts, owners, pay
   const server = http.createServer(async (req, res) => {
     try {
       const u = new URL(req.url, "http://localhost");
-      const name = u.pathname === "/" ? "app" : (u.pathname.match(/^\/api\/([a-z]+)$/) || [])[1];
+      const sharedPack = u.pathname.match(/^\/p\/([^/]+)$/); // the host rewrites /p/<playpack> the same way (vercel.json)
+      if (sharedPack) req.url = "/api/app?p=" + encodeURIComponent(decodeURIComponent(sharedPack[1]));
+      const name = u.pathname === "/" || sharedPack ? "app" : (u.pathname.match(/^\/api\/([a-z]+)$/) || [])[1];
       // the host answers form posts too (mail apps use one for one-click unsubscribe)
       if (name && fs.existsSync(path.join(root, "api", name + ".js"))) {
         if (req.method === "POST") { let raw = ""; for await (const c of req) raw += c; try { req.body = JSON.parse(raw); } catch (e) { req.body = {}; } }

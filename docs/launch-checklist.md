@@ -30,6 +30,12 @@ password away: strangers see the front door, tap "Come in", and are in. Tick the
 - [ ] Decide whether search engines may list the site. It is hidden from them today, even when open.
 - [x] A way to be told when a playpack is waiting for review: an email to the owner, at most one an hour (needs the email service).
 
+## Pages anyone can see, even while the site is private
+- The front door (`/`), the legal pages, and one page per playpack for shared links (`/p/<playpack>`).
+- A shared-link page shows only HyMeta's own picture and words for that playpack, so link previews work in
+  Discord and Messages. It never shows mods, and never a playpack before its week.
+- All of them tell search engines not to list them.
+
 ## Email
 Off until these are added under Settings, Environment Variables in Vercel, followed by a redeploy.
 - `BREVO_API_KEY`: the key from a free Brevo account (300 emails a day, checked November 2026). `RESEND_API_KEY` works instead.

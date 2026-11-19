@@ -132,6 +132,7 @@ input[type="text"],input[type="search"],input[type="password"],select{font:400 1
 .hero-title{position:absolute;inset:auto 16px 12px 16px;z-index:1}
 .art-zoom{position:absolute;right:12px;top:12px;z-index:2}
 .art-big{width:100%;height:auto;border-radius:12px;display:block;border:1.5px solid var(--line)}
+.share-card{width:100%;max-width:360px;height:auto;aspect-ratio:1;border-radius:14px;display:block;border:1.5px solid var(--line);background:#0e1223;align-self:center}
 .hero-title h1{font-size:clamp(1.75rem,6.4vw,3rem);text-shadow:0 2px 0 rgba(9,11,24,.7)}
 .hero-body{padding:16px;display:grid;gap:16px}
 .hero-side{display:flex;flex-direction:column;gap:12px}
@@ -317,7 +318,7 @@ var PATHS = {
   home:"M3 11l9-7 9 7v9h-6v-6H9v6H3z", explore:"M12 3a9 9 0 100 18 9 9 0 000-18zm3.5 5.5l-2 5-5 2 2-5z",
   heart:"M12 20s-7-4.6-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.4-7 10-7 10z", build:"M4 4h16v16H4zM12 8v8M8 12h8",
   you:"M12 12a4 4 0 100-8 4 4 0 000 8zm-8 9a8 8 0 0116 0", lock:"M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 017 0v3",
-  search:"M11 4a7 7 0 100 14 7 7 0 000-14zm5 12l4.5 4.5", expand:"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5", x:"M6 6l12 12M18 6L6 18", check:"M5 12.5l4.5 4.5L19 7.5",
+  search:"M11 4a7 7 0 100 14 7 7 0 000-14zm5 12l4.5 4.5", expand:"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5", share:"M12 15V3M8 7l4-4 4 4M5 12v8h14v-8", x:"M6 6l12 12M18 6L6 18", check:"M5 12.5l4.5 4.5L19 7.5",
   warn:"M12 3l10 18H2zM12 10v5M12 17.5v.5", ext:"M14 4h6v6M20 4l-9 9M10 6H5v13h13v-5", down:"M12 4v11M7 11l5 5 5-5M5 20h14",
   clock:"M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2", flame:"M12 3c1 4 5 5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z",
   send:"M4 12l16-8-6 16-3-6z", back:"M15 5l-7 7 7 7", star:"M12 3l2.7 5.8 6.3.8-4.6 4.3 1.2 6.2L12 17l-5.6 3.1 1.2-6.2L3 9.6l6.3-.8z",
@@ -881,6 +882,8 @@ function vPack(id){
     ? '<button type="button" class="btn btn-primary btn-big" data-action="join" data-fk="join">' + ic("lock") + "Unlock with membership</button>"
     : '<button type="button" class="btn btn-primary btn-big" data-action="play" data-id="' + p.id + '" data-fk="play">' + ic("play") + "Play this pack</button>" +
       (S.tier === "member" ? '<button type="button" class="btn btn-ghost btn-big" data-action="save" data-id="' + p.id + '" data-fk="save" aria-pressed="' + saved + '">' + ic("heart") + (saved ? "Saved" : "Save") + "</button>" : "");
+  // HyMeta's own playpacks can be shared by anyone, member or not. Playpacks built by members stay inside.
+  if (p.pitch && !p.by) acts += '<button type="button" class="btn btn-ghost btn-big" data-action="share" data-id="' + p.id + '" data-fk="share">' + ic("share") + "Share</button>";
   var body = locked
     ? '<div class="panel"><h2>' + (ready(p) ? n + " mods are hidden" : "The mods are hidden") + "</h2><p>Members see every " + term("mod", "mod") + " in this " + term("playpack", "playpack") + ", with links to " + term("curseforge", "CurseForge") + ".</p>" +
       '<div class="row"><button type="button" class="btn btn-ghost" data-action="join">See what members get</button><a class="btn btn-ghost" href="#home">Back to the free playpack</a></div></div>'
@@ -1238,6 +1241,82 @@ var DOCS = {
   rules:["Community rules", "<p>Shared playpacks are seen by other players, including children. Keep it friendly.</p><ul class=\"perks\"><li>Be kind. No insults, bullying or hate.</li><li>Keep it clean. No swearing or grown-up content.</li><li>Stay private. No real names, links, emails, phone numbers or addresses.</li><li>Be honest. No scams, spam or pretending to be someone else.</li></ul><p>A person checks every playpack before other members can see it. Break the rules and your playpack is removed. Do it again and your account is closed.</p><p>See something wrong? Open the playpack and tap Report this playpack, or block the member who shared it. We review every report within 24 hours.</p>"],
   credits:["Copyright and credits", "<p>&copy; 2026 Lumina Art House, LLC. All rights reserved.</p><p>HyMeta is an unofficial fan app. Hytale is a trademark of Hypixel Studios. CurseForge is a trademark of Overwolf. HyMeta is not affiliated with or endorsed by either company.</p><p>Every mod belongs to its creator. Mod names, logos and details come from CurseForge.</p><p>In this preview, all mods, authors, download counts and artwork are placeholders.</p>"]
 };
+/* ---------- share cards: a picture of a playpack to post or send, drawn here in the browser ---------- */
+var PUBLIC_SITE = "https://hymeta.vercel.app";
+function shareLink(p){ return (document.querySelector('meta[name="hymeta-server"]') ? location.origin : PUBLIC_SITE) + "/p/" + p.id; }
+function loadImg(src){ return new Promise(function(ok, no){ var i = new Image(); i.onload = function(){ ok(i); }; i.onerror = no; i.src = src; }); }
+function wrapText(ctx, text, width){
+  var words = String(text).split(" "), lines = [], line = "";
+  words.forEach(function(w){ var t = line ? line + " " + w : w; if (ctx.measureText(t).width > width && line){ lines.push(line); line = w; } else line = t; });
+  if (line) lines.push(line); return lines;
+}
+// Draws the card: the playpack's picture, its name, Hex and her line, and where to find it.
+function drawCard(p, stamp){
+  var W = 1080, c = document.createElement("canvas"), x = c.getContext("2d"), display = '"Grandstander","Trebuchet MS",sans-serif', body = '"Atkinson Hyperlegible",Verdana,sans-serif';
+  c.width = W; c.height = W;
+  var fonts = document.fonts && document.fonts.load ? Promise.all([document.fonts.load("900 72px Grandstander"), document.fonts.load("500 40px Grandstander"), document.fonts.load('700 30px "Atkinson Hyperlegible"')]).catch(function(){}) : Promise.resolve();
+  return Promise.all([loadImg("images/" + (ART[p.art] || ART.hero) + ".jpg"), loadImg("images/hex-face.jpg"), fonts]).then(function(got){
+    var art = got[0], face = got[1], AH = 540, s = Math.max(W / art.width, AH / art.height);
+    x.fillStyle = "#0e1223"; x.fillRect(0, 0, W, W);
+    x.drawImage(art, (W - art.width * s) / 2, (AH - art.height * s) / 2, art.width * s, art.height * s);
+    var g = x.createLinearGradient(0, AH - 260, 0, AH); g.addColorStop(0, "rgba(14,18,35,0)"); g.addColorStop(1, "rgba(14,18,35,1)");
+    x.fillStyle = g; x.fillRect(0, AH - 260, W, 262); x.fillStyle = "#0e1223"; x.fillRect(0, AH, W, W - AH);
+    // name, shrunk until it fits on two lines
+    var size = 84, lines; x.fillStyle = "#fffdf2"; x.textBaseline = "alphabetic";
+    do { x.font = "900 " + size + "px " + display; lines = wrapText(x, p.name, W - 120); size -= 6; } while (lines.length > 2 && size > 40);
+    var y = AH + 20 - (lines.length - 1) * (size + 14);
+    lines.forEach(function(l){ x.fillText(l, 60, y); y += size + 14; });
+    // dare level and free flag
+    x.font = "700 30px " + body; var tag = DARE[p.dare] + (p.id === FEATURED ? "  \u00b7  Free this week" : ""), tw = x.measureText(tag).width;
+    x.fillStyle = "#f2b94b"; x.beginPath(); x.roundRect(60, y - 26, tw + 44, 52, 26); x.fill(); x.fillStyle = "#1d1503"; x.fillText(tag, 82, y + 10);
+    // Hex and her line
+    var top = y + 62, bx = 216, bw = W - bx - 60;
+    x.save(); x.beginPath(); x.roundRect(60, top, 132, 132, 28); x.clip(); x.drawImage(face, 60, top, 132, 132); x.restore();
+    x.strokeStyle = "#6672b8"; x.lineWidth = 3; x.beginPath(); x.roundRect(60, top, 132, 132, 28); x.stroke();
+    var fs = 40, say; do { x.font = "500 " + fs + "px " + display; say = wrapText(x, p.pitch[S.mood] || p.blurb, bw - 56); fs -= 3; } while (say.length * (fs + 15) + 78 > W - top - 110 && fs > 22);
+    var bh = Math.max(132, say.length * (fs + 15) + 78);
+    x.fillStyle = "#1a2143"; x.beginPath(); x.roundRect(bx, top, bw, bh, 24); x.fill(); x.stroke();
+    x.fillStyle = "#b9c1de"; x.font = "700 24px " + body; x.fillText("Hex says", bx + 28, top + 40);
+    x.fillStyle = "#eef1fb"; x.font = "500 " + (fs + 3) + "px " + display; say.forEach(function(l, i){ x.fillText(l, bx + 28, top + 84 + i * (fs + 15)); });
+    // where to find it
+    x.fillStyle = "#f2b94b"; x.font = "900 40px " + display; x.fillText("HyMeta", 60, W - 50);
+    x.fillStyle = "#b9c1de"; x.font = "400 28px " + body; var site = PUBLIC_SITE.replace("https://", "") + "  \u00b7  mod playpacks for Hytale"; x.fillText(site, W - 60 - x.measureText(site).width, W - 52);
+    // the stamp, for players who finished it
+    if (stamp){
+      x.save(); x.translate(W - 210, 190); x.rotate(-0.22); x.strokeStyle = "#ff5aa5"; x.fillStyle = "rgba(14,18,35,.78)"; x.lineWidth = 10;
+      x.beginPath(); x.roundRect(-170, -70, 340, 140, 18); x.fill(); x.stroke(); x.lineWidth = 3; x.beginPath(); x.roundRect(-154, -54, 308, 108, 10); x.stroke();
+      x.fillStyle = "#ff5aa5"; x.font = "900 64px " + display; x.textAlign = "center"; x.fillText("SURVIVED", 0, 22); x.restore();
+    }
+    return c;
+  });
+}
+var shareNow = null;
+function canShareFiles(file){ try { return !!(navigator.canShare && navigator.share && navigator.canShare({ files:[file] })); } catch (e) { return false; } }
+function openShare(id){
+  var p = findPack(id); if (!p || !p.pitch || p.by) return;
+  var stamped = S.stamps.indexOf(id) > -1, link = shareLink(p);
+  shareNow = { p:p, stamp:stamped, link:link, file:null };
+  openSheet("Share " + esc(p.name),
+    '<p class="muted">A picture to post or send, and a link that opens this playpack.</p>' +
+    '<img class="share-card" id="share-card" alt="Share card for ' + esc(p.name) + '. It shows the picture, the name and what Hex says." width="1080" height="1080">' +
+    (stamped ? '<label class="check"><input type="checkbox" id="share-stamp" checked>Show my Survived stamp</label>' : "") +
+    '<div class="row"><button type="button" class="btn btn-primary" data-action="sharesend" id="share-send" hidden>' + ic("share") + "Share</button>" +
+    '<button type="button" class="btn btn-ghost" data-action="sharesave" id="share-save" disabled>Save the picture</button>' +
+    '<button type="button" class="btn btn-ghost" data-action="sharecopy">Copy the link</button></div>' +
+    '<p class="small muted" id="share-link">' + esc(link) + "</p>");
+  paintShare();
+}
+function paintShare(){
+  var st = shareNow; if (!st) return;
+  drawCard(st.p, st.stamp).then(function(c){
+    if (shareNow !== st || !$("#share-card")) return;
+    $("#share-card").src = c.toDataURL("image/jpeg", 0.9); $("#share-save").disabled = false;
+    c.toBlob(function(blob){ if (!blob || shareNow !== st) return;
+      try { st.file = new File([blob], "hymeta-" + st.p.id + ".jpg", { type:"image/jpeg" }); } catch (e) { st.file = null; }
+      if (st.file && canShareFiles(st.file) && $("#share-send")) $("#share-send").hidden = false;
+    }, "image/jpeg", 0.9);
+  }, function(){ toast("The picture could not be made. The link still works."); });
+}
 function openDoc(k){ var d = DOCS[k]; if (d) openSheet(d[0], '<div class="doc">' + d[1] + '</div><div><button type="button" class="btn btn-ghost" data-action="close">Close</button></div>'); }
 function openTerm(t){ var g = GLOSS[t]; if (g) openSheet(g[0], "<p>" + g[1] + '</p><div><button type="button" class="btn btn-ghost" data-action="close">Got it</button></div>'); }
 function openLeave(){
@@ -1290,6 +1369,10 @@ document.addEventListener("click", function(e){
   else if (a === "signin"){ if (S.accounts) openAccount("login"); else openSignin(); }
   else if (a === "signup") openAccount("signup");
   else if (a === "forgot") openForgot();
+  else if (a === "share") openShare(id);
+  else if (a === "sharecopy"){ var sl = shareNow && shareNow.link; (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(sl) : Promise.reject()).then(function(){ toast("Link copied"); }, function(){ toast("Could not copy. The link is shown below the buttons."); }); }
+  else if (a === "sharesave"){ if (shareNow && $("#share-card").src){ var dl = document.createElement("a"); dl.href = $("#share-card").src; dl.download = "hymeta-" + shareNow.p.id + ".jpg"; document.body.appendChild(dl); dl.click(); dl.remove(); toast("Picture saved"); } }
+  else if (a === "sharesend"){ if (shareNow && shareNow.file) navigator.share({ files:[shareNow.file], title:shareNow.p.name + " on HyMeta", text:"Hex dares you: " + shareNow.p.name + ".", url:shareNow.link }).catch(function(){}); }
   else if (a === "art"){ var ap = findPack(b.getAttribute("data-id")); if (ap) openSheet(esc(ap.name), '<img class="art-big" id="art-big" src="images/' + (ART[ap.art] || ART.hero) + '.jpg" alt="The picture for ' + esc(ap.name) + '">' +
     '<div><button type="button" class="btn btn-ghost" data-action="close">Close</button></div>'); }
   else if (a === "testnews"){ b.disabled = true; post({ op:"test" }, "api/mail").then(function(){ b.disabled = false; toast("Test sent. Check your inbox."); }, function(e){ b.disabled = false; toast(e.message); }); }
@@ -1356,6 +1439,7 @@ document.addEventListener("change", function(e){
   else if (t.getAttribute("data-inst")){ var ip = findPack(t.getAttribute("data-inst")); markInstalled(ip, t.value, t.checked); openSheet("Play " + esc(ip.name), playBody(ip, "here")); var back = sheet.querySelector('input[value="' + t.value + '"]'); if (back) back.focus(); }
   else if (t.id === "sort"){ S.sort = t.value; $("#results").innerHTML = resultsHtml(); }
   else if (t.id === "news-on"){ var want = t.checked; post({ op:"news", on:want }).then(function(){ S.user.news = want; toast(want ? "Weekly email is on" : "Weekly email is off"); }, function(){ t.checked = !want; toast("That did not save. Check your connection."); }); }
+  else if (t.id === "share-stamp"){ if (shareNow){ shareNow.stamp = t.checked; shareNow.file = null; paintShare(); } }
   else if (t.id === "theme"){ S.theme = t.value; store.set("theme", S.theme); applyTheme(); }
   else if (t.name === "mood"){ S.mood = t.value; store.set("mood", S.mood); $("#mood-sample").innerHTML = hex(say("greet")); }
   else if (t.name === "mods"){

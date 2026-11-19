@@ -7,6 +7,10 @@
     {
       "source": "/",
       "destination": "/api/app"
+    },
+    {
+      "source": "/p/:id",
+      "destination": "/api/app?p=:id"
     }
   ],
   "headers": [
