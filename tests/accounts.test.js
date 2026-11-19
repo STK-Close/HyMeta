@@ -4,6 +4,13 @@ process.env.HYMETA_LOCAL_DB = "1";
 const a = require("../lib/accounts"), { query } = require("../lib/db");
 (async () => {
   const problems = [], bad = (m) => problems.push(m);
+  // the connection setting is found under any of the names a host may give it
+  const { databaseUrl } = require("../lib/db"), url = "postgresql://u:p@host.example/db";
+  for (const name of ["DATABASE_URL", "POSTGRES_URL", "STORAGE_DATABASE_URL", "HYMETA_POSTGRES_URL"]) {
+    process.env[name] = url; if (databaseUrl() !== url) bad("connection setting named " + name + " was not found"); delete process.env[name];
+  }
+  process.env.DATABASE_URL = "not-a-database-address"; if (databaseUrl()) bad("a setting that is not a database address was accepted"); delete process.env.DATABASE_URL;
+  if (databaseUrl()) bad("a database address was found when none was set");
   const refuses = async (label, fn, pattern) => { try { await fn(); bad(label + ": was allowed"); } catch (e) { if (e.code !== "invalid" || (pattern && !pattern.test(e.message))) bad(label + ": wrong refusal: " + e.message); } };
   const good = { email: "Kid@Example.test", password: "correct-horse-9", name: "Moss Goblin", over13: true };
   const cookie = await a.signUp(good), req = { headers: { cookie: cookie.split(";")[0] } };
