@@ -254,7 +254,13 @@ function makeAudit(p, bad) {
       if (!(await count("#g-help"))) bad("helper mods were not found for a mod that needs one");
       if (/Pretend Helper Lib/.test(await p.textContent("#g-core"))) bad("a helper mod was listed as a main pick");
       if (!/By pretend_author/.test(text)) bad("mod author is missing");
+      if (!/Picked for:\s*Crops and gardens/.test(text)) bad("mods do not say which job they were picked for");
+      if (!/Chosen for Hytale 0\.7/.test(text) || !/Hytale 0\.7/.test(await p.textContent(".mod .meta"))) bad("game version is not shown");
       const href = await p.getAttribute(".mod a.linkbtn", "href"); if (!/^https:\/\/www\.curseforge\.com\/hytale\/mods\//.test(href)) bad("mod link does not go to its CurseForge page: " + href);
+      // a mod that may not work with the current game says so on its card
+      await p.click("#tier-member"); await go("pack-wizard-dropout"); await p.waitForSelector(".mod");
+      if (!(await count(".mod .caution"))) bad("an out-of-date mod carries no warning");
+      await audit("live pack with a warning"); await p.click("#tier-free");
       // locked playpacks never fetch their mods in the free view
       const before = server.calls.length; await go("pack-dungeon-gremlin"); await p.waitForTimeout(300);
       if (server.calls.length !== before || await count(".mod")) bad("a locked playpack fetched its mods for a free player");

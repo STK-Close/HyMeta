@@ -47,7 +47,13 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 - Hosted on Vercel, behind one shared password, hidden from search engines.
 - The app page is only handed out after sign-in, and every data route checks the sign-in too.
 - Mods are fetched live from CurseForge and nothing is stored, to stay inside their rules while permission is pending.
-- Each playpack is a recipe of live searches. The essentials take the most popular matches. The spice reaches further down the list and shifts weekly, so lesser-known mods get a turn.
+- Each playpack is a list of jobs (for the cozy farmer: crops, farm animals, cooking, a cozy home, fishing and seasons). Each job is filled by the best-fitting mod found by live searches.
+- A mod earns its place by fit (the job's words in its name or description, whole words only), upkeep (updated recently and marked for the game version most mods support), and trust (downloads).
+- Fairness rules: one mod per job, at most two mods per author, nothing needing more than three helper mods, nothing a chosen mod clashes with, nothing that plainly belongs to another playpack, no skin or resource packs, no add-ons for other mods.
+- "The spice" jobs skip the most downloaded match and rotate weekly among good lesser-known mods.
+- Old mods with no current-version mark are left out. If nothing well-kept does a job, an older mod is used and its card says it may not work.
+- Each card says which job the mod was picked for and which game version it is marked for.
+- Horror mods are kept out, even from the spider playpack.
 - Helper mods that a pick cannot run without are found automatically and listed in their own group.
 - Mods whose name or description contains a blocked word never appear.
 - Free players never trigger a fetch for a locked playpack. Real enforcement arrives with accounts.

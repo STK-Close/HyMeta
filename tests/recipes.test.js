@@ -1,0 +1,68 @@
+// Checks the playpack recipes against a pretend CurseForge that is full of traps: mods that would
+// win a place on downloads alone and must be turned away by one specific rule.
+// Run: node tests/recipes.test.js
+process.env.CURSEFORGE_API_KEY = "pretend-key";
+require("../scripts/dev-server").pretendCurseForge();
+const { PACKS, resolve, spotlight } = require("../lib/recipes");
+const WEEK = 7 * 24 * 3600 * 1000, NOW = Date.now();
+
+(async () => {
+  const problems = [], bad = (m) => problems.push(m);
+  const packs = {};
+  for (const id of Object.keys(PACKS)) packs[id] = await resolve(id, NOW);
+  const picks = (id) => packs[id].core.concat(packs[id].spice);
+  const names = (id) => picks(id).map((m) => m.name);
+  const has = (id, text) => names(id).some((n) => n.includes(text));
+
+  for (const id of Object.keys(PACKS)) {
+    const jobs = PACKS[id].jobs.map((j) => j.label), list = picks(id);
+    if (list.length < 4) bad(`${id}: only ${list.length} mods`);
+    if (new Set(list.map((m) => m.id)).size !== list.length) bad(`${id}: the same mod appears twice`);
+    list.forEach((m) => { if (!jobs.includes(m.role)) bad(`${id}: "${m.name}" has no job it was picked for`); });
+    PACKS[id].jobs.forEach((j) => { const n = list.filter((m) => m.role === j.label).length; if (n > j.n) bad(`${id}: ${n} mods doing the job "${j.label}", which takes ${j.n}`); });
+    if (packs[id].gameVersion !== "0.7") bad(`${id}: current game version worked out as "${packs[id].gameVersion}", expected 0.7`);
+  }
+  // whole words only
+  if (has("beast-friend", "Carpets")) bad('beast-friend: "Carpets" was matched by the word "pet"');
+  // each playpack's own avoid list, resource packs and add-ons
+  if (has("too-many-legs", "Skin Pack")) bad("too-many-legs: a skin pack got in");
+  if (has("too-many-legs", "Begone")) bad("too-many-legs: a mod that removes spiders got in");
+  if (has("too-many-legs", "textures")) bad("too-many-legs: a resource pack got in");
+  if (has("dungeon-gremlin", "integration")) bad("dungeon-gremlin: an add-on for another mod got in");
+  // upkeep
+  if (has("the-wanderer", "ancient")) bad("the-wanderer: an old, untouched mod for an old game version was picked");
+  const staff = picks("wizard-dropout").find((m) => m.role === "Wands and staffs");
+  if (!staff) bad("wizard-dropout: no fallback pick when every wand and staff mod is old");
+  else if (!staff.caution) bad("wizard-dropout: an out-of-date fallback pick carries no warning");
+  if (picks("cozy-farmer").some((m) => m.caution)) bad("cozy-farmer: a well-kept mod carries a warning");
+  // a mod stays with the playpack it belongs to
+  if (!has("beast-friend", "Taming Pets Mounts")) bad("beast-friend: the taming and pets mod is missing");
+  if (has("dungeon-gremlin", "Taming Pets Mounts")) bad("dungeon-gremlin: took a mod that belongs to the pets playpack");
+  // no more than two mods from one author
+  const flood = picks("dungeon-gremlin").filter((m) => m.by === "flooder").length;
+  if (flood > 2) bad(`dungeon-gremlin: ${flood} mods from one author`);
+  if (flood < 1) bad("dungeon-gremlin: expected the popular dungeon mods to be picked");
+  // clashes, doubling up and helper-heavy mods
+  if (!has("hard-mode-hermit", "hardcore star")) bad("hard-mode-hermit: the hardcore mod is missing");
+  if (has("hard-mode-hermit", "rival")) bad("hard-mode-hermit: picked a mod that clashes with one already chosen");
+  if (has("hard-mode-hermit", "season mega")) bad("hard-mode-hermit: picked a second hunger mod for a different job");
+  if (has("factory-goblin", "heavy")) bad("factory-goblin: picked a mod that needs five helper mods");
+  // helpers, blocked words
+  if (!packs["cozy-farmer"].helpers.some((m) => m.name === "Pretend Helper Lib")) bad("cozy-farmer: the helper mod was not found");
+  if (has("cozy-farmer", "Helper Lib")) bad("cozy-farmer: a helper mod was used as a main pick");
+  if (has("cozy-farmer", "Sexy")) bad("cozy-farmer: a mod with a blocked word got in");
+  if (!has("cozy-farmer", "Sneaky Crops") || !has("cozy-farmer", "Coops")) bad("cozy-farmer: expected picks are missing: " + names("cozy-farmer").join(", "));
+  // lesser-known picks: never the superstar, the same all week, different across weeks
+  const gemNames = async (t) => (await resolve("cozy-farmer", t)).spice.map((m) => m.name).join(" | ");
+  const weeks = [await gemNames(NOW), await gemNames(NOW + WEEK), await gemNames(NOW + 2 * WEEK), await gemNames(NOW + 3 * WEEK)];
+  if (weeks.some((w) => w.includes("superstar"))) bad("cozy-farmer: the most downloaded mod was used as the lesser-known pick");
+  if (new Set(weeks).size < 2) bad("cozy-farmer: the lesser-known picks never change from week to week");
+  if ((await gemNames(NOW + 1000)) !== weeks[0]) bad("cozy-farmer: picks changed within the same week");
+  // spotlight
+  const spot = await spotlight(NOW);
+  if (!spot || /Lib/.test(spot.name)) bad("spotlight: no mod, or a helper mod, was chosen");
+  if ((await resolve("no-such-pack", NOW)) !== null) bad("an unknown playpack did not return nothing");
+
+  console.log(problems.length ? problems.join("\n") : "RECIPES OK");
+  process.exit(problems.length ? 1 : 0);
+})().catch((e) => { console.error("FAILED", e); process.exit(1); });

@@ -185,6 +185,9 @@ details.fold[open]>summary::after{content:"\2212"}
 .mod .meta{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:6px}
 .mod .meta>span{display:inline-flex;align-items:center;gap:4px}
 .mod .meta svg.ic{width:16px;height:16px}
+.caution{color:var(--pink-text);font-weight:700;display:flex;gap:6px;align-items:flex-start;margin-top:2px}
+.caution svg.ic{width:16px;height:16px;margin-top:2px}
+.why{margin-top:2px}
 .tag-sample{font:700 .8125rem var(--body);border:1px dashed var(--muted);color:var(--muted);border-radius:4px;padding:0 6px}
 .list{padding:0 16px}
 .list .mod:first-child{border-top:0}
@@ -531,7 +534,7 @@ function isMine(p){ return S.mine.indexOf(p) > -1; }
 function isLocked(p){ return S.tier === "free" && p.id !== FEATURED; }
 function modCount(p){ return p.core.length + p.spice.length + (p.helpers ? p.helpers.length : 0); }
 function allMods(p){ return p.core.concat(p.spice, p.helpers || []).filter(function(i){ return MOD[i]; }); }
-function rows(ids){ return ids.map(function(i){ return MOD[i]; }).filter(Boolean).map(modRow).join(""); }
+function rows(ids, p){ return ids.map(function(i){ return MOD[i]; }).filter(Boolean).map(function(m){ return modRow(m, p); }).join(""); }
 
 /* ---------- live mods (only when the page is served by HyMeta's own server) ---------- */
 var LIVE = false, fetching = {}, bTimer;
@@ -542,7 +545,7 @@ function safeUrl(u, prefix){ return typeof u === "string" && u.indexOf(prefix) =
 function isLiveId(i){ return /^cf\d+$/.test(i); }
 function adopt(m){
   MOD[m.id] = { id:m.id, live:true, name:String(m.name || ""), by:String(m.by || ""), blurb:String(m.blurb || ""), tags:(m.tags || []).slice(0, 3).map(String),
-    dl:fmtNum(+m.downloads || 0), upd:fmtDate(m.updated), logo:safeUrl(m.logo, "https://media.forgecdn.net/"), url:safeUrl(m.url, "https://www.curseforge.com/"), icon:"star", hue:215 };
+    dl:fmtNum(+m.downloads || 0), upd:fmtDate(m.updated), logo:safeUrl(m.logo, "https://media.forgecdn.net/"), url:safeUrl(m.url, "https://www.curseforge.com/"), version:String(m.version || ""), icon:"star", hue:215 };
   return m.id;
 }
 function ready(p){ return !LIVE || !!p.ready || !!p.by; }
@@ -550,7 +553,9 @@ function nMods(p){ return ready(p) ? modCount(p) + " mods" : ""; }
 function loadPack(p){
   if (!LIVE || !p || p.by || p.ready || fetching[p.id]) return;
   fetching[p.id] = true; p.failed = false;
-  api("api/pack?id=" + encodeURIComponent(p.id)).then(function(d){ p.core = d.core.map(adopt); p.spice = d.spice.map(adopt); p.helpers = (d.helpers || []).map(adopt); p.ready = true; })
+  api("api/pack?id=" + encodeURIComponent(p.id)).then(function(d){ p.why = {}; p.warn = {}; p.gameVersion = String(d.gameVersion || "");
+      d.core.concat(d.spice).forEach(function(m){ p.why[m.id] = String(m.role || ""); p.warn[m.id] = String(m.caution || ""); });
+      p.core = d.core.map(adopt); p.spice = d.spice.map(adopt); p.helpers = (d.helpers || []).map(adopt); p.ready = true; })
     .catch(function(){ p.failed = true; })
     .then(function(){ delete fetching[p.id]; if (current === "pack-" + p.id || (current === "home" && p.id === FEATURED)) render(false); });
 }
@@ -642,12 +647,14 @@ function vHome(){
     "</div>";
 }
 
-function modRow(m){
-  var saved = S.savedMods.indexOf(m.id) > -1;
+function modRow(m, p){
+  var saved = S.savedMods.indexOf(m.id) > -1, why = p && p.why && p.why[m.id], warn = p && p.warn && p.warn[m.id];
   return '<div class="mod">' + tile(m) + "<div><h4>" + esc(m.name) + (m.live ? "" : '<span class="tag-sample">Sample</span>') + "</h4>" +
     '<p class="small muted">By ' + (m.live ? esc(m.by || "an unnamed author") : "sample author") + "</p><p>" + esc(m.blurb) + "</p>" +
+    (why ? '<p class="small why"><strong>Picked for:</strong> ' + esc(why) + "</p>" : "") +
+    (warn ? '<p class="small caution">' + ic("warn") + "<span>" + esc(warn) + "</span></p>" : "") +
     '<div class="meta small"><span class="chips">' + m.tags.map(function(t){ return '<span class="chip">' + esc(t) + "</span>"; }).join("") + "</span>" +
-    "<span>" + ic("down") + '<span class="sr">Downloads: </span>' + m.dl + "</span><span>" + ic("clock") + '<span class="sr">Updated: </span>' + m.upd + "</span></div>" +
+    "<span>" + ic("down") + '<span class="sr">Downloads: </span>' + m.dl + "</span><span>" + ic("clock") + '<span class="sr">Updated: </span>' + m.upd + "</span>" + (m.version ? '<span><span class="sr">Game version: </span>Hytale ' + esc(m.version) + "</span>" : "") + "</div>" +
     '<a class="linkbtn" href="' + esc(m.url || "https://www.curseforge.com/hytale") + '" target="_blank" rel="noopener">View on CurseForge' + ic("ext") + '<span class="sr"> (opens in a new tab)</span></a></div>' +
     (S.tier === "member" ? '<button type="button" class="iconbtn" data-action="savemod" data-id="' + m.id + '" data-fk="sm-' + m.id + '" aria-pressed="' + saved + '" aria-label="' + (saved ? "Saved. Remove " : "Save ") + esc(m.name) + '">' + ic("heart") + "</button>" : "<span></span>") +
     "</div>";
@@ -669,9 +676,10 @@ function vPack(id){
     ? '<section class="sec" aria-labelledby="h-mods"><h2 id="h-mods">What is inside</h2><div class="panel" id="pack-wait" role="status">' + (p.failed
         ? '<p>CurseForge did not answer, so the mods could not be fetched.</p><button type="button" class="btn btn-ghost" data-action="retry" data-id="' + p.id + '" data-fk="retry">Try again</button>'
         : "<p>Fetching the mods from CurseForge.</p>") + "</div></section>"
-    : '<section class="sec" aria-labelledby="h-mods"><h2 id="h-mods">What is inside</h2><div class="card mods">' +
-        fold("g-core", "The essentials (" + p.core.length + ")", rows(p.core), true) +
-        (p.spice.length ? fold("g-spice", "The spice (" + p.spice.length + ")", rows(p.spice), false) : "") +
+    : '<section class="sec" aria-labelledby="h-mods"><h2 id="h-mods">What is inside</h2>' +
+        (LIVE && p.gameVersion ? '<p class="muted" id="pack-version">Chosen for Hytale ' + esc(p.gameVersion) + ", the version most mods support right now. Each mod fills one job, so nothing doubles up.</p>" : "") + '<div class="card mods">' +
+        fold("g-core", "The essentials (" + p.core.length + ")", rows(p.core, p), true) +
+        (p.spice.length ? fold("g-spice", "The spice (" + p.spice.length + ")", rows(p.spice, p), false) : "") +
         (p.helpers && p.helpers.length ? fold("g-help", "Helpers these mods need (" + p.helpers.length + ")", '<p class="small muted" style="padding-bottom:10px">Some mods cannot run without a helper mod. Hex found them so you do not have to.</p>' + rows(p.helpers), false) : "") + "</div></section>" +
       '<section class="sec" aria-labelledby="h-stamp"><h2 id="h-stamp">Played it?</h2>' +
       (stamped
@@ -733,7 +741,7 @@ function vSaved(){
   var packs = S.saved.map(findPack).filter(function(p){ return p && shown(p); }), mods = S.savedMods.map(function(i){ return MOD[i]; }).filter(Boolean), tab = S.savedTab, body;
   if (tab === "packs") body = packs.length ? savedShelf(packs)
     : hex(say("savedEmpty")) + '<div class="panel"><p>Tap Save on any playpack and it lands here.</p><a class="btn btn-primary" href="#explore">Browse playpacks</a></div>';
-  else body = mods.length ? '<div class="card list">' + mods.map(modRow).join("") + "</div>"
+  else body = mods.length ? '<div class="card list">' + mods.map(function(m){ return modRow(m); }).join("") + "</div>"
     : '<div class="panel"><p>Tap the heart beside any mod to keep it here, even if you do not want the whole playpack.</p><a class="btn btn-primary" href="#explore">Browse playpacks</a></div>';
   return '<div class="page"><div class="sec"><h1 tabindex="-1">Saved</h1>' +
     '<div class="seg seg-wide" role="group" aria-label="What to show">' +
