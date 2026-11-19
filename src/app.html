@@ -678,7 +678,7 @@ var S = {
   tier: store.get("tier", "free"), mood: store.get("mood", "cheeky"), theme: store.get("theme", "device"),
   saved: store.get("saved", []), savedMods: store.get("savedMods", []), stamps: store.get("stamps", []), mine: store.get("mine", []),
   hidden: store.get("hidden", []), blocked: store.get("blocked", []),
-  user: null, accounts: false, billing: false, plan: "year", queue: null, blockedMembers: [], upnext: store.get("upnext", []), installed: store.get("installed", {}), welcomed: store.get("welcomed", false), sort: "style", q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false, bres: [], bbusy: false, spot: null,
+  user: null, accounts: false, billing: false, plan: "year", queue: null, blockedMembers: [], upnext: store.get("upnext", []), installed: store.get("installed", {}), welcomed: store.get("welcomed", false), sort: (["new", "style", "az", "gentle", "wild"].indexOf(store.get("sort", "new")) > -1 ? store.get("sort", "new") : "new"), q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false, bres: [], bbusy: false, spot: null,
   draft: { name:"", blurb:"", mods:[] }, dirty: false, justStamped: null, open: {}
 };
 var hostTheme = document.documentElement.getAttribute("data-theme");
@@ -1005,11 +1005,11 @@ function searchBox(id, clearAction, label, placeholder, value){
 function options(list, cur){ return list.map(function(o){ return '<option value="' + o[0] + '"' + (cur === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join(""); }
 function vExplore(){
   return '<div class="page"><div class="sec"><h1 tabindex="-1">Every playpack</h1><p class="muted">Pick how you want to play. Hex has done the digging.</p>' +
-    '<div class="toolbar filters">' + searchBox("q", "clear", "Search playpacks and mods", "Search, for example farming", S.q) +
+    '<div class="toolbar filters">' + searchBox("q", "clear", "Search playpacks and mods", "Search", S.q) +
     '<label class="sr" for="fam">Filter by playstyle</label><select id="fam">' + options([["all","Any playstyle"]].concat(FAMILIES), S.fam) + "</select>" +
     '<label class="sr" for="filter">Filter by dare level</label><select id="filter">' +
     options([["all","Any dare level"],["1","Cozy"],["2","Spicy"],["3","Send help"],["exp","Experimental"]], S.filter) + "</select>" +
-    '<label class="sr" for="sort">Sort playpacks</label><select id="sort">' + options([["style","By playstyle"],["new","Newest first"],["az","A to Z"],["gentle","Gentlest first"],["wild","Wildest first"]], S.sort) + "</select>" +
+    '<label class="sr" for="sort">Sort playpacks</label><select id="sort">' + options([["new","Newest first"],["style","By playstyle"],["az","A to Z"],["gentle","Gentlest first"],["wild","Wildest first"]], S.sort) + "</select>" +
     '<button type="button" class="btn btn-ghost" data-action="surprise" id="surprise">' + ic("star") + "Surprise me</button></div></div>" +
     '<div class="page" id="results">' + resultsHtml() + "</div></div>";
 }
@@ -1494,7 +1494,7 @@ document.addEventListener("change", function(e){
   else if (t.id === "bcat"){ S.bcat = t.value; $("#b-list").innerHTML = pickList(); }
   else if (t.id === "bonly"){ S.bonly = t.checked; $("#b-list").innerHTML = pickList(); }
   else if (t.getAttribute("data-inst")){ var ip = findPack(t.getAttribute("data-inst")); markInstalled(ip, t.value, t.checked); openSheet("Play " + esc(ip.name), playBody(ip, "here")); var back = sheet.querySelector('input[value="' + t.value + '"]'); if (back) back.focus(); }
-  else if (t.id === "sort"){ S.sort = t.value; $("#results").innerHTML = resultsHtml(); }
+  else if (t.id === "sort"){ S.sort = t.value; store.set("sort", S.sort); $("#results").innerHTML = resultsHtml(); }
   else if (t.id === "news-on"){ var want = t.checked; post({ op:"news", on:want }).then(function(){ S.user.news = want; toast(want ? "Weekly email is on" : "Weekly email is off"); }, function(){ t.checked = !want; toast("That did not save. Check your connection."); }); }
   else if (t.id === "share-stamp"){ if (shareNow){ shareNow.stamp = t.checked; shareNow.file = null; paintShare(); } }
   else if (t.id === "theme"){ S.theme = t.value; store.set("theme", S.theme); applyTheme(); }

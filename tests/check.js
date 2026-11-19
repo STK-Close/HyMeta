@@ -201,7 +201,13 @@ function makeAudit(p, bad) {
     const magic = await p.locator("#results .pk .pk-name").allTextContents();
     if (await p.inputValue("#fam") !== "magic" || magic.slice().sort().join(" | ") !== Object.values(CARD).filter((c) => c.family === "magic").map((c) => c.name).sort().join(" | ")) bad("playstyle tile did not filter to the magic packs, showed: " + magic.join(" | "));
     await p.selectOption("#fam", "all"); await p.waitForTimeout(150);
-    if (await count("#results .fam-group .pk") !== EVERY) bad("explore: all " + EVERY + " playpacks should be out once the weekly list has run out, found " + await count("#results .fam-group .pk"));
+    const out22 = await p.locator("#results .shelf").first().locator(".pk").count();
+    if (out22 !== EVERY) bad("explore: all " + EVERY + " playpacks should be out once the weekly list has run out, found " + out22);
+    // newest first is how Explore opens, and the search box says only "Search"
+    const firstUp = await p.locator("#results .pk .pk-name").allTextContents();
+    if (await p.inputValue("#sort") !== "new" || firstUp[0] !== CARD[ROTA[ROTA.length - 1]].name || firstUp[1] !== CARD[ROTA[ROTA.length - 2]].name) bad("explore: does not open with the newest playpack first, opened with: " + firstUp.slice(0, 2).join(" | "));
+    if (await count(".fam-group")) bad("explore: opens grouped by playstyle, not newest first");
+    if ((await p.getAttribute("#q", "placeholder")) !== "Search") bad("explore: the search box says more than Search: " + await p.getAttribute("#q", "placeholder"));
     if (await count("#results .pk-new")) bad("explore: a playpack is called new after the weekly list has run out");
     if (name === "phone") { // the filters sit in two tidy rows under the search box, not four ragged ones
       const bar = await p.evaluate(() => { const t = document.querySelector(".toolbar.filters").getBoundingClientRect(), w = [...document.querySelectorAll(".toolbar.filters select, #surprise")].map((e) => Math.round(e.getBoundingClientRect().width)); return { h: Math.round(t.height), min: Math.min(...w), max: Math.max(...w) }; });
@@ -290,12 +296,15 @@ function makeAudit(p, bad) {
 
     // explore: grouped by playstyle, sortable, and a surprise button
     await go("explore"); await audit("explore"); await shot("explore");
+    await p.selectOption("#sort", "style"); await audit("explore, by playstyle");
     if (await count(".fam-group") < 6) bad("explore: playpacks are not grouped under playstyle headings");
+    // the chosen order is remembered on the next visit
+    await p.reload(); await p.waitForSelector("#results .pk"); if (await p.inputValue("#sort") !== "style" || await count(".fam-group") < 6) bad("explore: the chosen sort order was forgotten after reloading");
     await p.selectOption("#sort", "az");
     const order = await p.locator("#results .shelf").first().locator(".pk-name").allTextContents();
     if (order.length < 10 || order.join("|") !== order.slice().sort((x, y) => x.localeCompare(y)).join("|")) bad("explore: A to Z sorting is wrong: " + order.slice(0, 4).join(", "));
     await p.selectOption("#sort", "wild"); if ((await p.locator("#results .pk .chip").first().textContent()).indexOf("Send help") < 0) bad("explore: wildest first does not start with a send help playpack");
-    await p.selectOption("#sort", "style");
+    await p.selectOption("#sort", "new");
     await p.click("#surprise"); await p.waitForFunction(() => location.hash.indexOf("#pack-") === 0); await go("explore");
     await p.fill("#q", "spider"); if (await count("#results .pk") !== 1) bad("search for spider should find 1 playpack");
     await p.fill("#q", "zzzz"); if (!(await count("#results .panel"))) bad("no empty state for a search with no results");
@@ -625,7 +634,7 @@ function makeAudit(p, bad) {
       for (const n of [next.name, later.name]) if (names.includes(n)) bad("explore: " + n + " is on the shelf before its week");
       if (names.length !== catalog.base.length + 2) bad("explore: expected " + (catalog.base.length + 2) + " playpacks in week 1, found " + names.length);
       if (await count("#results .pk-new") !== 1 || !(await p.textContent("#results .pk:has(.pk-new)")).includes(now.name)) bad("explore: only this week's playpack should be marked new");
-      await p.selectOption("#sort", "new"); await p.waitForTimeout(150);
+      if (await p.inputValue("#sort") !== "new") bad("explore: newest first is not the order it opens in"); await p.waitForTimeout(150);
       const newest = await p.locator("#results .pk .pk-name").allTextContents();
       if (newest.slice(0, 2).join(" | ") !== now.name + " | " + before.name) bad("explore: Newest first is in the wrong order: " + newest.slice(0, 4).join(" | "));
       const lost = await loaded(); if (lost.length) bad("explore: pictures did not load: " + lost.join(", "));
