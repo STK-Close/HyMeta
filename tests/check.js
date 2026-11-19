@@ -52,6 +52,15 @@ function makeAudit(p, bad) {
           if (el.type === "checkbox" || el.type === "radio") { const l = el.closest("label").getBoundingClientRect(); hh = l.height; ww = l.width; }
           if (hh < 43.5 || ww < 43.5) res.push(`tap target ${Math.round(ww)}x${Math.round(hh)}: ${el.tagName} ${el.textContent.trim().slice(0, 20)}`);
         }
+        // nothing a person can tap may run off the side of the screen or have its words cut off,
+        // including bars pinned to the screen, which never make the page itself scroll sideways
+        const scrolls = (el) => { for (let e = el.parentElement; e; e = e.parentElement) { const o = getComputedStyle(e).overflowX; if ((o === "auto" || o === "scroll") && e.scrollWidth > e.clientWidth + 1) return true; } return false; };
+        for (const el of scope.querySelectorAll("a,button,select,input,summary,label")) {
+          const cs = getComputedStyle(el), r = el.getBoundingClientRect(); if (!r.width || !r.height || cs.visibility === "hidden" || el.closest(".sr") || scrolls(el)) continue;
+          const what = el.tagName + " " + (el.textContent.trim() || el.getAttribute("aria-label") || el.id || "").slice(0, 24);
+          if (r.right > innerWidth + 1 || r.left < -1) res.push(`runs off the side of the screen (${Math.round(r.left)} to ${Math.round(r.right)} of ${innerWidth}): ${what}`);
+          if ((el.tagName === "BUTTON" || el.classList.contains("btn")) && el.scrollWidth > el.clientWidth + 1) res.push(`words cut off: ${what}`);
+        }
         // every card must stand apart from the page behind it
         const pageBg = getComputedStyle(document.body).backgroundColor;
         for (const sel of [".pk", ".card", ".panel", ".hex .say"]) for (const el of scope.querySelectorAll(sel)) {
