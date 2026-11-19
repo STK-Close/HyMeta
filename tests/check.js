@@ -77,7 +77,7 @@ function makeAudit(p, bad) {
     const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: name !== "desktop" });
     const p = await ctx.newPage();
     const bad = (m) => problems.push(`${tag} ${m}`);
-    p.on("console", (m) => { if (m.type() === "error" && !(expecting401 && /40[01]/.test(m.text()))) bad("console: " + m.text()); });
+    p.on("console", (m) => { if (m.type() === "error" && !(expecting401 && /40[01]/.test(m.text())) && !/registered handler|curseforge:/i.test(m.text())) bad("console: " + m.text()); });
     p.on("pageerror", (e) => bad("page error: " + e.message));
     const go = async (hash) => { await p.goto(url + "#" + hash); await p.waitForTimeout(220); };
     const shot = async (n) => { if (out) await p.screenshot({ path: `${out}/${tag}-${n}.png`, fullPage: true }); };
@@ -90,6 +90,10 @@ function makeAudit(p, bad) {
     // sign in, then home
     await signIn(p, bad); await p.waitForTimeout(500);
     await audit("home"); await shot("home");
+    // first-time welcome: shown once, gone for good after "Got it"
+    if (!(await count("#welcome"))) bad("home: no welcome for a first-time visitor");
+    await p.click('[data-action="welcome"]'); await p.reload(); await p.waitForSelector("#view .page"); await p.waitForTimeout(300);
+    if (await count("#welcome")) bad("home: the welcome came back after it was dismissed");
     if (await count(".top .hex, .top .face")) bad("home: troll is in the top bar");
     if (await count("#view > .page > .hex")) bad("home: troll greeting is back at the top of the page");
     if (name === "phone") { const hgt = await p.locator(".pk").first().evaluate((e) => e.getBoundingClientRect().height); if (hgt > 190) bad(`home: playpack card is ${Math.round(hgt)}px tall on a phone`); }
@@ -120,7 +124,7 @@ function makeAudit(p, bad) {
     // membership: disclosure, grown-up gate, then member view
     await p.click('.actions [data-action="join"]');
     const joinText = await p.textContent("#sheet");
-    for (const need of ["$3.99", "$24.99", "renews automatically", "Restore purchases", "Terms of use", "Privacy policy"]) if (!joinText.includes(need)) bad("membership sheet is missing: " + need);
+    for (const need of ["$3.99", "$24.99", "renews automatically", "Apple Pay", "Terms of use", "Privacy policy"]) if (!joinText.includes(need)) bad("membership sheet is missing: " + need);
     await audit("membership sheet");
     await p.click('[data-action="gate"]'); await audit("gate");
     await p.fill("#gate-in", "1"); await p.click('#gate button[type="submit"]');
@@ -140,8 +144,15 @@ function makeAudit(p, bad) {
     await p.click('[data-tab="packs"]'); await p.click(".pk-heart"); await p.waitForTimeout(150);
     if (await count("#view .pk") !== 0 || !(await count("#view .panel"))) bad("heart in Saved did not remove the playpack");
 
-    // explore search
+    // explore: grouped by playstyle, sortable, and a surprise button
     await go("explore"); await audit("explore"); await shot("explore");
+    if (await count(".fam-group") < 6) bad("explore: playpacks are not grouped under playstyle headings");
+    await p.selectOption("#sort", "az");
+    const order = await p.locator("#results .shelf").first().locator(".pk-name").allTextContents();
+    if (order.length < 10 || order.join("|") !== order.slice().sort((x, y) => x.localeCompare(y)).join("|")) bad("explore: A to Z sorting is wrong: " + order.slice(0, 4).join(", "));
+    await p.selectOption("#sort", "wild"); if ((await p.locator("#results .pk .chip").first().textContent()).indexOf("Send help") < 0) bad("explore: wildest first does not start with a send help playpack");
+    await p.selectOption("#sort", "style");
+    await p.click("#surprise"); await p.waitForFunction(() => location.hash.indexOf("#pack-") === 0); await go("explore");
     await p.fill("#q", "spider"); if (await count("#results .pk") !== 1) bad("search for spider should find 1 playpack");
     await p.fill("#q", "zzzz"); if (!(await count("#results .panel"))) bad("no empty state for a search with no results");
     await p.click("#q-clear"); if (await p.inputValue("#q") !== "") bad("search clear button failed");
@@ -224,7 +235,7 @@ function makeAudit(p, bad) {
     const p = await ctx.newPage();
     const bad = (m) => problems.push(`${tag} ${m}`);
     await p.route("https://media.forgecdn.net/**", (r) => r.fulfill({ status: 200, contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="#888"/></svg>' }));
-    p.on("console", (m) => { if (m.type() === "error" && !(expecting401 && /40[01]/.test(m.text()))) bad("console: " + m.text()); });
+    p.on("console", (m) => { if (m.type() === "error" && !(expecting401 && /40[01]/.test(m.text())) && !/registered handler|curseforge:/i.test(m.text())) bad("console: " + m.text()); });
     p.on("pageerror", (e) => bad("page error: " + e.message));
     const leaked = new Set();
     p.on("response", async (r) => { if (!r.url().startsWith(url)) return; try { if ((await r.text()).includes("pretend-key")) leaked.add(new URL(r.url()).pathname); } catch (e) {} });
@@ -243,8 +254,27 @@ function makeAudit(p, bad) {
       if (!(await count('section[aria-labelledby="h-spot"] img.tile-img'))) bad("spotlight mod has no logo");
       // the free playpack: real-style mods, logos, authors, links and helper mods
       await p.waitForSelector('.hero-side .chip:has-text("mods")'); // the free playpack has finished loading
-      await p.click('[data-action="play"]'); await p.click('[data-mode="here"]'); await p.waitForSelector("#ticks li");
-      const inPack = await count("#ticks li"); if (inPack < 6) bad("free playpack has too few mods: " + inPack);
+      await p.click('[data-action="play"]'); await p.click('[data-mode="here"]'); await p.waitForSelector("#inst-list li");
+      const inPack = await count("#inst-list li"); if (inPack < 6) bad("free playpack has too few mods: " + inPack);
+      // real installing: each tap hands one mod to the CurseForge app and moves on to the next
+      await audit("install sheet"); if (out) await p.screenshot({ path: `${out}/${tag}-install.png` });
+      const first = await p.getAttribute("#inst-next", "href"), firstName = await p.textContent("#inst-next");
+      if (!/^curseforge:\/\/install\?addonId=\d+$/.test(first)) bad("the install button does not hand the mod to the CurseForge app: " + first);
+      await p.click("#inst-next"); await p.waitForFunction(() => /^1 of /.test(document.querySelector("#inst-count").textContent));
+      if ((await p.textContent("#inst-next")) === firstName) bad("after installing a mod the button did not move on to the next one");
+      if (await count("#inst-list input:checked") !== 1) bad("the installed mod was not ticked off");
+      while (await count("#inst-list input:not(:checked)")) { await p.locator("#inst-list input:not(:checked)").first().click(); await p.waitForTimeout(80); }
+      await p.waitForSelector("#inst-done");
+      if (!/switch these mods on/.test(await p.textContent("#inst-done"))) bad("the last step, switching the mods on in Hytale, is not explained");
+      await p.keyboard.press("Escape"); await p.reload(); await p.waitForSelector('.hero-side .chip:has-text("mods")');
+      await p.click('[data-action="play"]'); await p.click('[data-mode="here"]'); if (!(await count("#inst-done"))) bad("install progress was forgotten after reloading");
+      // send to my computer: a real code that opens the same playpack
+      await p.click('[data-mode="send"]'); await p.waitForFunction(() => /^[B-DF-HJ-NP-TV-XZ]{4}-\d{4}$/.test(document.querySelector("#code").textContent));
+      const handCode = await p.textContent("#code"); await audit("send sheet with a code");
+      await p.keyboard.press("Escape"); await p.click("#have-code"); await audit("code entry");
+      expecting401 = true; await p.fill("#code-in", "ZZZZ-0000"); await p.click('#codeform button[type="submit"]'); await p.waitForSelector("#code-err:not([hidden])"); expecting401 = false;
+      await p.fill("#code-in", handCode.toLowerCase()); await p.click('#codeform button[type="submit"]'); await p.waitForSelector("#inst-list");
+      if (!/pack-cozy-farmer/.test(p.url())) bad("the code did not open its playpack");
       await p.keyboard.press("Escape");
       await go("pack-cozy-farmer"); await p.waitForSelector(".mod");
       await audit("live pack"); if (out) await p.screenshot({ path: `${out}/${tag}-pack.png`, fullPage: true });
@@ -312,6 +342,10 @@ function makeAudit(p, bad) {
       await q.fill("#a-pass", pass); await q.click('#acct button[type="submit"]'); await q.waitForSelector("#acct-who");
       await q.click("#tier-member"); await q.goto(url + "#saved"); await q.click('[data-tab="mods"]');
       try { await q.waitForSelector("#view .mod"); } catch (e) { bad("a mod saved before signing up did not follow the account to a second device"); }
+      // a playpack sent from one signed-in device is waiting on the other
+      await p.goto(url + "#home"); await p.waitForSelector('.hero-side [data-action="play"]'); await p.click('.hero-side [data-action="play"]'); await p.click('[data-mode="send"]'); await p.waitForSelector("#code-also"); await p.waitForTimeout(400); await p.keyboard.press("Escape");
+      await q.goto(url + "#home"); await q.reload(); await q.waitForSelector("#view .page");
+      try { await q.waitForSelector("#upnext .pk"); } catch (e) { bad("a playpack sent from one device is not waiting on the other"); }
       // a stamp collected on the second device shows on the first
       await q.goto(url + "#pack-cozy-farmer"); await q.waitForSelector('[data-action="stamp"]'); await q.click('[data-action="stamp"]'); await q.waitForTimeout(400);
       await p.reload(); await p.waitForSelector("#view .page"); await go("you"); await p.waitForSelector("#acct-who, #f-acct");

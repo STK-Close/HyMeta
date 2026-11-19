@@ -179,6 +179,11 @@ details.fold[open]>summary::after{content:"\2212"}
 .fold-body{padding:0 0 16px;display:flex;flex-direction:column;gap:12px}
 .mods .fold-body{padding:0;gap:0}
 .group-about{padding-bottom:10px}
+details.plain>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700}
+.steps{padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.inst li{justify-content:space-between;min-height:44px;border-top:1px solid var(--line-soft)}
+.inst .linkbtn{padding:0;font-size:.8125rem}
+.inst .check{font-weight:400;flex:1;min-width:0}
 .qrow{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--line-soft)}
 .mod{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;padding:14px 0;border-top:1px solid var(--line-soft)}
 .tile{width:56px;height:56px;border-radius:10px;padding:9px;display:block;flex:none}
@@ -361,7 +366,7 @@ function rng(seed){
   var s = 7; for (var i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) >>> 0;
   return function(){ s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
 }
-var ART = { combat:"pack-combat", building:"pack-building", survival:"pack-survival", creatures:"pack-creatures", magic:"pack-magic", exploration:"pack-exploration", everything:"pack-everything", hero:"hymeta-hero", spiders:"pack-spiders", factory:"pack-factory", hermit:"pack-hermit" };
+var ART = { combat:"pack-combat", building:"pack-building", survival:"pack-survival", creatures:"pack-creatures", magic:"pack-magic", exploration:"pack-exploration", everything:"pack-everything", hero:"hymeta-hero", spiders:"pack-spiders", factory:"pack-factory", hermit:"pack-hermit", farm:"pack-farm" };
 function art(key, big){ return '<img class="art" src="images/' + (big ? "" : "thumb-") + (ART[key] || ART.hero) + '.jpg" alt="" decoding="async"' + (big ? "" : ' loading="lazy"') + ">"; }
 
 /* ---------- sample data (placeholders until CurseForge is connected) ---------- */
@@ -408,7 +413,7 @@ var MOD = {}; MODS.forEach(function(m){ MOD[m.id] = m; });
 
 var NIGHT = ["#232a5c","#3d3f86"], HILLS = ["#2a3466","#1f2750","#151b3a"];
 var PACKS = [
-  { id:"cozy-farmer", family:"creatures", art:"creatures", name:"The cozy farmer", kind:"Standard", dare:1, icon:"leaf", sky:["#20315f","#3f6b7d"], moon:"#ffe9a8", hills:["#2f5a5c","#234647","#17302f"],
+  { id:"cozy-farmer", family:"creatures", art:"farm", name:"The cozy farmer", kind:"Standard", dare:1, icon:"leaf", sky:["#20315f","#3f6b7d"], moon:"#ffe9a8", hills:["#2f5a5c","#234647","#17302f"],
     blurb:"Plant things. Pet things. Watch the rain. Nothing bad happens.",
     warning:"May cause you to name every chicken. One of them is plotting something.",
     pitch:{ gentle:"Soft soil, gentle rain and animals that love you. A slow week, on purpose.",
@@ -519,7 +524,7 @@ var S = {
   tier: store.get("tier", "free"), mood: store.get("mood", "cheeky"), theme: store.get("theme", "device"),
   saved: store.get("saved", []), savedMods: store.get("savedMods", []), stamps: store.get("stamps", []), mine: store.get("mine", []),
   hidden: store.get("hidden", []), blocked: store.get("blocked", []),
-  user: null, accounts: false, queue: null, blockedMembers: [], q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false, bres: [], bbusy: false, spot: null,
+  user: null, accounts: false, queue: null, blockedMembers: [], upnext: store.get("upnext", []), installed: store.get("installed", {}), welcomed: store.get("welcomed", false), sort: "style", q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false, bres: [], bbusy: false, spot: null,
   draft: { name:"", blurb:"", mods:[] }, dirty: false, justStamped: null, open: {}
 };
 var hostTheme = document.documentElement.getAttribute("data-theme");
@@ -577,7 +582,7 @@ function liveSearch(){
   }, 350);
 }
 /* ---------- accounts (only when the server has a database) ---------- */
-var KEPT = ["saved", "savedMods", "stamps"];
+var KEPT = ["saved", "savedMods", "stamps", "upnext"];
 function post(body, route){
   return fetch(route || "api/account", { method:"POST", credentials:"same-origin", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) })
     .then(function(r){ return r.json().then(function(d){ if (!r.ok) throw new Error(d.message || "Something went wrong. Try again."); return d; }); });
@@ -685,9 +690,14 @@ function head(id, title, href, label){
 
 /* ---------- views ---------- */
 function vHome(){
-  var p = findPack(FEATURED), n = modCount(p), comm = communityPacks().slice(0, 3), spot = LIVE ? MOD[S.spot] : MOD[SPOTLIGHT];
+  var p = findPack(FEATURED), n = modCount(p), comm = communityPacks().slice(0, 3), spot = LIVE ? MOD[S.spot] : MOD[SPOTLIGHT], waiting = S.upnext.map(findPack).filter(function(w){ return w && shown(w); });
   return '<div class="page">' +
     '<p class="notice small">' + (LIVE ? "Private test. These are live mods from CurseForge. The playpacks are early recipes, not final picks." : "Preview. Every mod, number and picture is a placeholder until CurseForge is connected.") + "</p>" +
+    (S.welcomed ? "" : '<section class="card pad sec" id="welcome" aria-labelledby="h-welcome"><h2 id="h-welcome">New here? Three steps.</h2>' +
+      '<ol class="steps"><li><strong>Pick a playstyle.</strong> Farming, dungeons, building, whatever you fancy.</li><li><strong>See the ' + term("playpack", "playpack") + ".</strong> About eight " + term("mod", "mods") + ' picked to work together.</li><li><strong>Install and play.</strong> One tap per mod on your computer.</li></ol>' +
+      '<div><button type="button" class="btn btn-ghost" data-action="welcome">Got it</button></div></section>') +
+    (waiting.length ? '<section class="sec" id="upnext" aria-labelledby="h-next">' + head("h-next", "Waiting for you") + '<p class="muted">Sent from your phone. Open one to install it.</p><div class="shelf shelf-3">' + waiting.map(function(w){
+      return '<div class="pk-wrap">' + pk(w) + '<button type="button" class="iconbtn pk-heart" data-action="unqueue" data-id="' + w.id + '" aria-label="Remove ' + esc(w.name) + ' from waiting">' + ic("x") + "</button></div>"; }).join("") + "</div></section>" : "") +
     '<section class="card hero" aria-labelledby="h-week">' +
       '<div class="hero-art">' + art(p.art, true) +
         '<div class="hero-top"><span class="badge">' + ic("star") + 'Free this week</span><span class="badge badge-dark">' + ic("clock") + nextDrop() + "</span></div>" +
@@ -695,7 +705,7 @@ function vHome(){
       '<div class="hero-body"><div class="sec"><p class="lede">' + esc(p.blurb) + "</p>" + hex(p.pitch[S.mood]) + warnBox(p) + "</div>" +
         '<div class="hero-side"><div class="chips">' + dareChip(p) + (nMods(p) ? '<span class="chip">' + nMods(p) + "</span>" : "") + "</div>" +
         '<button type="button" class="btn btn-primary btn-big btn-full" data-action="play" data-id="' + p.id + '">' + ic("play") + "Play this pack</button>" +
-        '<a class="btn btn-ghost btn-full" href="#pack-' + p.id + '">' + (ready(p) ? "See the " + n + " mods" : "See the mods") + "</a></div></div></section>" +
+        '<a class="btn btn-ghost btn-full" href="#pack-' + p.id + '">' + (ready(p) ? "See the " + n + " mods" : "See the mods") + "</a>" + (LIVE ? '<button type="button" class="linkbtn" data-action="code" id="have-code">I have a code from my phone</button>' : "") + "</div></div></section>" +
     '<section class="sec" aria-labelledby="h-shelf">' + head("h-shelf", "Also this week", "#explore", "See all") +
       '<p class="muted">' + (S.tier === "free" ? "Free players can read about these. Members get the " + term("mod", "mods") + " and the links." : "All yours. Open any " + term("playpack", "playpack") + " to see its mods.") + "</p>" +
       shelf(TEASERS.map(findPack), true) + "</section>" +
@@ -786,7 +796,13 @@ function resultsHtml(){
   var a = PACKS.filter(matches), c = communityPacks().filter(matches), o = "";
   if (!a.length && !c.length)
     return '<div class="panel"><h2>No playpacks match</h2><p>Try a different word, or clear the search to see the whole shelf.</p><button type="button" class="btn btn-ghost" data-action="clear">Clear the search</button></div>';
-  if (a.length) o += shelf(a);
+  var byName = function(x, y){ return x.name.localeCompare(y.name); };
+  if (S.sort === "az") o += shelf(a.slice().sort(byName));
+  else if (S.sort === "gentle" || S.sort === "wild") o += shelf(a.slice().sort(function(x, y){ return (S.sort === "gentle" ? x.dare - y.dare : y.dare - x.dare) || byName(x, y); }));
+  else FAMILIES.forEach(function(f){
+    var inFam = a.filter(function(x){ return x.family === f[0]; });
+    if (inFam.length) o += '<section class="sec fam-group" aria-labelledby="h-fam-' + f[0] + '">' + head("h-fam-" + f[0], f[1]) + shelf(inFam) + "</section>";
+  });
   if (c.length) o += '<section class="sec" aria-labelledby="h-comm">' + head("h-comm", "From the community") + '<p class="muted">Built and shared by members.</p>' + shelf(c) + "</section>";
   return o;
 }
@@ -801,7 +817,9 @@ function vExplore(){
     '<div class="toolbar">' + searchBox("q", "clear", "Search playpacks and mods", "Search, for example farming", S.q) +
     '<label class="sr" for="fam">Filter by playstyle</label><select id="fam">' + options([["all","Any playstyle"]].concat(FAMILIES), S.fam) + "</select>" +
     '<label class="sr" for="filter">Filter by dare level</label><select id="filter">' +
-    options([["all","Any dare level"],["1","Cozy"],["2","Spicy"],["3","Send help"],["exp","Experimental"]], S.filter) + "</select></div></div>" +
+    options([["all","Any dare level"],["1","Cozy"],["2","Spicy"],["3","Send help"],["exp","Experimental"]], S.filter) + "</select>" +
+    '<label class="sr" for="sort">Sort playpacks</label><select id="sort">' + options([["style","Grouped by playstyle"],["az","A to Z"],["gentle","Gentlest first"],["wild","Wildest first"]], S.sort) + "</select>" +
+    '<button type="button" class="btn btn-ghost" data-action="surprise" id="surprise">' + ic("star") + "Surprise me</button></div></div>" +
     '<div class="page" id="results">' + resultsHtml() + "</div></div>";
 }
 
@@ -914,7 +932,7 @@ function vYou(){
         '<div class="row"><button type="button" class="btn btn-ghost" data-action="signin">Sign in</button><button type="button" class="btn btn-danger" data-action="delacct">Delete my account</button></div>') +
       "<h3>Blocked members</h3>" + blocked, false) +
     fold("f-mem", "Membership", "<p>Membership is $3.99 a month or $24.99 a year. You are looking at the " + (S.tier === "member" ? "member" : "free") + " view.</p>" +
-      '<div class="row"><button type="button" class="btn btn-ghost" data-action="join">See what members get</button><button type="button" class="btn btn-ghost" data-action="restore">Restore purchases</button></div>', false) +
+      '<div class="row"><button type="button" class="btn btn-ghost" data-action="join">See what members get</button></div>', false) +
     fold("f-legal", "Help and legal", '<div style="display:flex;flex-direction:column;align-items:flex-start">' +
       [["support","Help and contact"],["privacy","Privacy policy"],["terms","Terms of use"],["rules","Community rules"],["credits","Copyright and credits"]].map(function(d){
         return '<button type="button" class="linkbtn" data-action="doc" data-doc="' + d[0] + '">' + d[1] + "</button>"; }).join("") + "</div>", false) +
@@ -968,11 +986,51 @@ function closeSheet(){ timers.forEach(clearTimeout); timers = []; if (sheet.open
 sheet.addEventListener("close", function(){ if (opener && document.contains(opener)) opener.focus(); else { var h = $("#view h1"); if (h) h.focus(); } });
 sheet.addEventListener("click", function(e){ if (e.target === sheet) closeSheet(); });
 
+// Installing for real: each mod is handed to the CurseForge app, which downloads it and puts it in
+// Hytale's mods folder. CurseForge has no way to take a whole list at once, so it is one tap per mod.
+function installedIn(p){ var got = S.installed[p.id] || []; return allMods(p).filter(function(i){ return got.indexOf(i) > -1; }); }
+function markInstalled(p, id, on){
+  var got = (S.installed[p.id] || []).filter(function(i){ return i !== id; }); if (on) got.push(id);
+  S.installed[p.id] = got; store.set("installed", S.installed);
+  if (installedIn(p).length === allMods(p).length && S.upnext.indexOf(p.id) > -1){ S.upnext = S.upnext.filter(function(x){ return x !== p.id; }); store.set("upnext", S.upnext); remember("upnext", p.id, false); }
+}
+function appLink(id){ return "curseforge://install?addonId=" + encodeURIComponent(String(id).replace(/^cf/, "")); }
+function installBody(p){
+  var ids = allMods(p), done = installedIn(p), next = ids.filter(function(i){ return done.indexOf(i) < 0; })[0];
+  var top = next
+    ? '<a class="btn btn-primary btn-big btn-full" id="inst-next" href="' + appLink(next) + '" data-action="instnext" data-id="' + p.id + '" data-mod="' + next + '">' + ic("down") + "Install " + esc(MOD[next].name) + "</a>" +
+      '<p class="small muted" id="inst-count">' + done.length + " of " + ids.length + " installed. Each tap hands one mod to the CurseForge app.</p>"
+    : '<div id="inst-done" class="sec"><p><strong>All ' + ids.length + " mods are in.</strong> Last step: open Hytale, make a new world or edit one, open its mod settings and switch these mods on.</p>" + hex(say("installed")) + "</div>";
+  return top + '<ul class="ticks inst" id="inst-list">' + ids.map(function(i){
+      var m = MOD[i], on = done.indexOf(i) > -1;
+      return '<li class="' + (on ? "done" : "") + '"><label class="check"><input type="checkbox" data-inst="' + p.id + '" value="' + i + '"' + (on ? " checked" : "") + '><span><span class="sr">Installed: </span>' + esc(m.name) + "</span></label>" +
+        '<a class="linkbtn small" href="' + esc(m.url || "https://www.curseforge.com/hytale") + '" target="_blank" rel="noopener">Page' + ic("ext") + '<span class="sr"> for ' + esc(m.name) + " (opens in a new tab)</span></a></li>"; }).join("") + "</ul>" +
+    '<details class="plain"><summary>Nothing happens when I tap install</summary><p class="small">The install button needs the free CurseForge app on this computer. Open it once, then try again. You can also tap Page beside any mod and install it from its CurseForge page, then tick it off here.</p><a class="linkbtn" href="https://www.curseforge.com/download/app" target="_blank" rel="noopener">Get the CurseForge app' + ic("ext") + '<span class="sr"> (opens in a new tab)</span></a></details>';
+}
+function sendBody(p){
+  return "<p>Hytale runs on computers. Open HyMeta on yours, choose <strong>I have a code</strong> on the home screen and type this in. The code works for one day.</p>" +
+    '<p class="code" id="code" role="status">Making your code.</p><div class="row"><button type="button" class="btn btn-primary" data-action="copy" data-text="" id="code-copy" hidden>Copy the code</button></div>' +
+    (S.user ? '<p class="small muted" id="code-also">You are signed in, so this playpack is also waiting on your home screen on every device.</p>' : "");
+}
+function makeCode(p){
+  if (S.user && S.upnext.indexOf(p.id) < 0){ S.upnext.push(p.id); store.set("upnext", S.upnext); remember("upnext", p.id, true); }
+  post({ pack:p.id }, "api/handoff").then(function(d){
+    var el = $("#code"), btn = $("#code-copy"); if (!el) return;
+    if (!d.enabled){ el.textContent = "Codes are not switched on yet."; return; }
+    el.textContent = d.code; btn.setAttribute("data-text", d.code); btn.hidden = false;
+  }, function(e){ var el = $("#code"); if (el) el.textContent = e.message; });
+}
+function openCode(){
+  openSheet("I have a code", "<p>Made a code on your phone? Type it here to open that playpack.</p>" +
+    '<form id="codeform" class="sec" novalidate><div class="field"><label for="code-in">Code</label><input type="text" id="code-in" autocomplete="off" autocapitalize="characters" placeholder="BCDF-1234"></div>' +
+    '<p id="code-err" class="err" role="alert" hidden></p><div class="row"><button type="submit" class="btn btn-primary">Open the playpack</button></div></form>');
+}
 function playBody(p, mode){
   var ids = allMods(p), n = ids.length;
   var seg = '<div class="seg seg-wide" role="group" aria-label="Where do you play?">' +
     '<button type="button" data-action="playmode" data-mode="here" data-id="' + p.id + '" aria-pressed="' + (mode === "here") + '">On this computer</button>' +
     '<button type="button" data-action="playmode" data-mode="send" data-id="' + p.id + '" aria-pressed="' + (mode === "send") + '">Send to my computer</button></div>';
+  if (LIVE) return seg + (mode === "send" ? sendBody(p) : installBody(p));
   if (mode === "send"){
     var code = p.id.replace(/[^a-z]/g, "").slice(0, 4).toUpperCase() + "-" + (1000 + (rng(p.id)() * 9000 | 0));
     return seg + "<p>Hytale runs on computers. Open HyMeta on yours and type this code. The playpack will be waiting.</p>" +
@@ -991,6 +1049,7 @@ function openPlay(id, mode){
   var switching = !!mode;
   if (!mode) mode = (window.matchMedia && matchMedia("(pointer: coarse)").matches) ? "send" : "here";
   openSheet("Play " + esc(p.name), playBody(p, mode));
+  if (LIVE && mode === "send") makeCode(p);
   if (switching){ var b = $('[data-mode="' + mode + '"]', sheet); if (b) b.focus(); }
 }
 function runInstall(id){
@@ -1011,11 +1070,10 @@ function openJoin(){
     '<div class="radios" role="radiogroup" aria-label="Choose a plan">' +
     '<label><input type="radio" name="plan" value="year" checked><span><strong>Yearly, $24.99</strong><br><span class="small muted">About $2.08 a month. Saves 48% compared with paying monthly.</span></span></label>' +
     '<label><input type="radio" name="plan" value="month"><span><strong>Monthly, $3.99</strong><br><span class="small muted">Billed every month.</span></span></label></div>' +
-    '<p class="small muted">Payment is charged to your Apple Account when you confirm. Membership renews automatically unless you cancel at least 24 hours before the end of the current period. You can manage or cancel it at any time in your Apple Account settings.</p>' +
+    '<p class="small muted">Pay by card, Apple Pay or Google Pay. Membership renews automatically until you cancel, and you can cancel in two taps under You.</p>' +
     '<div class="row">' + (member
       ? '<button type="button" class="btn btn-ghost" data-action="tier" data-tier="free">Switch to the free view</button>'
-      : '<button type="button" class="btn btn-primary" data-action="gate">Continue</button>') +
-    '<button type="button" class="btn btn-ghost" data-action="restore">Restore purchases</button></div>' +
+      : '<button type="button" class="btn btn-primary" data-action="gate">Continue</button>') + "</div>" +
     '<div class="row"><button type="button" class="linkbtn" data-action="doc" data-doc="terms">Terms of use</button><button type="button" class="linkbtn" data-action="doc" data-doc="privacy">Privacy policy</button></div>' +
     '<p class="small muted">Preview only. No payment is taken.</p>');
 }
@@ -1027,8 +1085,8 @@ function openGate(){
 }
 var DOCS = {
   support:["Help and contact", "<p>Stuck, or spotted something wrong? Write to us and a real person will answer.</p><p><strong>Email:</strong> to be added before release.</p><p>To report a shared playpack, open it and tap Report this playpack. We review every report within 24 hours.</p>"],
-  privacy:["Privacy policy", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What we keep</h3><p>If you make an account we keep your sign-in email, the playpacks and mods you save, your stamps and anything you choose to share. Purchases are handled by Apple. We never see your card details.</p><h3>What we never do</h3><p>We do not sell or share your data. We do not show ads. We do not track you across other apps or websites.</p><h3>Children</h3><p>HyMeta is kept clean so it is safe for younger players to browse. Accounts and sharing are for ages 13 and up. We do not knowingly collect personal information from children under 13, and we delete it if we find any.</p><h3>Your choices</h3><p>You can delete your account, and everything in it, at any time from You, Account, Delete my account. Deleted data is removed within 30 days.</p><h3>Contact</h3><p>Lumina Art House, LLC. Contact email to be added before release.</p>"],
-  terms:["Terms of use", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What HyMeta is</h3><p>HyMeta is an unofficial guide to Hytale mods. It suggests sets of mods and links to their CurseForge pages. It is not made, endorsed or supported by Hypixel Studios, CurseForge or Overwolf.</p><h3>Mods belong to their creators</h3><p>Every mod, name and logo shown belongs to the person who made it. Mods are downloaded from CurseForge under its own terms. We cannot promise that any mod works, or that mods work together.</p><h3>Membership</h3><p>Membership is an auto-renewing subscription bought through Apple, at $3.99 a month or $24.99 a year. It renews until you cancel in your Apple Account settings. Refunds are handled by Apple.</p><h3>Accounts</h3><p>You must be 13 or older to make an account or share a playpack.</p><h3>Sharing</h3><p>Anything you share must follow the community rules. A person reviews every playpack before other members see it. We may remove content or close accounts that break the rules.</p><h3>Governing law</h3><p>These terms are governed by the laws of the State of Florida, United States.</p><h3>Owner</h3><p>HyMeta is owned and run by Lumina Art House, LLC. &copy; 2026 Lumina Art House, LLC. All rights reserved.</p>"],
+  privacy:["Privacy policy", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What we keep</h3><p>If you make an account we keep your sign-in email, the playpacks and mods you save, your stamps and anything you choose to share. Payments are handled by Stripe. We never see your card details.</p><h3>What we never do</h3><p>We do not sell or share your data. We do not show ads. We do not track you across other apps or websites.</p><h3>Children</h3><p>HyMeta is kept clean so it is safe for younger players to browse. Accounts and sharing are for ages 13 and up. We do not knowingly collect personal information from children under 13, and we delete it if we find any.</p><h3>Your choices</h3><p>You can delete your account, and everything in it, at any time from You, Account, Delete my account. Deleted data is removed within 30 days.</p><h3>Contact</h3><p>Lumina Art House, LLC. Contact email to be added before release.</p>"],
+  terms:["Terms of use", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What HyMeta is</h3><p>HyMeta is an unofficial guide to Hytale mods. It suggests sets of mods and links to their CurseForge pages. It is not made, endorsed or supported by Hypixel Studios, CurseForge or Overwolf.</p><h3>Mods belong to their creators</h3><p>Every mod, name and logo shown belongs to the person who made it. Mods are downloaded from CurseForge under its own terms. We cannot promise that any mod works, or that mods work together.</p><h3>Membership</h3><p>Membership is an auto-renewing subscription at $3.99 a month or $24.99 a year, paid through Stripe. It renews until you cancel, which you can do at any time under You.</p><h3>Accounts</h3><p>You must be 13 or older to make an account or share a playpack.</p><h3>Sharing</h3><p>Anything you share must follow the community rules. A person reviews every playpack before other members see it. We may remove content or close accounts that break the rules.</p><h3>Governing law</h3><p>These terms are governed by the laws of the State of Florida, United States.</p><h3>Owner</h3><p>HyMeta is owned and run by Lumina Art House, LLC. &copy; 2026 Lumina Art House, LLC. All rights reserved.</p>"],
   rules:["Community rules", "<p>Shared playpacks are seen by other players, including children. Keep it friendly.</p><ul class=\"perks\"><li>Be kind. No insults, bullying or hate.</li><li>Keep it clean. No swearing or grown-up content.</li><li>Stay private. No real names, links, emails, phone numbers or addresses.</li><li>Be honest. No scams, spam or pretending to be someone else.</li></ul><p>A person checks every playpack before other members can see it. Break the rules and your playpack is removed. Do it again and your account is closed.</p><p>See something wrong? Open the playpack and tap Report this playpack, or block the member who shared it. We review every report within 24 hours.</p>"],
   credits:["Copyright and credits", "<p>&copy; 2026 Lumina Art House, LLC. All rights reserved.</p><p>HyMeta is an unofficial fan app. Hytale is a trademark of Hypixel Studios. CurseForge is a trademark of Overwolf. HyMeta is not affiliated with or endorsed by either company.</p><p>Every mod belongs to its creator. Mod names, logos and details come from CurseForge.</p><p>In this preview, all mods, authors, download counts and artwork are placeholders.</p>"]
 };
@@ -1060,6 +1118,15 @@ document.addEventListener("click", function(e){
   else if (a === "play") openPlay(id);
   else if (a === "playmode") openPlay(id, b.getAttribute("data-mode"));
   else if (a === "install") runInstall(id);
+  else if (a === "instnext"){ p = findPack(id); markInstalled(p, b.getAttribute("data-mod"), true); setTimeout(function(){ if (sheet.open){ openSheet("Play " + esc(p.name), playBody(p, "here")); var nx = $("#inst-next") || $("#sheet-title"); nx.focus(); } }, 60); }
+  else if (a === "code") openCode();
+  else if (a === "unqueue"){ S.upnext = S.upnext.filter(function(x){ return x !== id; }); store.set("upnext", S.upnext); remember("upnext", id, false); render(false); toast("Removed from waiting"); }
+  else if (a === "welcome"){ S.welcomed = true; store.set("welcomed", true); render(true); }
+  else if (a === "surprise"){
+    var pool = PACKS.concat(communityPacks()).filter(function(x){ return !isLocked(x) && x.id !== current.replace("pack-", ""); });
+    if (!pool.length) pool = PACKS.slice();
+    p = pool[Math.floor(Math.random() * pool.length)]; toast("Hex picked " + p.name + ". No take-backs."); location.hash = "pack-" + p.id;
+  }
   else if (a === "join") openJoin();
   else if (a === "gate") openGate();
   else if (a === "restore") toast("Nothing to restore in this preview");
@@ -1126,6 +1193,8 @@ document.addEventListener("change", function(e){
   else if (t.id === "fam"){ S.fam = t.value; $("#results").innerHTML = resultsHtml(); }
   else if (t.id === "bcat"){ S.bcat = t.value; $("#b-list").innerHTML = pickList(); }
   else if (t.id === "bonly"){ S.bonly = t.checked; $("#b-list").innerHTML = pickList(); }
+  else if (t.getAttribute("data-inst")){ var ip = findPack(t.getAttribute("data-inst")); markInstalled(ip, t.value, t.checked); openSheet("Play " + esc(ip.name), playBody(ip, "here")); var back = sheet.querySelector('input[value="' + t.value + '"]'); if (back) back.focus(); }
+  else if (t.id === "sort"){ S.sort = t.value; $("#results").innerHTML = resultsHtml(); }
   else if (t.id === "theme"){ S.theme = t.value; store.set("theme", S.theme); applyTheme(); }
   else if (t.name === "mood"){ S.mood = t.value; store.set("mood", S.mood); $("#mood-sample").innerHTML = hex(say("greet")); }
   else if (t.name === "mods"){
@@ -1138,7 +1207,14 @@ document.addEventListener("change", function(e){
 document.addEventListener("toggle", function(e){ var d = e.target; if (d.classList && d.classList.contains("fold") && d.id) S.open[d.id] = d.open; }, true);
 document.addEventListener("submit", function(e){
   var f = e.target; e.preventDefault();
-  if (f.id === "acct"){
+  if (f.id === "codeform"){
+    var cerr = $("#code-err"); cerr.hidden = true;
+    api("api/handoff?code=" + encodeURIComponent($("#code-in").value)).then(function(d){
+      if (!d.enabled || !findPack(d.pack)){ cerr.textContent = "That playpack is not available here."; cerr.hidden = false; return; }
+      closeSheet(); location.hash = "pack-" + d.pack; setTimeout(function(){ openPlay(d.pack, "here"); }, 250);
+    }, function(){ cerr.textContent = "That code is not right, or it is more than a day old. Make a new one on your phone."; cerr.hidden = false; $("#code-in").focus(); });
+  }
+  else if (f.id === "acct"){
     var aerr = $("#a-err"), up = f.getAttribute("data-mode") === "signup", btn = f.querySelector('button[type="submit"]');
     var body = { op: up ? "signup" : "login", email: $("#a-email").value, password: $("#a-pass").value };
     if (up){ body.name = $("#a-name").value; body.over13 = $("#a-age").checked; }

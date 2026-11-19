@@ -32,7 +32,7 @@ const a = require("../lib/accounts"), { query } = require("../lib/db");
   await a.keep(user, { list: "savedMods", id: "cf123", on: true }); await a.keep(user, { list: "stamps", id: "cozy-farmer", on: true });
   await a.keep(user, { list: "savedMods", id: "cf123", on: false });
   const lists = await a.lists(user);
-  if (JSON.stringify(lists) !== JSON.stringify({ saved: ["cozy-farmer"], savedMods: [], stamps: ["cozy-farmer"] })) bad("kept lists are wrong: " + JSON.stringify(lists));
+  if (JSON.stringify(lists) !== JSON.stringify({ saved: ["cozy-farmer"], savedMods: [], stamps: ["cozy-farmer"], upnext: [] })) bad("kept lists are wrong: " + JSON.stringify(lists));
   await refuses("unknown list", () => a.keep(user, { list: "tier", id: "member", on: true }));
   await refuses("odd item id", () => a.keep(user, { list: "saved", id: "<script>", on: true }));
   const other = await a.signUp({ ...good, email: "other@example.test", name: "Other One" }), otherReq = { headers: { cookie: other.split(";")[0] } };

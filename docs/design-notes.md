@@ -2,6 +2,19 @@
 
 Decisions made so far, and who made them. Anything marked "Claude's call" is open to change.
 
+## Direction set on November 19, 2026 (from Ligia)
+- HyMeta is a website, not an App Store app. Hytale is a desktop game, so the computer is where it matters most. It must still work well on a phone, because people will browse on the go.
+- Paying should be as easy as possible, always. On the web that means Stripe Checkout, with cards, Apple Pay and Google Pay. Not built yet.
+- With every build, Claude adds one thing nobody asked for and says what it was. So far: "Surprise me" in Explore.
+- `docs/app-store-checklist.md` is kept for reference only. Its safety items (review before sharing, report, block, account deletion) are built and stay.
+
+## Installing (Claude's call, from research)
+- CurseForge has no way to take a whole list of Hytale mods at once, and no shareable profiles for Hytale that could be confirmed. So installing is one tap per mod: each tap hands a mod to the CurseForge app with its `curseforge://install` link, and the next mod moves up.
+- This link is confirmed for Minecraft and the CurseForge site shows "Install via App" for Hytale mods. It has not been tested on a real computer with the CurseForge app yet.
+- Every mod can be ticked off by hand, and each has a link to its CurseForge page as a fallback. Progress is remembered on the device.
+- The last step is explained: mods are switched on per world inside Hytale.
+- "Send to my computer" makes a real code (four consonants, four digits, good for one day) that opens the same playpack on the computer. Signed-in members also find it under "Waiting for you" on every device.
+
 ## The weekly plan (from Ligia)
 - Every week brings all-new playpacks to the main area.
 - Earlier playpacks leave the main area but stay in the full playpacks area, which keeps growing.
