@@ -193,6 +193,11 @@ function makeAudit(p, bad) {
     await p.selectOption("#fam", "all"); await p.waitForTimeout(150);
     if (await count("#results .fam-group .pk") !== 22) bad("explore: all 22 playpacks should be out once the weekly list has run out, found " + await count("#results .fam-group .pk"));
     if (await count("#results .pk-new")) bad("explore: a playpack is called new after the weekly list has run out");
+    if (name === "phone") { // the filters sit in two tidy rows under the search box, not four ragged ones
+      const bar = await p.evaluate(() => { const t = document.querySelector(".toolbar.filters").getBoundingClientRect(), w = [...document.querySelectorAll(".toolbar.filters select, #surprise")].map((e) => Math.round(e.getBoundingClientRect().width)); return { h: Math.round(t.height), min: Math.min(...w), max: Math.max(...w) }; });
+      if (bar.h > 190) bad("explore: the search and filters take up " + bar.h + "px on a phone");
+      if (bar.max - bar.min > 2 || bar.min < 150) bad("explore: the filter boxes are ragged widths on a phone (" + bar.min + " to " + bar.max + "px)");
+    }
     await p.selectOption("#fam", "magic"); await p.waitForTimeout(150);
     await go("home");
     // dare tiles filter the shelf
@@ -231,6 +236,16 @@ function makeAudit(p, bad) {
     await go("pack-too-many-legs");
     // save a playpack and a mod, collect a stamp
     await p.click('[data-action="save"]'); await p.click('[data-action="savemod"]'); await p.click('[data-action="stamp"]'); await p.waitForTimeout(550);
+    // the bar of buttons under a playpack: every button fully on screen, each on one line,
+    // at this size and, on a phone, on the smallest phones too (320px wide)
+    for (const narrow of name === "phone" ? [0, 320] : [0]) {
+      if (narrow) { await p.setViewportSize({ width: narrow, height: h }); await p.waitForTimeout(120); }
+      const bar = await p.evaluate(() => [...document.querySelectorAll(".actions .btn")].map((e) => { const r = e.getBoundingClientRect(); return { t: e.textContent.trim(), l: Math.round(r.left), r: Math.round(r.right), h: Math.round(r.height), cut: e.scrollWidth > e.clientWidth + 1 }; }).concat([{ vw: innerWidth }]));
+      const vw = bar.pop().vw;
+      if (bar.map((x) => x.t).join("|") !== "Play this pack|Saved|Share") bad("pack: expected Play, Save and Share under a playpack, found " + bar.map((x) => x.t).join("|"));
+      for (const x of bar) { if (x.l < 0 || x.r > vw) bad(`pack at ${vw}px: the ${x.t} button runs off the screen (${x.l} to ${x.r})`); if (x.h > 64 || x.cut) bad(`pack at ${vw}px: the ${x.t} button wraps or is cut off (${x.h}px tall)`); }
+      if (narrow) { await audit("pack on a very small phone"); await p.setViewportSize({ width: w, height: h }); await p.waitForTimeout(120); }
+    }
     // share: a picture card drawn in the browser, a link, and a stamp for players who finished it
     await p.click('[data-action="share"]'); await p.waitForFunction(() => { const i = document.querySelector("#share-card"); return i && i.naturalWidth === 1080 && i.naturalHeight === 1080; });
     const cardInfo = (sel) => p.evaluate(async () => { const i = document.querySelector("#share-card"), c = document.createElement("canvas"); c.width = c.height = 1080; const x = c.getContext("2d"); x.drawImage(i, 0, 0);
