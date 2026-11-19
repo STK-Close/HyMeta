@@ -67,7 +67,7 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 - An extra never repeats a job the playpack already fills.
 - Helper mods that a pick cannot run without are found automatically and listed in their own group.
 - Mods whose name or description contains a blocked word never appear.
-- Free players never trigger a fetch for a locked playpack. Real enforcement arrives with accounts.
+- Free players never trigger a fetch for a locked playpack. Real enforcement arrives with payments.
 
 ## Accounts (Claude's call)
 - Sign up with an email, a password and a display name, after ticking "I am 13 or older". Sign in with Apple is added when the Apple developer account is ready.
@@ -75,7 +75,11 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 - An account holds saved playpacks, saved mods and stamps. Anything saved on a device before signing in is added to the account.
 - Deleting an account removes everything in it at once and signs out every device.
 - Display names reject links, emails, phone numbers and rude words.
-- Not built yet: password reset by email, playpacks a member built, and member-only access enforced by the server. The Free and Member switch is still a preview control until payments exist.
+- A signed-in member can build a playpack and send it for review. Only its name, one line and the ids of the chosen mods are kept.
+- Nobody but its builder sees a playpack until the owner approves it. The owner is the first account ever made, plus any email listed in `OWNER_EMAILS` in the host's settings.
+- The owner's review queue lives under You: approve or decline waiting playpacks, and remove or keep reported ones.
+- Reporting a playpack hides it for the reporter at once. Blocking a member hides all of their playpacks. A member can have 5 playpacks waiting and 30 in all.
+- Not built yet: password reset by email, and member-only access enforced by the server. The Free and Member switch is still a preview control until payments exist.
 - The database is Neon, the same service Heckle uses.
 
 ## Not decided

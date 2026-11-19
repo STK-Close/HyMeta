@@ -274,17 +274,21 @@ function makeAudit(p, bad) {
       await p.click("#tier-member"); await p.waitForSelector(".mod"); await p.click('[data-action="savemod"]');
       await p.reload(); await p.waitForSelector("#view .page"); await go("saved"); await p.click('[data-tab="mods"]'); await p.waitForSelector("#view .mod");
       await audit("live saved mods");
-      // build: live search
-      await go("build"); await p.waitForSelector(".pickrow"); await audit("live build");
-      await p.fill("#bq", "fishing"); await p.waitForFunction(() => document.querySelectorAll(".pickrow").length === 7);
-      await p.check(".pickrow input"); await p.click("#bq-clear"); await p.waitForFunction(() => document.querySelectorAll(".pickrow").length > 7);
-      if (!/1 picked/.test(await p.textContent("#b-status"))) bad("live build lost the picked mod");
-      if (out) await p.screenshot({ path: `${out}/${tag}-build.png`, fullPage: true });
+      // building needs a signed-in member once accounts exist
+      await go("build"); await p.waitForSelector('#view [data-action="signup"]');
+      if (await count(".pickrow")) bad("the builder is open to visitors who have not signed in");
       // ---------- accounts ----------
       const email = tag + "@example.test", pass = "correct-horse-9";
+      // the owner's account exists first: the first account ever made is the one that reviews playpacks
+      const bossCtx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme });
+      const boss = await bossCtx.newPage(); boss.setDefaultTimeout(6000);
+      await boss.route("https://media.forgecdn.net/**", (r) => r.fulfill({ status: 200, contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg'/>" }));
+      await boss.goto(url); await boss.fill("#pw", PASSWORD); await boss.click('button[type="submit"]'); await boss.waitForSelector("#view .page");
+      const made = await bossCtx.request.post(url + "api/account", { data: { op: "signup", email: "owner@example.test", password: pass, name: "The Owner", over13: true } });
+      if (!made.ok()) await bossCtx.request.post(url + "api/account", { data: { op: "login", email: "owner@example.test", password: pass } });
       const refused = await ctx.request.post(url + "api/account", { data: { op: "keep", list: "saved", id: "cozy-farmer", on: true } });
       if (refused.status() !== 401) bad("an item was saved to an account without signing in (status " + refused.status() + ")");
-      await go("you"); await p.click('dialog [data-action="leave"]'); await p.waitForSelector("#f-acct"); // leaving the half-built playpack behind
+      await go("you"); await p.waitForSelector("#f-acct");
       await p.click("#f-acct > summary"); await p.click('[data-action="signup"]');
       await audit("make an account");
       await p.fill("#a-name", "Test Player"); await p.fill("#a-email", email); await p.fill("#a-pass", pass);
@@ -312,15 +316,48 @@ function makeAudit(p, bad) {
       await q.goto(url + "#pack-cozy-farmer"); await q.waitForSelector('[data-action="stamp"]'); await q.click('[data-action="stamp"]'); await q.waitForTimeout(400);
       await p.reload(); await p.waitForSelector("#view .page"); await go("you"); await p.waitForSelector("#acct-who, #f-acct");
       if (!(await count(".stamp"))) bad("a stamp collected on one device did not show on the other");
+      // ---------- community playpacks ----------
+      await go("build"); await p.waitForSelector(".pickrow"); await audit("live build, signed in");
+      await p.fill("#bq", "fishing"); await p.waitForFunction(() => document.querySelectorAll(".pickrow").length === 7);
+      await p.check(".pickrow input"); await p.click("#bq-clear"); await p.waitForFunction(() => document.querySelectorAll(".pickrow").length > 7);
+      if (!/1 picked/.test(await p.textContent("#b-status"))) bad("live build lost the picked mod");
+      if (out) await p.screenshot({ path: `${out}/${tag}-build.png`, fullPage: true });
+      await p.fill("#b-name", "Swamp <i>wizard</i>"); await p.fill("#b-blurb", "Mud and magic.");
+      for (const box of await p.locator(".pickrow input").all()) { if (!(await box.isChecked())) await box.check(); if ((await p.locator(".pickrow input:checked").count()) >= 3) break; }
+      await p.click('#build button[type="submit"]'); await p.waitForSelector("#review-note");
+      const mine = p.url().split("#")[1];
+      if (await count('[data-action="approve"], #owner-review')) bad("a member can approve their own playpack");
+      const sneak = await ctx.request.post(url + "api/community", { data: { op: "review", id: mine.replace("pack-", ""), approve: true } });
+      if (sneak.status() !== 403) bad("a member who is not the owner could review a playpack (status " + sneak.status() + ")");
+      // the owner sees it in the review queue, nobody else sees it anywhere
+      await boss.reload(); await boss.waitForSelector("#view .page"); await boss.click("#tier-member");
+      await boss.goto(url + "#explore"); await boss.waitForTimeout(400);
+      if (await boss.locator(`a[href="#${mine}"]`).count()) bad("a playpack still waiting for review is listed for other members");
+      await boss.goto(url + "#you"); await boss.waitForSelector("#f-queue .qrow");
+      if (!/Swamp <i>wizard<\/i>/.test(await boss.textContent("#f-queue")) || await boss.locator("#f-queue i").count()) bad("the review queue does not show the waiting playpack as plain text");
+      const bossAudit = makeAudit(boss, bad); await bossAudit("owner review queue");
+      await boss.click('#f-queue [data-action="review"][data-ok="1"]'); await boss.waitForSelector("#queue-empty");
+      await boss.goto(url + "#explore"); await boss.waitForSelector(`a[href="#${mine}"]`);
+      await boss.click(`a[href="#${mine}"]`); await boss.waitForSelector(".mod");
+      if (!/Shared by Test Player/.test(await boss.textContent("#view"))) bad("a shared playpack does not name its builder");
+      await bossAudit("shared playpack");
+      await p.reload(); await p.waitForSelector("#view .page"); await p.waitForFunction(() => /Approved\. Other members/.test(document.querySelector("#view").textContent));
+      // a report hides it for the reporter and lands in the owner's queue, where it can be removed
+      await boss.click('[data-action="report"]'); await boss.click('#report button[type="submit"]'); await boss.waitForFunction(() => location.hash === "#explore"); await boss.waitForTimeout(400);
+      if (await boss.locator(`a[href="#${mine}"]`).count()) bad("a reported playpack is still listed for the member who reported it");
+      await boss.goto(url + "#you"); await boss.waitForSelector("#f-queue .qrow");
+      await boss.click('#f-queue [data-action="review"][data-ok="0"]'); await boss.waitForSelector("#queue-empty");
+      await p.reload(); await p.waitForSelector("#view .page"); await p.waitForFunction(() => /Not approved/.test(document.querySelector("#view").textContent));
+      await bossCtx.close();
       // deleting the account signs out every device and the login stops working
-      await p.click("#f-acct > summary"); await p.click('[data-action="delacct"]'); await p.click('[data-action="delacct"]'); await p.waitForSelector('[data-action="signup"]');
+      await go("you"); await p.waitForSelector("#f-acct"); await p.click("#f-acct > summary"); await p.click('[data-action="delacct"]'); await p.click('[data-action="delacct"]'); await p.waitForSelector('[data-action="signup"]');
       const after = await (await other.request.get(url + "api/account")).json();
       if (after.user) bad("the account was deleted but another device is still signed in");
       const again = await other.request.post(url + "api/account", { data: { op: "login", email, password: pass } });
       if (again.status() !== 400) bad("a deleted account can still sign in (status " + again.status() + ")");
       await other.close();
       if (leaked.size) bad("the CurseForge key was sent to the browser by " + [...leaked].join(", "));
-    } catch (e) { bad("stopped early, a step could not be done: " + e.message.split("\n").slice(0, 4).join(" ").replace(/\s+/g, " ").slice(0, 260)); }
+    } catch (e) { if (process.env.HYMETA_DEBUG) console.log("DEBUG", p.url(), (await p.textContent("#view").catch(() => "")).slice(0, 300)); bad("stopped early, a step could not be done: " + e.message.split("\n").slice(0, 4).join(" ").replace(/\s+/g, " ").slice(0, 260)); }
     await ctx.close();
   }
   server.close();

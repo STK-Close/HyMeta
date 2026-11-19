@@ -179,6 +179,7 @@ details.fold[open]>summary::after{content:"\2212"}
 .fold-body{padding:0 0 16px;display:flex;flex-direction:column;gap:12px}
 .mods .fold-body{padding:0;gap:0}
 .group-about{padding-bottom:10px}
+.qrow{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--line-soft)}
 .mod{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;padding:14px 0;border-top:1px solid var(--line-soft)}
 .tile{width:56px;height:56px;border-radius:10px;padding:9px;display:block;flex:none}
 .tile svg{width:100%;height:100%;display:block}
@@ -518,7 +519,7 @@ var S = {
   tier: store.get("tier", "free"), mood: store.get("mood", "cheeky"), theme: store.get("theme", "device"),
   saved: store.get("saved", []), savedMods: store.get("savedMods", []), stamps: store.get("stamps", []), mine: store.get("mine", []),
   hidden: store.get("hidden", []), blocked: store.get("blocked", []),
-  user: null, accounts: false, q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false, bres: [], bbusy: false, spot: null,
+  user: null, accounts: false, queue: null, blockedMembers: [], q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false, bres: [], bbusy: false, spot: null,
   draft: { name:"", blurb:"", mods:[] }, dirty: false, justStamped: null, open: {}
 };
 var hostTheme = document.documentElement.getAttribute("data-theme");
@@ -529,7 +530,7 @@ function applyTheme(){
 }
 function shown(p){ return S.hidden.indexOf(p.id) < 0 && (!p.by || S.blocked.indexOf(p.by) < 0); }
 function communityPacks(){ return COMMUNITY.concat(S.mine.filter(function(p){ return p.status !== "pending"; })).filter(shown); }
-function allPacks(){ return PACKS.concat(COMMUNITY, S.mine); }
+function allPacks(){ return PACKS.concat(COMMUNITY, S.mine, S.queue ? S.queue.waiting : []); }
 function findPack(id){ return allPacks().filter(function(p){ return p.id === id; })[0]; }
 function isMine(p){ return S.mine.indexOf(p) > -1; }
 function isLocked(p){ return S.tier === "free" && p.id !== FEATURED; }
@@ -577,8 +578,8 @@ function liveSearch(){
 }
 /* ---------- accounts (only when the server has a database) ---------- */
 var KEPT = ["saved", "savedMods", "stamps"];
-function post(body){
-  return fetch("api/account", { method:"POST", credentials:"same-origin", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) })
+function post(body, route){
+  return fetch(route || "api/account", { method:"POST", credentials:"same-origin", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) })
     .then(function(r){ return r.json().then(function(d){ if (!r.ok) throw new Error(d.message || "Something went wrong. Try again."); return d; }); });
 }
 // merge: on signing in, anything saved on this device before is added to the account
@@ -591,12 +592,40 @@ function loadAccount(merge){
       S[k] = server; store.set(k, server);
     });
     loadMissing(); render(false);
+    if (d.user) loadCommunity();
   }).catch(function(){});
+}
+/* ---------- community playpacks, kept on the server once signed in ---------- */
+var ARTS = ["hero", "everything", "exploration", "creatures", "building", "magic"];
+function cpost(body){ return post(body, "api/community"); }
+function serverMode(){ return LIVE && !!S.user; }
+function toPack(d){
+  var n = 0, i; for (i = 0; i < d.id.length; i++) n += d.id.charCodeAt(i);
+  var mods = (d.mods || []).filter(isLiveId);
+  return { id:String(d.id), server:true, name:String(d.name), kind:"Community", by:String(d.by), family:"everything", art:ARTS[n % ARTS.length], dare:mods.length > 6 ? 2 : 1, icon:"star",
+    sky:NIGHT, moon:"#ffe2a0", hills:HILLS, blurb:String(d.blurb), warning:"Built by a member. Hex has not checked under the floorboards.", pitch:null, core:mods, spice:[], status:String(d.status), reason:String(d.reason || "") };
+}
+function loadCommunity(){
+  if (!serverMode()) return Promise.resolve();
+  return api("api/community").then(function(d){
+    if (!d.enabled) return;
+    COMMUNITY.length = 0; d.packs.forEach(function(x){ COMMUNITY.push(toPack(x)); });
+    S.mine = d.mine.map(toPack); S.blockedMembers = d.blocked || [];
+    S.queue = d.queue ? { waiting:d.queue.waiting.map(toPack), reported:d.queue.reported || [] } : null;
+    render(false);
+  }).catch(function(){});
+}
+// a member's playpack lists only mod ids, so the mod details are fetched when it is opened
+function ensureMods(p){
+  var want = p.core.filter(function(i){ return isLiveId(i) && !MOD[i]; });
+  if (!want.length || fetching["mods-" + p.id]) return;
+  fetching["mods-" + p.id] = true;
+  api("api/mods?ids=" + want.slice(0, 50).join(",")).then(function(d){ d.mods.forEach(adopt); render(false); }).catch(function(){});
 }
 function remember(list, id, on){
   if (S.user) post({ op:"keep", list:list, id:id, on:on }).catch(function(){ toast("That did not reach your account. Check your connection."); });
 }
-function forgetLocal(){ S.user = null; KEPT.forEach(function(k){ S[k] = []; store.set(k, []); }); }
+function forgetLocal(){ S.user = null; S.queue = null; S.blockedMembers = []; S.mine = []; COMMUNITY.length = 0; KEPT.forEach(function(k){ S[k] = []; store.set(k, []); }); }
 function openAccount(mode){
   var up = mode === "signup";
   openSheet(up ? "Make an account" : "Sign in",
@@ -701,6 +730,7 @@ function vPack(id){
   var p = findPack(id);
   if (!p || !shown(p)) return '<div class="page"><h1 tabindex="-1">That playpack is not on the shelf</h1><p>It may have been removed.</p><div><a class="btn btn-primary" href="#explore">Browse playpacks</a></div></div>';
   if (!isLocked(p)) loadPack(p);
+  if (LIVE && p.by) ensureMods(p);
   var locked = isLocked(p), n = modCount(p), saved = S.saved.indexOf(p.id) > -1, stamped = S.stamps.indexOf(p.id) > -1, mine = isMine(p);
   var line = locked ? say("locked") : (p.pitch ? p.pitch[S.mood] : say("community"));
   var acts = locked
@@ -726,10 +756,14 @@ function vPack(id){
         : '<p class="muted">Collect a stamp for every playstyle you try.</p><div><button type="button" class="btn btn-ghost" data-action="stamp" data-id="' + p.id + '" data-fk="stamp">' + ic("star") + "Stamp my card</button></div>") +
       "</section>";
   var care = "";
-  if (mine) care = '<section class="sec"><h2>Your playpack</h2>' + (p.status === "pending" ? '<div class="panel" id="review-note"><p><strong>Waiting for review.</strong> Only you can see this playpack until a person approves it. We review within 24 hours.</p><button type="button" class="btn btn-ghost" data-action="approve" data-id="' + p.id + '" data-fk="approve">Approve it now (preview only)</button></div>' : '<p class="muted">Approved. Other members can see it.</p>') + '<div><button type="button" class="btn btn-danger" data-action="del" data-id="' + p.id + '">Delete my playpack</button></div></section>';
+  if (mine) care = '<section class="sec"><h2>Your playpack</h2>' + (p.status === "pending" ? '<div class="panel" id="review-note"><p><strong>Waiting for review.</strong> Only you can see this playpack until a person approves it. We review within 24 hours.</p>' + (p.server ? "" : '<button type="button" class="btn btn-ghost" data-action="approve" data-id="' + p.id + '" data-fk="approve">Approve it now (preview only)</button>') + "</div>"
+    : p.status === "rejected" ? '<div class="panel" id="review-note"><p><strong>Not approved.</strong> ' + esc(p.reason || "It does not follow the community rules.") + " Only you can see it.</p></div>"
+    : '<p class="muted">Approved. Other members can see it.</p>') + '<div><button type="button" class="btn btn-danger" data-action="del" data-id="' + p.id + '">Delete my playpack</button></div></section>';
   else if (p.by) care = '<section class="sec" aria-labelledby="h-care"><h2 id="h-care">Something wrong?</h2><p class="muted">We review every report within 24 hours.</p><div class="row">' +
     '<button type="button" class="btn btn-ghost" data-action="report" data-id="' + p.id + '">' + ic("flag") + "Report this playpack</button>" +
     '<button type="button" class="btn btn-danger" data-action="block" data-id="' + p.id + '">' + ic("block") + "Block this member</button></div></section>";
+  if (S.user && S.user.owner && p.server && p.status === "pending") care += '<section class="sec" id="owner-review"><h2>Owner review</h2><p class="muted">Only you see this. Approving shows the playpack to every member.</p><div class="row">' +
+    '<button type="button" class="btn btn-primary" data-action="review" data-ok="1" data-id="' + p.id + '">Approve</button><button type="button" class="btn btn-danger" data-action="review" data-ok="0" data-id="' + p.id + '">Do not approve</button></div></section>';
   return '<div class="page"><div class="sec"><a class="linkbtn" href="#explore">' + ic("back") + "All playpacks</a>" +
     '<section class="card hero"><div class="hero-art">' + art(p.art, true) +
       '<div class="hero-top">' + (p.kind === "Experimental" ? '<span class="badge badge-exp">' + ic("warn") + "Experimental</span>" : "") + (locked ? '<span class="badge badge-dark">' + ic("lock") + "Members</span>" : "") + "</div>" +
@@ -822,6 +856,8 @@ function pickRow(m){
 function buildStatus(){ return '<p><strong>' + S.draft.mods.length + ' picked</strong> <span class="muted">Pick 3 to 20.</span></p>' + hex(buildComment()); }
 function vBuild(){
   if (LIVE && S.tier !== "free" && !S.bres.length && !S.bbusy) liveSearch();
+  if (LIVE && S.accounts && !S.user) return '<div class="page"><div class="sec"><h1 tabindex="-1">Build your own playpack</h1></div><div class="panel"><p>Sign in to build a playpack and share it with other members.</p>' +
+    '<div class="row"><button type="button" class="btn btn-primary" data-action="signup">Make an account</button><button type="button" class="btn btn-ghost" data-action="signin">Sign in</button></div></div></div>';
   if (S.tier === "free") return lockedPanel("Build your own playpack", "Members can pick their own mods, name the result and share it with the community.");
   return '<div class="page"><div class="sec"><h1 tabindex="-1">Build your own playpack</h1><p class="muted">Pick the mods, give it a name and send it for review. Once approved, other members can see it.</p></div>' +
     (S.mine.length ? '<section class="sec" aria-labelledby="h-mine">' + head("h-mine", "Your playpacks") + shelf(S.mine) + "</section>" : "") +
@@ -845,15 +881,26 @@ function rank(){
 }
 function vYou(){
   var st = S.stamps.map(findPack).filter(Boolean);
-  var blocked = S.blocked.length
-    ? '<ul class="ticks">' + S.blocked.map(function(b){ return "<li>" + esc(b) + ' <button type="button" class="linkbtn" data-action="unblock" data-by="' + esc(b) + '">Unblock</button></li>'; }).join("") + "</ul>"
+  var blockList = serverMode() ? S.blockedMembers : S.blocked.map(function(b){ return { id:b, name:b }; });
+  var blocked = blockList.length
+    ? '<ul class="ticks">' + blockList.map(function(b){ return "<li>" + esc(b.name) + ' <button type="button" class="linkbtn" data-action="unblock" data-by="' + esc(b.id) + '">Unblock</button></li>'; }).join("") + "</ul>"
     : '<p class="muted">You have not blocked anyone.</p>';
+  var q = S.queue, ownerFold = !q ? "" : fold("f-queue", "Review queue (" + (q.waiting.length + q.reported.length) + ")",
+    '<p class="muted">Only you see this. Playpacks wait here until you approve them.</p>' +
+    (q.waiting.length ? "<h3>Waiting for review</h3>" + q.waiting.map(function(p){
+      return '<div class="qrow"><p><strong>' + esc(p.name) + "</strong> by " + esc(p.by) + ", " + p.core.length + ' mods<br><span class="muted">' + esc(p.blurb) + '</span></p><div class="row">' +
+        '<a class="btn btn-ghost" href="#pack-' + p.id + '">Open</a><button type="button" class="btn btn-primary" data-action="review" data-ok="1" data-id="' + p.id + '">Approve</button>' +
+        '<button type="button" class="btn btn-danger" data-action="review" data-ok="0" data-id="' + p.id + '">Do not approve</button></div></div>'; }).join("") : '<p id="queue-empty">Nothing is waiting. Enjoy the quiet.</p>') +
+    (q.reported.length ? "<h3>Reported by members</h3>" + q.reported.map(function(r){
+      return '<div class="qrow"><p><strong>' + esc(r.name) + "</strong> by " + esc(r.by) + '<br><span class="muted">' + r.count + (r.count === 1 ? " report: " : " reports: ") + esc(r.reasons) + '</span></p><div class="row">' +
+        '<a class="btn btn-ghost" href="#pack-' + esc(r.id) + '">Open</a><button type="button" class="btn btn-danger" data-action="review" data-ok="0" data-id="' + esc(r.id) + '">Remove it</button>' +
+        '<button type="button" class="btn btn-ghost" data-action="dismiss" data-id="' + esc(r.id) + '">Keep it</button></div></div>'; }).join("") : ""), true);
   return '<div class="page"><h1 tabindex="-1">You</h1>' +
     '<section class="sec" aria-labelledby="h-card"><h2 id="h-card">Stamp card</h2><p>Your rank: <strong>' + rank() + "</strong>. " + st.length + " of " + PACKS.length + " playstyles survived.</p>" +
     (st.length ? '<div class="stamps">' + st.map(function(p){ return '<div class="stamp"><span class="ink">' + glyph(p.icon) + '</span><span class="small">' + esc(p.name) + "</span></div>"; }).join("") + "</div>"
                : '<div class="panel"><p>No stamps yet. Play a playpack, then tap Stamp my card on its page.</p><a class="btn btn-ghost" href="#home">Start with this week</a></div>') + "</section>" +
     '<section class="sec" aria-labelledby="h-set"><h2 id="h-set">Settings</h2><div class="card pad" style="padding-block:0">' +
-    fold("f-mood", "Hex's mood", '<p class="muted">How much mischief you want from your host. Always clean, never mean.</p>' +
+    ownerFold + fold("f-mood", "Hex's mood", '<p class="muted">How much mischief you want from your host. Always clean, never mean.</p>' +
       '<div class="moods" role="radiogroup" aria-label="Hex\'s mood">' + [["gentle","Gentle"],["cheeky","Cheeky"],["unhinged","Unhinged"]].map(function(o){
         return '<label><input type="radio" name="mood" value="' + o[0] + '"' + (S.mood === o[0] ? " checked" : "") + ">" + o[1] + "</label>"; }).join("") + '</div><div id="mood-sample">' + hex(say("greet")) + "</div>", true) +
     fold("f-look", "Appearance", '<div class="field" style="max-width:320px"><label for="theme">Light or dark</label><select id="theme">' + options([["device","Match my device"],["light","Light"],["dark","Dark"]], S.theme) + "</select></div>", false) +
@@ -1040,11 +1087,15 @@ document.addEventListener("click", function(e){
     var text = b.getAttribute("data-text"), ok = function(){ toast("Code copied"); }, fail = function(){ var r = document.createRange(); r.selectNodeContents($("#code")); var s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Code selected. Copy it from here."); };
     try { navigator.clipboard.writeText(text).then(ok, fail); } catch (err) { fail(); }
   }
+  else if (a === "review"){ var okd = b.getAttribute("data-ok") === "1"; cpost({ op:"review", id:id, approve:okd }).then(function(){ toast(okd ? "Approved. Every member can see it now." : "Not approved. Only its builder can see it."); return loadCommunity(); }, function(e){ toast(e.message); }); }
+  else if (a === "dismiss") cpost({ op:"dismiss", id:id }).then(function(){ toast("Report cleared. The playpack stays."); return loadCommunity(); }, function(e){ toast(e.message); });
   else if (a === "report") openReport(id);
   else if (a === "block"){
     if (!twoTap(b, "Tap again to block")) return;
+    if (serverMode()){ cpost({ op:"block", id:id }).then(function(){ toast("Member blocked. Their playpacks are hidden."); return loadCommunity(); }, function(e){ toast(e.message); }).then(function(){ location.hash = "explore"; }); return; }
     p = findPack(id); if (p && S.blocked.indexOf(p.by) < 0) S.blocked.push(p.by); store.set("blocked", S.blocked); toast("Member blocked. Their playpacks are hidden."); location.hash = "explore";
   }
+  else if (a === "unblock" && serverMode()) cpost({ op:"unblock", author:b.getAttribute("data-by") }).then(function(){ toast("Member unblocked"); return loadCommunity(); }, function(e){ toast(e.message); });
   else if (a === "unblock"){ S.blocked = S.blocked.filter(function(x){ return x !== b.getAttribute("data-by"); }); store.set("blocked", S.blocked); render(false); toast("Member unblocked"); }
   else if (a === "delacct" && S.user){
     if (!twoTap(b, "Tap again to delete everything")) return;
@@ -1057,6 +1108,7 @@ document.addEventListener("click", function(e){
   }
   else if (a === "del"){
     if (!twoTap(b, "Tap again to delete")) return;
+    if (serverMode()){ cpost({ op:"delete", id:id }).then(function(){ toast("Playpack deleted"); return loadCommunity(); }, function(e){ toast(e.message); }).then(function(){ location.hash = "explore"; }); return; }
     S.mine = S.mine.filter(function(x){ return x.id !== id; }); S.saved = S.saved.filter(function(x){ return x !== id; });
     store.set("mine", S.mine); store.set("saved", S.saved); toast("Playpack deleted"); location.hash = "explore";
   }
@@ -1100,13 +1152,27 @@ document.addEventListener("submit", function(e){
     S.tier = "member"; store.set("tier", "member"); closeSheet(); render(false); toast("Now showing the member view");
   }
   else if (f.id === "report"){
-    var rid = f.getAttribute("data-id"); if (S.hidden.indexOf(rid) < 0) S.hidden.push(rid); store.set("hidden", S.hidden);
+    var rid = f.getAttribute("data-id");
+    if (serverMode()){
+      var why = (f.querySelector('input[name="why"]:checked') || {}).value || 3;
+      cpost({ op:"report", id:rid, why:why }).then(function(){ closeSheet(); toast("Report sent. We review reports within 24 hours."); return loadCommunity(); }, function(e){ toast(e.message); }).then(function(){ location.hash = "explore"; });
+      return;
+    }
+    if (S.hidden.indexOf(rid) < 0) S.hidden.push(rid); store.set("hidden", S.hidden);
     closeSheet(); toast("Report sent. We review reports within 24 hours."); location.hash = "explore";
   }
   else if (f.id === "build"){
     var berr = $("#b-err"), name = S.draft.name.trim(), blurb = S.draft.blurb.trim(), personal = /(https?:|www\.|@|\.(com|net|org|gg)\b|\d{7,})/i;
     var msg = !name ? "Give your playpack a name." : personal.test(name + " " + blurb) ? "Leave out links, emails and phone numbers." : S.draft.mods.length < 3 ? "Pick at least three mods." : "";
     if (msg){ berr.textContent = msg; berr.hidden = false; (S.draft.mods.length < 3 && name && !personal.test(name + " " + blurb) ? $("#bq") : $("#b-name")).focus(); return; }
+    if (serverMode()){
+      var sendBtn = f.querySelector('button[type="submit"]'); sendBtn.disabled = true; berr.hidden = true;
+      cpost({ op:"submit", name:name, blurb:blurb, mods:S.draft.mods.slice() }).then(function(d){
+        S.dirty = false; S.draft = { name:"", blurb:"", mods:[] }; S.bq = ""; S.bcat = "all"; S.bonly = false;
+        return loadCommunity().then(function(){ toast("Sent for review"); location.hash = "pack-" + d.id; });
+      }, function(e){ sendBtn.disabled = false; berr.textContent = e.message; berr.hidden = false; $("#b-name").focus(); });
+      return;
+    }
     var first = MOD[S.draft.mods[0]];
     var np = { id:"mine-" + Date.now().toString(36), name:name, kind:"Community", by:"you", status:"pending", family:"everything", art:first.icon === "paw" ? "creatures" : first.icon === "sword" ? "combat" : first.icon === "bolt" ? "magic" : first.icon === "house" ? "building" : first.icon === "compass" ? "exploration" : "hero", dare:S.draft.mods.length > 6 ? 2 : 1, icon:first.icon, sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
       blurb:blurb || "A playpack built by a member.", warning:"Built by a member. Hex has not checked under the floorboards.", pitch:null, core:S.draft.mods.slice(), spice:[] };

@@ -12,9 +12,9 @@ Status key: **Designed** = already in the preview. **Build** = needs the real ap
 
 | Apple requires | Status |
 | --- | --- |
-| A way to filter objectionable material | **Designed**: every shared playpack waits for a person to approve it before other members see it, and links, emails and phone numbers are rejected. **Build**: a real word filter and the review inbox. |
-| A way to report offensive content, with timely responses | **Designed**: "Report this playpack" on every shared pack, with a 24 hour promise. **Build**: the inbox the reports go to. **You**: someone to answer them. |
-| A way to block abusive users | **Designed**: "Block this member", plus a list of blocked members under You, Account. |
+| A way to filter objectionable material | **Built**: every shared playpack waits in the owner's review queue before other members see it, and links, emails, phone numbers and rude words are rejected. |
+| A way to report offensive content, with timely responses | **Built**: "Report this playpack" on every shared pack, landing in the owner's review queue. **You**: check the queue daily to keep the 24 hour promise. |
+| A way to block abusive users | **Built**: "Block this member", plus a list of blocked members under You, Account. |
 | Published contact information | **Designed**: Help and contact page. **You**: a support email address. |
 
 ## Children (guidelines 1.3, 5.1.4, 2.3.8)

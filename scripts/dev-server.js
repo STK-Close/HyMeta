@@ -68,7 +68,8 @@ function pretendCurseForge() {
   return calls;
 }
 
-function start({ port = 0, pretend = false, password, key, accounts } = {}) {
+function start({ port = 0, pretend = false, password, key, accounts, owners } = {}) {
+  if (owners !== undefined) { if (owners) process.env.OWNER_EMAILS = owners; else delete process.env.OWNER_EMAILS; }
   if (accounts !== undefined) { if (accounts) process.env.HYMETA_LOCAL_DB = "1"; else delete process.env.HYMETA_LOCAL_DB; }
   if (password !== undefined) { if (password) process.env.SITE_PASSWORD = password; else delete process.env.SITE_PASSWORD; }
   if (key !== undefined) { if (key) process.env.CURSEFORGE_API_KEY = key; else delete process.env.CURSEFORGE_API_KEY; }

@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
   try {
     if (req.method === "GET") {
       const user = await accounts.currentUser(req);
-      return json(res, 200, user ? { enabled: true, user: publicUser(user), ...(await accounts.lists(user)) } : { enabled: true, user: null });
+      return json(res, 200, user ? { enabled: true, user: { ...publicUser(user), owner: await accounts.isOwner(user) }, ...(await accounts.lists(user)) } : { enabled: true, user: null });
     }
     if (req.method !== "POST" || !/application\/json/i.test(String(req.headers["content-type"] || ""))) return json(res, 405, { error: "method" });
     const body = req.body && typeof req.body === "object" ? req.body : {};
