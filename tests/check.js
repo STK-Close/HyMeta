@@ -317,7 +317,11 @@ function makeAudit(p, bad) {
       // send to my computer: a real code that opens the same playpack
       await p.click('[data-mode="send"]'); await p.waitForFunction(() => /^[B-DF-HJ-NP-TV-XZ]{4}-\d{4}$/.test(document.querySelector("#code").textContent));
       const handCode = await p.textContent("#code"); await audit("send sheet with a code");
-      await p.keyboard.press("Escape"); await p.click("#have-code"); await audit("code entry");
+      await p.keyboard.press("Escape");
+      // the code is typed in on the computer, so a phone never offers "I have a code from my phone"
+      if (w < 500) { if (await count("#have-code")) bad("a phone offers I have a code from my phone"); await p.evaluate(() => { const t = document.createElement("button"); t.dataset.action = "code"; document.body.appendChild(t); t.click(); t.remove(); }); }
+      else await p.click("#have-code");
+      await audit("code entry");
       expecting401 = true; await p.fill("#code-in", "ZZZZ-0000"); await p.click('#codeform button[type="submit"]'); await p.waitForSelector("#code-err:not([hidden])"); expecting401 = false;
       await p.fill("#code-in", handCode.toLowerCase()); await p.click('#codeform button[type="submit"]'); await p.waitForSelector("#inst-list");
       if (!/pack-cozy-farmer/.test(p.url())) bad("the code did not open its playpack");

@@ -508,6 +508,8 @@ var LINES = {
   stamped:{ gentle:"Stamp earned. Well played.", cheeky:"You survived. I owe the scarecrow five coins.", unhinged:"YOU LIVED. Incredible. I had already picked out your replacement." },
   community:{ gentle:"Made by a fellow player. Be kind to it.", cheeky:"A member built this. I take no responsibility and all of the credit.", unhinged:"A MEMBER MADE THIS. I did not check it. I simply released it into the wild." }
 };
+// a phone or tablet: the place codes are sent from, never where they are typed in
+function onTouch(){ return !!(window.matchMedia && matchMedia("(pointer: coarse)").matches); }
 var QUIPS = {
   gentle:["You are doing wonderfully.", "Take your time. The mods will wait.", "I saved you the good ones."],
   cheeky:["I have read every mod description. All of them. I have not slept.", "I am not a goblin. Goblins are shorter and worse at maps.", "Pick the hard one. I will watch. Supportively.", "The chickens told me things. I cannot repeat them."],
@@ -716,7 +718,7 @@ function vHome(){
       '<div class="hero-body"><div class="sec"><p class="lede">' + esc(p.blurb) + "</p>" + hex(p.pitch[S.mood]) + warnBox(p) + "</div>" +
         '<div class="hero-side"><div class="chips">' + dareChip(p) + (nMods(p) ? '<span class="chip">' + nMods(p) + "</span>" : "") + "</div>" +
         '<button type="button" class="btn btn-primary btn-big btn-full" data-action="play" data-id="' + p.id + '">' + ic("play") + "Play this pack</button>" +
-        '<a class="btn btn-ghost btn-full" href="#pack-' + p.id + '">' + (ready(p) ? "See the " + n + " mods" : "See the mods") + "</a>" + (LIVE ? '<button type="button" class="linkbtn" data-action="code" id="have-code">I have a code from my phone</button>' : "") + "</div></div></section>" +
+        '<a class="btn btn-ghost btn-full" href="#pack-' + p.id + '">' + (ready(p) ? "See the " + n + " mods" : "See the mods") + "</a>" + (LIVE && !onTouch() ? '<button type="button" class="linkbtn" data-action="code" id="have-code">I have a code from my phone</button>' : "") + "</div></div></section>" +
     '<section class="sec" aria-labelledby="h-shelf">' + head("h-shelf", "Also this week", "#explore", "See all") +
       '<p class="muted">' + (S.tier === "free" ? "Free players can read about these. Members get the " + term("mod", "mods") + " and the links." : "All yours. Open any " + term("playpack", "playpack") + " to see its mods.") + "</p>" +
       shelf(TEASERS.map(findPack), true) + "</section>" +
@@ -1065,7 +1067,7 @@ function openPlay(id, mode){
   var p = findPack(id); if (!p) return;
   if (!ready(p)){ loadPack(p); toast("Still fetching the mods. Try again in a moment."); return; }
   var switching = !!mode;
-  if (!mode) mode = (window.matchMedia && matchMedia("(pointer: coarse)").matches) ? "send" : "here";
+  if (!mode) mode = onTouch() ? "send" : "here";
   openSheet("Play " + esc(p.name), playBody(p, mode));
   if (LIVE && mode === "send") makeCode(p);
   if (switching){ var b = $('[data-mode="' + mode + '"]', sheet); if (b) b.focus(); }
