@@ -1,11 +1,15 @@
 # Makes playpack artwork with fal (FLUX.2, about 1.2 cents a picture, commercial use allowed).
-# Run: FAL_KEY=... python3 scripts/make-art.py spiders factory hermit   (pictures land in the current folder)
+# Run: FAL_KEY=... python3 scripts/make-art.py crawlies factory hermit   (pictures land in the current folder)
 # Add a line to JOBS for each new playpack. STYLE keeps every picture in the same blocky, glowing look.
 import json, os, sys, time, urllib.request
 MODEL="fal-ai/flux-2"
-STYLE=("Voxel art illustration, a world built from small chunky cubes, vibrant saturated colours, warm glowing light sources, soft painterly shading, "
-       "cinematic wide composition, rich detail, cheerful adventurous mood, family friendly, no text, no letters, no logos, no watermark.")
-JOBS={"spiders":"A dim crystal cave draped in huge glowing spider webs, three big friendly-looking cube spiders with shiny eyes on the webs, silk cocoons, a small hooded adventurer holding a lantern peeking in nervously, teal and purple light.",
+STYLE=("Chunky 3D voxel art, like an elaborate block-building game world rendered with soft ray-traced lighting. The whole scene is constructed from large, clearly visible cubes: "
+       "the ground, trees, clouds, buildings, objects, animals and people are all stacked cube blocks with hard square stair-stepped silhouettes. Characters are blocky figures with cube heads and cube limbs. "
+       "Any water is made of square blocks. Nothing is smooth, round or curved anywhere; no flat cartoon illustration, no 2D pixel art, no thin lines. "
+       "Dense, richly detailed diorama with real depth, warm glowing lanterns and windows, glowing sparkles, deep saturated colours, golden cinematic light, adventurous family friendly mood. "
+       "No text, no letters, no writing on signs, no logos, no watermark.")
+JOBS={"crawlies":"A glowing mushroom cave crawling with friendly-looking creepy crawlies: big spiders on webs, bouncing green slimes, a long centipede, shiny beetles, glowing frogs and a fat caterpillar, a nervous hooded adventurer with a lantern peeking in from the entrance, teal and purple light.",
+      "farm":"A cozy farm at golden sunset, a red barn, a field of golden wheat, rows of carrots and pumpkins, a cow and three round chickens, a scarecrow in a straw hat, a watering can, a glowing lantern on a fence post.",
       "factory":"A cozy goblin workshop factory at dusk, conveyor belts carrying crates and gems, spinning brass gears, pipes, glowing furnaces, sorting chests, a water wheel, a small green goblin engineer in goggles pulling a lever, orange and teal light.",
       "hermit":"A lone hooded survivor beside a tiny campfire outside a rough stone shelter on a snowy mountainside at night, blizzard wind, frost on pine trees, distant glowing eyes in the dark woods, a single heart-shaped lantern, cold blue with one warm fire glow.",
       "fishing":"A calm lake at sunrise, a small wooden rowboat with a cheerful hooded angler holding a bent fishing rod, a huge glowing golden fish leaping from the water, a little dock with lanterns and a crate of fish, reeds and lily pads, soft pink and teal light.",
@@ -17,7 +21,7 @@ JOBS={"spiders":"A dim crystal cave draped in huge glowing spider webs, three bi
       "plushies":"A bedroom absolutely overflowing with cute plush toys stacked to the ceiling, shelves of plushies, framed pixel paintings, a small statue on a pedestal, a jukebox glowing in the corner, a tiny proud collector sitting on the pile, soft pastel light.",
       "archer":"A hooded archer on a forest ridge at dawn drawing a glowing bow, straw targets with arrows in the bullseye among the trees, a quiver, a crossbow resting on a log, falling leaves, shafts of golden light through the forest.",
       "garden":"A walled flower garden in full bloom at dusk, arches of roses, giant sunflowers, beehives with fat friendly cube bees, paper lanterns and string lights, a picnic table with a teapot and cakes, butterflies, pink and gold light.",
-      "quests":"A busy village square with a big wooden quest notice board covered in pinned notes, a small adventurer with a backpack reading it, a merchant stall, a guild hall with banners, a friendly villager waving, morning light, treasure chest by the board.",
+      "quests":"A busy village square with a big wooden notice board covered in blank pinned paper notes, a small adventurer with a backpack reading it, a merchant stall, a guild hall with banners, a friendly villager waving, morning light, treasure chest by the board.",
       "dinos":"A small adventurer riding a big friendly green dinosaur through a lush prehistoric jungle, giant ferns, a long-necked dinosaur by a waterfall in the distance, flying pterosaurs, a volcano glowing softly, bright warm daylight.",
       "packrat":"A storeroom crammed with treasure chests, barrels, crates and bulging backpacks stacked into teetering towers, every one labelled with a tiny sign, a small happy hoarder goblin holding one more chest, coins and trinkets spilling, warm lantern light."}
 def call(url, body=None):

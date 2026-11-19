@@ -187,6 +187,10 @@ function makeAudit(p, bad) {
 
     // locked pack in the free view
     await go("pack-too-many-legs"); await audit("locked pack"); await shot("locked");
+    if ((await p.textContent("#view h1")) !== "Creepy crawlies" || !/slimes, frogs/.test(await p.textContent(".lede"))) bad("Too many legs has not become Creepy crawlies");
+    await p.click(".art-zoom"); await p.waitForSelector("#art-big");
+    if (!(await p.evaluate(async () => { const i = document.querySelector("#art-big"); if (!i.complete) await new Promise((r) => { i.onload = i.onerror = r; }); return i.naturalWidth >= 1200 && /pack-crawlies\.jpg$/.test(i.src); }))) bad("the full size picture did not open");
+    await audit("full size picture"); await p.keyboard.press("Escape");
     if (await count(".mod")) bad("locked pack shows its mods to free players");
 
     // membership: disclosure, grown-up gate, then member view

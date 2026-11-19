@@ -130,6 +130,8 @@ input[type="text"],input[type="search"],input[type="password"],select{font:400 1
 .hero-art::after{content:"";position:absolute;inset:30% 0 0 0;background:linear-gradient(to bottom,rgba(9,11,24,0),rgba(9,11,24,.94))}
 .hero-top{position:absolute;inset:12px 12px auto 12px;display:flex;flex-wrap:wrap;gap:6px;z-index:1}
 .hero-title{position:absolute;inset:auto 16px 12px 16px;z-index:1}
+.art-zoom{position:absolute;right:12px;top:12px;z-index:2}
+.art-big{width:100%;height:auto;border-radius:12px;display:block;border:1.5px solid var(--line)}
 .hero-title h1{font-size:clamp(1.75rem,6.4vw,3rem);text-shadow:0 2px 0 rgba(9,11,24,.7)}
 .hero-body{padding:16px;display:grid;gap:16px}
 .hero-side{display:flex;flex-direction:column;gap:12px}
@@ -315,7 +317,7 @@ var PATHS = {
   home:"M3 11l9-7 9 7v9h-6v-6H9v6H3z", explore:"M12 3a9 9 0 100 18 9 9 0 000-18zm3.5 5.5l-2 5-5 2 2-5z",
   heart:"M12 20s-7-4.6-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.4-7 10-7 10z", build:"M4 4h16v16H4zM12 8v8M8 12h8",
   you:"M12 12a4 4 0 100-8 4 4 0 000 8zm-8 9a8 8 0 0116 0", lock:"M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 017 0v3",
-  search:"M11 4a7 7 0 100 14 7 7 0 000-14zm5 12l4.5 4.5", x:"M6 6l12 12M18 6L6 18", check:"M5 12.5l4.5 4.5L19 7.5",
+  search:"M11 4a7 7 0 100 14 7 7 0 000-14zm5 12l4.5 4.5", expand:"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5", x:"M6 6l12 12M18 6L6 18", check:"M5 12.5l4.5 4.5L19 7.5",
   warn:"M12 3l10 18H2zM12 10v5M12 17.5v.5", ext:"M14 4h6v6M20 4l-9 9M10 6H5v13h13v-5", down:"M12 4v11M7 11l5 5 5-5M5 20h14",
   clock:"M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2", flame:"M12 3c1 4 5 5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z",
   send:"M4 12l16-8-6 16-3-6z", back:"M15 5l-7 7 7 7", star:"M12 3l2.7 5.8 6.3.8-4.6 4.3 1.2 6.2L12 17l-5.6 3.1 1.2-6.2L3 9.6l6.3-.8z",
@@ -364,7 +366,7 @@ function rng(seed){
   var s = 7; for (var i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) >>> 0;
   return function(){ s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
 }
-var ART = { combat:"pack-combat", building:"pack-building", survival:"pack-survival", creatures:"pack-creatures", magic:"pack-magic", exploration:"pack-exploration", everything:"pack-everything", hero:"hymeta-hero", spiders:"pack-spiders", factory:"pack-factory", hermit:"pack-hermit", farm:"pack-farm",
+var ART = { combat:"pack-combat", building:"pack-building", survival:"pack-survival", creatures:"pack-creatures", magic:"pack-magic", exploration:"pack-exploration", everything:"pack-everything", hero:"hymeta-hero", crawlies:"pack-crawlies", factory:"pack-factory", hermit:"pack-hermit", farm:"pack-farm",
   fishing:"pack-fishing", knights:"pack-knights", catcafe:"pack-catcafe", miner:"pack-miner", potions:"pack-potions", roadtrip:"pack-roadtrip", plushies:"pack-plushies", archer:"pack-archer", garden:"pack-garden", quests:"pack-quests", dinos:"pack-dinos", packrat:"pack-packrat" };
 function art(key, big){ return '<img class="art" src="images/' + (big ? "" : "thumb-") + (ART[key] || ART.hero) + '.jpg" alt="" decoding="async"' + (big ? "" : ' loading="lazy"') + ">"; }
 
@@ -440,10 +442,10 @@ var PACKS = [
             cheeky:"It is just over that hill. So is the next thing. I may have fibbed about the distance.",
             unhinged:"WALK. Keep walking. I moved your house while you were gone. It is a game now." },
     core:["atlas","trail","far"], spice:["camp","rain"] },
-  { id:"too-many-legs", family:"creatures", art:"spiders", name:"Too many legs", kind:"Experimental", dare:3, icon:"spider", sky:["#261a45","#144a52"], moon:"#b8ffe9", hills:["#28405a","#1c2f45","#11202f"],
-    blurb:"Caves full of spiders, webs that change the weather and silk worth a fortune.",
-    warning:"This playpack may make you shiver if you are scared of spiders. It may make you shiver if you are not.",
-    pitch:{ gentle:"A brave one. There are spiders, yes, but they are mostly busy.",
+  { id:"too-many-legs", family:"creatures", art:"crawlies", name:"Creepy crawlies", kind:"Experimental", dare:3, icon:"spider", sky:["#261a45","#144a52"], moon:"#b8ffe9", hills:["#28405a","#1c2f45","#11202f"],
+    blurb:"Spiders, slimes, frogs and things with far too many legs. All of them are underfoot.",
+    warning:"Check your boots before you put them on. Then check them again.",
+    pitch:{ gentle:"A brave one. Lots of small things scuttle about, but they are mostly busy.",
             cheeky:"They are more scared of you than you are of them. I made that up.",
             unhinged:"LEGS. SO MANY LEGS. I counted them and then I had to lie down. You will love it." },
     core:["legs","web","chorus"], spice:["silk","trap"] },
@@ -908,6 +910,7 @@ function vPack(id){
   return '<div class="page"><div class="sec"><a class="linkbtn" href="#explore">' + ic("back") + "All playpacks</a>" +
     '<section class="card hero"><div class="hero-art">' + art(p.art, true) +
       '<div class="hero-top">' + (p.kind === "Experimental" ? '<span class="badge badge-exp">' + ic("warn") + "Experimental</span>" : "") + (locked ? '<span class="badge badge-dark">' + ic("lock") + "Members</span>" : "") + "</div>" +
+      '<button type="button" class="iconbtn art-zoom" data-action="art" data-id="' + p.id + '" aria-label="See the picture for ' + esc(p.name) + ' full size">' + ic("expand") + "</button>" +
       '<div class="hero-title"><h1 tabindex="-1">' + esc(p.name) + "</h1></div></div>" +
     '<div class="hero-body"><div class="sec"><p class="lede">' + esc(p.blurb) + "</p>" + (p.by ? '<p class="small muted">Shared by ' + esc(p.by) + "</p>" : "") + hex(line) + warnBox(p) + "</div>" +
     '<div class="hero-side"><div class="chips">' + dareChip(p) + (nMods(p) ? '<span class="chip">' + nMods(p) + "</span>" : "") + '<span class="chip">' + esc(FAMILY[p.family] || p.kind) + "</span>" + (p.status === "pending" ? '<span class="chip">' + ic("clock") + "In review</span>" : "") + '</div><div class="actions">' + acts + "</div></div></div></section></div>" +
@@ -1286,6 +1289,8 @@ document.addEventListener("click", function(e){
   else if (a === "signin"){ if (S.accounts) openAccount("login"); else openSignin(); }
   else if (a === "signup") openAccount("signup");
   else if (a === "forgot") openForgot();
+  else if (a === "art"){ var ap = findPack(b.getAttribute("data-id")); if (ap) openSheet(esc(ap.name), '<img class="art-big" id="art-big" src="images/' + (ART[ap.art] || ART.hero) + '.jpg" alt="The picture for ' + esc(ap.name) + '">' +
+    '<div><button type="button" class="btn btn-ghost" data-action="close">Close</button></div>'); }
   else if (a === "testnews"){ b.disabled = true; post({ op:"test" }, "api/mail").then(function(){ b.disabled = false; toast("Test sent. Check your inbox."); }, function(e){ b.disabled = false; toast(e.message); }); }
   else if (a === "acctmode") openAccount(b.getAttribute("data-mode"));
   else if (a === "signout") post({ op:"logout" }).catch(function(){}).then(function(){ forgetLocal(); render(false); toast("Signed out"); });
