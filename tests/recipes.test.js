@@ -3,25 +3,33 @@
 // Run: node tests/recipes.test.js
 process.env.CURSEFORGE_API_KEY = "pretend-key";
 require("../scripts/dev-server").pretendCurseForge();
-const { PACKS, resolve, spotlight } = require("../lib/recipes");
+const { PACKS, EXTRAS, TARGET_PICKS, resolve, spotlight } = require("../lib/recipes");
 const WEEK = 7 * 24 * 3600 * 1000, NOW = Date.now();
 
 (async () => {
   const problems = [], bad = (m) => problems.push(m);
   const packs = {};
   for (const id of Object.keys(PACKS)) packs[id] = await resolve(id, NOW);
-  const picks = (id) => packs[id].core.concat(packs[id].spice);
+  const picks = (id) => packs[id].core.concat(packs[id].spice, packs[id].extras);
   const names = (id) => picks(id).map((m) => m.name);
   const has = (id, text) => names(id).some((n) => n.includes(text));
 
   for (const id of Object.keys(PACKS)) {
-    const jobs = PACKS[id].jobs.map((j) => j.label), list = picks(id);
-    if (list.length < 4) bad(`${id}: only ${list.length} mods`);
+    const jobs = PACKS[id].jobs.concat(EXTRAS).map((j) => j.label), list = picks(id);
+    if (list.length < 6) bad(`${id}: only ${list.length} mods, a playpack needs at least 6`);
+    if (list.length > 10) bad(`${id}: ${list.length} mods, more than the 10 a new player should start with`);
+    if (packs[id].extras.length > 3) bad(`${id}: ${packs[id].extras.length} everyday extras, the limit is 3`);
+    if (list.length < TARGET_PICKS && packs[id].extras.length < 2) bad(`${id}: stopped at ${list.length} mods without topping up from the everyday extras`);
+    packs[id].extras.forEach((m) => { if (!EXTRAS.some((j) => j.label === m.role)) bad(`${id}: "${m.name}" is filed under extras but is not one`); });
     if (new Set(list.map((m) => m.id)).size !== list.length) bad(`${id}: the same mod appears twice`);
     list.forEach((m) => { if (!jobs.includes(m.role)) bad(`${id}: "${m.name}" has no job it was picked for`); });
-    PACKS[id].jobs.forEach((j) => { const n = list.filter((m) => m.role === j.label).length; if (n > j.n) bad(`${id}: ${n} mods doing the job "${j.label}", which takes ${j.n}`); });
+    PACKS[id].jobs.concat(EXTRAS).forEach((j) => { const n = list.filter((m) => m.role === j.label).length; if (n > j.n) bad(`${id}: ${n} mods doing the job "${j.label}", which takes ${j.n}`); });
     if (packs[id].gameVersion !== "0.7") bad(`${id}: current game version worked out as "${packs[id].gameVersion}", expected 0.7`);
   }
+  // an extra never doubles up on one of the playpack's own jobs
+  if (picks("the-wanderer").filter((m) => /map/i.test(m.name)).length > 1) bad("the-wanderer: two map mods, one from its own job and one from the extras");
+  if (packs["whole-circus"].extras.some((m) => /hud|info/i.test(m.name))) bad("whole-circus: an extra doubled up on its own everyday helpers job");
+  if (!has("the-wanderer", "PretendBetterMap")) bad('the-wanderer: a run-together name like "BetterMap" was not recognised as a map mod');
   // whole words only
   if (has("beast-friend", "Carpets")) bad('beast-friend: "Carpets" was matched by the word "pet"');
   // each playpack's own avoid list, resource packs and add-ons

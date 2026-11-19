@@ -178,6 +178,7 @@ details.fold>summary::after{content:"+";font:900 1.4rem/1 var(--display);width:2
 details.fold[open]>summary::after{content:"\2212"}
 .fold-body{padding:0 0 16px;display:flex;flex-direction:column;gap:12px}
 .mods .fold-body{padding:0;gap:0}
+.group-about{padding-bottom:10px}
 .mod{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;padding:14px 0;border-top:1px solid var(--line-soft)}
 .tile{width:56px;height:56px;border-radius:10px;padding:9px;display:block;flex:none}
 .tile svg{width:100%;height:100%;display:block}
@@ -532,8 +533,11 @@ function allPacks(){ return PACKS.concat(COMMUNITY, S.mine); }
 function findPack(id){ return allPacks().filter(function(p){ return p.id === id; })[0]; }
 function isMine(p){ return S.mine.indexOf(p) > -1; }
 function isLocked(p){ return S.tier === "free" && p.id !== FEATURED; }
-function modCount(p){ return p.core.length + p.spice.length + (p.helpers ? p.helpers.length : 0); }
-function allMods(p){ return p.core.concat(p.spice, p.helpers || []).filter(function(i){ return MOD[i]; }); }
+function modCount(p){ return p.core.length + p.spice.length + (p.extras ? p.extras.length : 0) + (p.helpers ? p.helpers.length : 0); }
+function allMods(p){ return p.core.concat(p.spice, p.extras || [], p.helpers || []).filter(function(i){ return MOD[i]; }); }
+function group(id, title, about, ids, p){
+  return ids && ids.length ? fold(id, title + " (" + ids.length + ")", '<p class="small muted group-about">' + about + "</p>" + rows(ids, p), true) : "";
+}
 function rows(ids, p){ return ids.map(function(i){ return MOD[i]; }).filter(Boolean).map(function(m){ return modRow(m, p); }).join(""); }
 
 /* ---------- live mods (only when the page is served by HyMeta's own server) ---------- */
@@ -554,8 +558,8 @@ function loadPack(p){
   if (!LIVE || !p || p.by || p.ready || fetching[p.id]) return;
   fetching[p.id] = true; p.failed = false;
   api("api/pack?id=" + encodeURIComponent(p.id)).then(function(d){ p.why = {}; p.warn = {}; p.gameVersion = String(d.gameVersion || "");
-      d.core.concat(d.spice).forEach(function(m){ p.why[m.id] = String(m.role || ""); p.warn[m.id] = String(m.caution || ""); });
-      p.core = d.core.map(adopt); p.spice = d.spice.map(adopt); p.helpers = (d.helpers || []).map(adopt); p.ready = true; })
+      d.core.concat(d.spice, d.extras || []).forEach(function(m){ p.why[m.id] = String(m.role || ""); p.warn[m.id] = String(m.caution || ""); });
+      p.core = d.core.map(adopt); p.spice = d.spice.map(adopt); p.extras = (d.extras || []).map(adopt); p.helpers = (d.helpers || []).map(adopt); p.ready = true; })
     .catch(function(){ p.failed = true; })
     .then(function(){ delete fetching[p.id]; if (current === "pack-" + p.id || (current === "home" && p.id === FEATURED)) render(false); });
 }
@@ -573,7 +577,7 @@ function liveSearch(){
 }
 function goLive(){
   LIVE = true;
-  PACKS.forEach(function(p){ p.core = []; p.spice = []; p.helpers = []; p.ready = false; });
+  PACKS.forEach(function(p){ p.core = []; p.spice = []; p.extras = []; p.helpers = []; p.ready = false; });
   COMMUNITY.length = 0;
   S.savedMods = S.savedMods.filter(isLiveId); S.saved = S.saved.filter(findPack); S.mine = S.mine.filter(function(p){ return p.core.every(isLiveId); });
   loadPack(findPack(FEATURED)); loadMissing();
@@ -678,9 +682,10 @@ function vPack(id){
         : "<p>Fetching the mods from CurseForge.</p>") + "</div></section>"
     : '<section class="sec" aria-labelledby="h-mods"><h2 id="h-mods">What is inside</h2>' +
         (LIVE && p.gameVersion ? '<p class="muted" id="pack-version">Chosen for Hytale ' + esc(p.gameVersion) + ", the version most mods support right now. Each mod fills one job, so nothing doubles up.</p>" : "") + '<div class="card mods">' +
-        fold("g-core", "The essentials (" + p.core.length + ")", rows(p.core, p), true) +
-        (p.spice.length ? fold("g-spice", "The spice (" + p.spice.length + ")", rows(p.spice, p), false) : "") +
-        (p.helpers && p.helpers.length ? fold("g-help", "Helpers these mods need (" + p.helpers.length + ")", '<p class="small muted" style="padding-bottom:10px">Some mods cannot run without a helper mod. Hex found them so you do not have to.</p>' + rows(p.helpers), false) : "") + "</div></section>" +
+        group("g-core", "The essentials", "The main pick for each part of this playstyle.", p.core, p) +
+        group("g-spice", "The spice", "Lesser-known mods that deserve a turn. These change every week.", p.spice, p) +
+        group("g-extra", "Handy extras", "Everyday helpers that suit any playstyle.", p.extras, p) +
+        group("g-help", "Helpers these mods need", "Some mods cannot run without these. Hex found them so you do not have to.", p.helpers, p) + "</div></section>" +
       '<section class="sec" aria-labelledby="h-stamp"><h2 id="h-stamp">Played it?</h2>' +
       (stamped
         ? '<div class="stamps"><div class="stamp' + (S.justStamped === p.id ? " new" : "") + '"><span class="ink">' + glyph(p.icon) + '</span><span class="small"><strong>Survived</strong></span></div></div>' + hex(say("stamped"))

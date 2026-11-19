@@ -2,6 +2,13 @@
 
 Decisions made so far, and who made them. Anything marked "Claude's call" is open to change.
 
+## The weekly plan (from Ligia)
+- Every week brings all-new playpacks to the main area.
+- Earlier playpacks leave the main area but stay in the full playpacks area, which keeps growing.
+- Favorites stay favorites after their week has passed.
+- The full area will need organizing once it is large. Not designed yet.
+- This needs each week's playpacks to be kept, which is the storage permission asked of CurseForge.
+
 ## From Ligia
 - Free tier: one full playpack a week, plus three teasers with a description but no mods or links.
 - Paid tier: every playpack, saved favorites, building and sharing your own.
@@ -15,6 +22,7 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 - Light mode cards must stand clearly apart from the page.
 - Membership costs $3.99 a month or $24.99 a year. No weekly plan and no free trial at launch.
 - Saved playpacks can be removed with the heart right in the Saved area, the same as saved mods.
+- Every group of mods on a playpack page starts open and says in one line what it is. A closed group reads as "you should not get these".
 
 ## Carried over from the first HyMeta (built in Perplexity, March and April 2026)
 - Seven playstyle families: combat, building, survival, creatures and farming, magic, exploration, a bit of everything.
@@ -54,6 +62,8 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 - Old mods with no current-version mark are left out. If nothing well-kept does a job, an older mod is used and its card says it may not work.
 - Each card says which job the mod was picked for and which game version it is marked for.
 - Horror mods are kept out, even from the spider playpack.
+- Every playpack aims for 8 picks: its own jobs first, then up to three everyday extras that suit any playstyle (item info, a map, bigger bags). Guides for new players suggest starting with 5 to 10 mods, which matches how Ligia plays.
+- An extra never repeats a job the playpack already fills.
 - Helper mods that a pick cannot run without are found automatically and listed in their own group.
 - Mods whose name or description contains a blocked word never appear.
 - Free players never trigger a fetch for a locked playpack. Real enforcement arrives with accounts.

@@ -128,6 +128,7 @@ function makeAudit(p, bad) {
     const nums = (await p.textContent('label[for="gate-in"]')).match(/\d+/g).map(Number);
     await p.fill("#gate-in", String(nums[0] * nums[1])); await p.click('#gate button[type="submit"]'); await p.waitForTimeout(200);
     if (!(await count(".mod"))) bad("member view hides the mods");
+    if (!(await count("#g-spice[open] .group-about"))) bad("the spice group starts closed or does not say what it is");
     await audit("pack"); await shot("pack");
 
     // save a playpack and a mod, collect a stamp
@@ -252,6 +253,11 @@ function makeAudit(p, bad) {
       if (!/Sneaky/.test(text)) bad("expected mod is missing from the playpack");
       if (await p.evaluate(() => window.__hacked) || await count("#view img[onerror]")) bad("a mod name was treated as code");
       if (!(await count("#g-help"))) bad("helper mods were not found for a mod that needs one");
+      if (!(await count("#g-extra .mod"))) bad("the everyday extras group is missing");
+      for (const g of ["g-core", "g-spice", "g-extra", "g-help"]) {
+        if (!(await count(`#${g}[open]`))) bad(`the group ${g} starts closed, which makes its mods look optional`);
+        if (!(await count(`#${g} .group-about`))) bad(`the group ${g} does not say what it is`);
+      }
       if (/Pretend Helper Lib/.test(await p.textContent("#g-core"))) bad("a helper mod was listed as a main pick");
       if (!/By pretend_author/.test(text)) bad("mod author is missing");
       if (!/Picked for:\s*Crops and gardens/.test(text)) bad("mods do not say which job they were picked for");

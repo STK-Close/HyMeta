@@ -28,6 +28,7 @@ function pretendCurseForge() {
   add({ name: "<img src=x onerror=self.__hacked=1> Sneaky Crops", cat: 9288, words: ["farm", "crop"], dl: HUGE });            // must be shown as plain text
   add({ name: "Sexy Farm Outfits", cat: 9288, words: ["farm"], dl: HUGE });                                                    // blocked word
   add({ name: "Pretend Coops", words: ["animal"], needs: [helper], dl: HUGE });                                                // needs one helper mod
+  add({ name: "PretendBetterMap", words: ["map"], dl: HUGE });                                                                 // a run-together name still counts as a map mod
   add({ name: "Pretend Carpets", words: ["pet"], dl: HUGE });                                                                  // "pet" inside "carpets" is not a match
   add({ name: "Pretend Spider Skin Pack", words: ["spider"], dl: HUGE });                                                      // the spider playpack avoids skins
   add({ name: "Pretend Spiders Begone", words: ["spider"], dl: HUGE });                                                        // removes spiders: on that playpack's own avoid list
