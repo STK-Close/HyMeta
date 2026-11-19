@@ -86,6 +86,10 @@ function makeAudit(p, bad) {
       if (await count(".steps li") !== 3 || await count(".style") !== 7) bad("the front door is missing its three steps or seven playstyles");
       if (await p.evaluate(() => [...document.images].filter((i) => !i.naturalWidth).length)) bad("a front door picture did not load");
       const doorText = await p.textContent("main");
+      // Hex is introduced before she is asked to pick anything: who she is, what she looks like, how she talks
+      if (!(await count('#hex-pic img[alt*="troll"]')) || !/Meet Hex/.test(await p.textContent("#h-quiz")) || !/resident troll/.test(await p.textContent(".meet"))) bad("the front door asks Hex to pick without saying who Hex is");
+      const firstLine = await p.textContent("#hex-say"); await p.click("#hex-pic");
+      if ((await p.textContent("#hex-say")) === firstLine) bad("tapping Hex does nothing");
       for (const need of ["$24.99 a year", "$3.99 a month", "Lumina Art House, LLC", "not affiliated", "13 and up", "CurseForge"]) if (!doorText.includes(need)) bad("the front door does not mention: " + need);
       // Hex's three questions choose a playstyle
       if (!(await p.locator("#result").isHidden())) bad("the quiz shows a result before any question is answered");

@@ -63,6 +63,8 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 
 ## Claude's call
 - Host name: Hex, a troll cousin of Heckle. Three moods (gentle, cheeky, unhinged), all clean.
+- Who Hex is: HyMeta's resident troll, a she, like her cousin Heckle. Small, bright green, big round ears, a wild tuft of hot pink hair, two tiny tusks and a huge grin. She wears a patched explorer's coat and a gold backpack and carries a lantern and a treasure map. She digs through the mods, then dares you to try what she found. Friendly, mostly.
+- Her portrait (`web/images/hex.jpg`) was made with fal to match the small pixel face used inside the app. The front door introduces her before she is asked to pick anything.
 - Logo: a pixel backpack, for "playpack". Placeholder quality, to be redrawn.
 - Dare levels: cozy, spicy, send help.
 - Stamp card: one stamp per playstyle survived, with ranks.
