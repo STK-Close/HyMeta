@@ -115,8 +115,8 @@ input[type="text"],input[type="search"],input[type="password"],select{font:400 1
 .badge-exp{background:var(--tape);color:var(--tape-ink)}
 
 .hex{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:start;max-width:62ch}
-.hex .face{width:44px;height:44px;border-radius:10px;background:var(--bg3);border:1px solid var(--line-soft);padding:4px}
-.hex .face svg{width:100%;height:100%;display:block}
+.hex .face{width:44px;height:44px;border-radius:12px;background:var(--art-bg);border:1.5px solid var(--line);padding:0;overflow:hidden;cursor:pointer;display:block}
+.hex .face img{width:100%;height:100%;object-fit:cover;display:block}
 .hex .say{background:var(--bg2);border:1.5px solid var(--line);border-radius:4px 14px 14px 14px;padding:8px 12px}
 .hex .who{font-size:.8125rem;font-weight:700;color:var(--muted)}
 .hex .line{font:500 1.0625rem/1.4 var(--display)}
@@ -343,9 +343,7 @@ var GLYPH = {
   heart:[".##..##.","########","########","########",".######.","..####..","...##...","........"],
   fish:["........","..###..#",".#####.#","#.######","########",".#####.#","..###..#","........"]
 };
-var HEXFACE = ["....pp.pp...","...pppppp...","..gggggggg..","g.gggggggg.g","gggwkggwkggg","gggwwggwwggg","g.gggddggg.g","..gggggggg..","..wkkkkkkw..","..wgkppkgw..","...gggggg...","....gggg...."];
 var PACKMARK = ["...####...","..#....#..",".########.","##########","##########","##oooooo##","##o####o##","##oooooo##","##########",".########."];
-var HEXCOL = { g:"#6fbf5a", d:"#3f8a3a", w:"#fffdf2", k:"#1c2433", p:"#ff5aa5" };
 function px(rows, colors){
   var r = "";
   rows.forEach(function(row, y){
@@ -357,7 +355,7 @@ function px(rows, colors){
   return '<svg viewBox="0 0 ' + rows[0].length + " " + rows.length + '" aria-hidden="true" shape-rendering="crispEdges">' + r + "</svg>";
 }
 function glyph(name, color){ return px(GLYPH[name] || GLYPH.star, { "#": color || "currentColor" }); }
-function hexFace(){ return px(HEXFACE, HEXCOL); }
+function hexFace(){ return '<img src="images/hex-face.jpg" alt="" width="44" height="44" decoding="async">'; }
 function tile(m){
   if (m.logo) return '<img class="tile tile-img" src="' + esc(m.logo) + '" alt="" loading="lazy" decoding="async">';
   return '<span class="tile" style="background:linear-gradient(145deg,hsl(' + m.hue + ' 62% 44%),hsl(' + ((m.hue + 40) % 360) + ' 58% 26%))">' + glyph(m.icon, "#fffdf2") + "</span>";
@@ -510,6 +508,11 @@ var LINES = {
   stamped:{ gentle:"Stamp earned. Well played.", cheeky:"You survived. I owe the scarecrow five coins.", unhinged:"YOU LIVED. Incredible. I had already picked out your replacement." },
   community:{ gentle:"Made by a fellow player. Be kind to it.", cheeky:"A member built this. I take no responsibility and all of the credit.", unhinged:"A MEMBER MADE THIS. I did not check it. I simply released it into the wild." }
 };
+var QUIPS = {
+  gentle:["You are doing wonderfully.", "Take your time. The mods will wait.", "I saved you the good ones."],
+  cheeky:["I have read every mod description. All of them. I have not slept.", "I am not a goblin. Goblins are shorter and worse at maps.", "Pick the hard one. I will watch. Supportively.", "The chickens told me things. I cannot repeat them."],
+  unhinged:["I COUNTED THE SPIDERS. There are more now.", "TAP ME AGAIN. I dare you.", "I hid a surprise in one of these. I forget which.", "EVERYTHING IS FINE. The barn is supposed to hum."]
+}, quipAt = 0;
 var GLOSS = {
   mod:["Mod","A mod is a free add-on made by a player. It changes or adds something in the game."],
   playpack:["Playpack","A playpack is a set of mods we picked because they work well together for one way of playing."],
@@ -662,7 +665,7 @@ function goLive(){
 }
 function say(key){ return LINES[key][S.mood]; }
 function hex(line){
-  return '<div class="hex"><div class="face">' + hexFace() + '</div><div class="say"><p class="who">Hex says</p><p class="line">' + esc(line) + "</p></div></div>";
+  return '<div class="hex"><button type="button" class="face" data-action="quip" aria-label="Hex. Tap her for a quip">' + hexFace() + '</button><div class="say"><p class="who">Hex says</p><p class="line">' + esc(line) + "</p></div></div>";
 }
 function flames(n){ var f = ""; for (var i = 0; i < n; i++) f += ic("flame"); return f; }
 function dareChip(p){ return '<span class="chip">' + flames(p.dare) + '<span><span class="sr">Dare level: </span>' + DARE[p.dare] + "</span></span>"; }
@@ -1139,6 +1142,7 @@ document.addEventListener("click", function(e){
   else if (a === "install") runInstall(id);
   else if (a === "instnext"){ p = findPack(id); markInstalled(p, b.getAttribute("data-mod"), true); setTimeout(function(){ if (sheet.open){ openSheet("Play " + esc(p.name), playBody(p, "here")); var nx = $("#inst-next") || $("#sheet-title"); nx.focus(); } }, 60); }
   else if (a === "stampdone"){ p = findPack(id); if (S.stamps.indexOf(id) < 0){ S.stamps.push(id); remember("stamps", id, true); store.set("stamps", S.stamps); } render(false); openSheet("Play " + esc(p.name), playBody(p, "here")); toast("Stamp collected"); }
+  else if (a === "quip"){ var ql = QUIPS[S.mood]; quipAt = (quipAt + 1) % ql.length; toast("Hex: " + ql[quipAt]); }
   else if (a === "code") openCode();
   else if (a === "unqueue"){ S.upnext = S.upnext.filter(function(x){ return x !== id; }); store.set("upnext", S.upnext); remember("upnext", id, false); render(false); toast("Removed from waiting"); }
   else if (a === "welcome"){ S.welcomed = true; store.set("welcomed", true); render(true); }

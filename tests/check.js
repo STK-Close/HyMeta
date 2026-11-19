@@ -93,9 +93,16 @@ function makeAudit(p, bad) {
       for (const need of ["$24.99 a year", "$3.99 a month", "Lumina Art House, LLC", "not affiliated", "13 and up", "CurseForge"]) if (!doorText.includes(need)) bad("the front door does not mention: " + need);
       // Hex's three questions choose a playstyle
       if (!(await p.locator("#result").isHidden())) bad("the quiz shows a result before any question is answered");
+      // one question at a time, and the Hex panel plus the question fit a phone screen without a long scroll
+      if (await count(".quiz .q") !== 1) bad("the quiz shows more than one question at once");
+      if (w < 500) { const tall = await p.locator(".quiz").evaluate((e) => e.getBoundingClientRect().height); if (tall > 440) bad(`the Hex area is ${Math.round(tall)}px tall on a phone, more than a screenful`); }
+      await audit("front door quiz");
       // two of the three answers point at magic, so magic wins even though the first answer said exploring
       for (const [qi, ai] of [[0, 3], [1, 2], [2, 1]]) await p.click(`.opt[data-q="${qi}"][data-a="${ai}"]`);
       await p.waitForSelector("#result:not([hidden])"); await audit("front door quiz result");
+      if (await count(".quiz .q")) bad("the questions stay on screen after Hex has given her verdict");
+      await p.click("#again"); if (await count(".quiz .q") !== 1 || !(await p.locator("#result").isHidden())) bad("Ask me again does not restart the questions");
+      for (const [qi, ai] of [[0, 3], [1, 2], [2, 1]]) await p.click(`.opt[data-q="${qi}"][data-a="${ai}"]`);
       if (!/Wizard school dropout/.test(await p.textContent("#result"))) bad("the quiz picked the wrong playstyle: " + (await p.textContent("#result")).slice(0, 60));
       // the password takes the visitor straight to the playstyle Hex picked
       await p.fill("#pw", "wrong-guess"); await p.click('#f button[type="submit"]'); await p.waitForSelector("#err:not([hidden])");
@@ -129,6 +136,9 @@ function makeAudit(p, bad) {
     await p.click('[data-action="welcome"]'); await p.reload(); await p.waitForSelector("#view .page"); await p.waitForTimeout(300);
     if (await count("#welcome")) bad("home: the welcome came back after it was dismissed");
     if (await count(".top .hex, .top .face")) bad("home: troll is in the top bar");
+    if (!(await count('.hex .face img[src$="hex-face.jpg"]')) || await count(".hex .face svg")) bad("home: Hex is not shown with her portrait face");
+    if (await p.evaluate(() => { const i = document.querySelector(".hex .face img"); return !i || !i.naturalWidth; })) bad("home: Hex's face did not load");
+    await p.click(".hex .face"); if (!/^Hex: /.test(await p.textContent("#toast"))) bad("home: tapping Hex's face does nothing");
     if (await count("#view > .page > .hex")) bad("home: troll greeting is back at the top of the page");
     if (name === "phone") { const hgt = await p.locator(".pk").first().evaluate((e) => e.getBoundingClientRect().height); if (hgt > 190) bad(`home: playpack card is ${Math.round(hgt)}px tall on a phone`); }
 
