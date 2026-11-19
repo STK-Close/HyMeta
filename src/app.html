@@ -524,7 +524,7 @@ var S = {
   tier: store.get("tier", "free"), mood: store.get("mood", "cheeky"), theme: store.get("theme", "device"),
   saved: store.get("saved", []), savedMods: store.get("savedMods", []), stamps: store.get("stamps", []), mine: store.get("mine", []),
   hidden: store.get("hidden", []), blocked: store.get("blocked", []),
-  user: null, accounts: false, queue: null, blockedMembers: [], upnext: store.get("upnext", []), installed: store.get("installed", {}), welcomed: store.get("welcomed", false), sort: "style", q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false, bres: [], bbusy: false, spot: null,
+  user: null, accounts: false, billing: false, plan: "year", queue: null, blockedMembers: [], upnext: store.get("upnext", []), installed: store.get("installed", {}), welcomed: store.get("welcomed", false), sort: "style", q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false, bres: [], bbusy: false, spot: null,
   draft: { name:"", blurb:"", mods:[] }, dirty: false, justStamped: null, open: {}
 };
 var hostTheme = document.documentElement.getAttribute("data-theme");
@@ -591,6 +591,8 @@ function post(body, route){
 function loadAccount(merge){
   return api("api/account").then(function(d){
     S.accounts = !!d.enabled; S.user = d.user || null;
+    // once payments are switched on, membership is real: it comes from the account, not the preview switch
+    S.billing = !!d.billing; if (S.billing) S.tier = d.user ? d.user.tier : "free";
     if (d.user) KEPT.forEach(function(k){
       var server = d[k] || [];
       if (merge) S[k].forEach(function(id){ if (server.indexOf(id) < 0 && /^[a-z0-9-]{1,80}$/.test(id)){ server.push(id); post({ op:"keep", list:k, id:id, on:true }).catch(function(){}); } });
@@ -630,7 +632,7 @@ function ensureMods(p){
 function remember(list, id, on){
   if (S.user) post({ op:"keep", list:list, id:id, on:on }).catch(function(){ toast("That did not reach your account. Check your connection."); });
 }
-function forgetLocal(){ S.user = null; S.queue = null; S.blockedMembers = []; S.mine = []; COMMUNITY.length = 0; KEPT.forEach(function(k){ S[k] = []; store.set(k, []); }); }
+function forgetLocal(){ S.user = null; if (S.billing) S.tier = "free"; S.queue = null; S.blockedMembers = []; S.mine = []; COMMUNITY.length = 0; KEPT.forEach(function(k){ S[k] = []; store.set(k, []); }); }
 function openAccount(mode){
   var up = mode === "signup";
   openSheet(up ? "Make an account" : "Sign in",
@@ -648,7 +650,13 @@ function goLive(){
   PACKS.forEach(function(p){ p.core = []; p.spice = []; p.extras = []; p.helpers = []; p.ready = false; });
   COMMUNITY.length = 0;
   S.savedMods = S.savedMods.filter(isLiveId); S.saved = S.saved.filter(findPack); S.mine = S.mine.filter(function(p){ return p.core.every(isLiveId); });
-  loadPack(findPack(FEATURED)); loadMissing(); loadAccount(false);
+  loadPack(findPack(FEATURED)); loadMissing();
+  var paid = /[?&]paid=1/.test(location.search);
+  if (paid) try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) {}
+  loadAccount(false).then(function(){
+    if (!paid || !S.user) return;
+    return post({ op:"sync" }, "api/billing").then(function(d){ if (d.tier === "member"){ return loadAccount(false).then(function(){ toast("Welcome, member. Every playpack is open."); }); } toast("Your payment is still being confirmed. Refresh in a minute."); }, function(){});
+  });
   api("api/spotlight").then(function(d){ if (d.mod){ S.spot = adopt(d.mod); if (current === "home") render(false); } }).catch(function(){});
   render(false);
 }
@@ -931,8 +939,11 @@ function vYou(){
       : '<p>You are not signed in. This preview keeps your choices on this device only.</p>' +
         '<div class="row"><button type="button" class="btn btn-ghost" data-action="signin">Sign in</button><button type="button" class="btn btn-danger" data-action="delacct">Delete my account</button></div>') +
       "<h3>Blocked members</h3>" + blocked, false) +
-    fold("f-mem", "Membership", "<p>Membership is $3.99 a month or $24.99 a year. You are looking at the " + (S.tier === "member" ? "member" : "free") + " view.</p>" +
-      '<div class="row"><button type="button" class="btn btn-ghost" data-action="join">See what members get</button></div>', false) +
+    fold("f-mem", "Membership", S.billing && S.tier === "member"
+      ? '<p id="mem-on"><strong>You are a member.</strong> Every playpack is open. Thank you for keeping the lanterns lit.</p>' +
+        (S.user && S.user.owner ? '<p class="small muted">As the owner you are a member without paying.</p>' : '<div class="row"><button type="button" class="btn btn-ghost" data-action="portal">Manage or cancel membership</button></div><p class="small muted">Opens a secure Stripe page where you can change your card or cancel. Cancelling keeps your membership until the end of the time you paid for.</p>')
+      : "<p>Membership is $3.99 a month or $24.99 a year." + (S.billing ? "" : " You are looking at the " + (S.tier === "member" ? "member" : "free") + " view.") + "</p>" +
+      '<div class="row"><button type="button" class="btn ' + (S.billing ? "btn-primary" : "btn-ghost") + '" data-action="join">See what members get</button></div>', false) +
     fold("f-legal", "Help and legal", '<div style="display:flex;flex-direction:column;align-items:flex-start">' +
       [["support","Help and contact"],["privacy","Privacy policy"],["terms","Terms of use"],["rules","Community rules"],["credits","Copyright and credits"]].map(function(d){
         return '<button type="button" class="linkbtn" data-action="doc" data-doc="' + d[0] + '">' + d[1] + "</button>"; }).join("") + "</div>", false) +
@@ -951,6 +962,7 @@ function render(focusHeading){
   $("#tabs").innerHTML = TABS.map(function(t){
     return '<a href="#' + t[0] + '"' + (tabFor(r) === t[0] ? ' aria-current="page"' : "") + ">" + ic(t[2]) + "<span>" + t[1] + "</span></a>";
   }).join("");
+  $(".viewas").hidden = !!S.billing;
   $("#tier-free").setAttribute("aria-pressed", S.tier === "free");
   $("#tier-member").setAttribute("aria-pressed", S.tier === "member");
   var v = $("#view"), isPack = r.indexOf("pack-") === 0;
@@ -1075,10 +1087,13 @@ function openJoin(){
     '<label><input type="radio" name="plan" value="month"><span><strong>Monthly, $3.99</strong><br><span class="small muted">Billed every month.</span></span></label></div>' +
     '<p class="small muted">Pay by card, Apple Pay or Google Pay. Membership renews automatically until you cancel, and you can cancel in two taps under You.</p>' +
     '<div class="row">' + (member
-      ? '<button type="button" class="btn btn-ghost" data-action="tier" data-tier="free">Switch to the free view</button>'
-      : '<button type="button" class="btn btn-primary" data-action="gate">Continue</button>') + "</div>" +
+      ? (S.billing ? '<p><strong>You are already a member.</strong></p>' : '<button type="button" class="btn btn-ghost" data-action="tier" data-tier="free">Switch to the free view</button>')
+      : '<button type="button" class="btn btn-primary" data-action="' + (S.billing ? "pay" : "gate") + '">' + (S.billing ? "Continue to payment" : "Continue") + "</button>") + "</div>" +
     '<div class="row"><button type="button" class="linkbtn" data-action="doc" data-doc="terms">Terms of use</button><button type="button" class="linkbtn" data-action="doc" data-doc="privacy">Privacy policy</button></div>' +
-    '<p class="small muted">Preview only. No payment is taken.</p>');
+    (S.billing ? '<p class="small muted">You pay on a secure Stripe page. HyMeta never sees your card.</p>' : '<p class="small muted">Preview only. No payment is taken.</p>'));
+}
+function startCheckout(){
+  return post({ op:"checkout", plan:S.plan }, "api/billing").then(function(d){ if (d.url) location.href = d.url; else throw new Error("Payments are not switched on yet."); });
 }
 function openGate(){
   var a = 12 + Math.floor(Math.random() * 8), b = 3 + Math.floor(Math.random() * 6); gateAnswer = a * b;
@@ -1117,6 +1132,7 @@ function toggle(list, key, id){ var i = list.indexOf(id); if (i > -1) list.splic
 document.addEventListener("click", function(e){
   var b = e.target.closest("[data-action]"); if (!b) return;
   var a = b.getAttribute("data-action"), id = b.getAttribute("data-id"), p;
+  if (a === "tier" && S.billing) return;
   if (a === "tier"){ S.tier = b.getAttribute("data-tier"); store.set("tier", S.tier); closeSheet(); render(false); toast(S.tier === "member" ? "Now showing the member view" : "Now showing the free view"); }
   else if (a === "play") openPlay(id);
   else if (a === "playmode") openPlay(id, b.getAttribute("data-mode"));
@@ -1133,6 +1149,11 @@ document.addEventListener("click", function(e){
   }
   else if (a === "join") openJoin();
   else if (a === "gate") openGate();
+  else if (a === "pay"){
+    S.plan = (sheet.querySelector('input[name="plan"]:checked') || {}).value === "month" ? "month" : "year";
+    if (!S.user){ openAccount("signup"); toast("Make an account first. Your membership lives on it."); } else openGate();
+  }
+  else if (a === "portal") post({ op:"portal" }, "api/billing").then(function(d){ location.href = d.url; }, function(e){ toast(e.message); });
   else if (a === "restore") toast("Nothing to restore in this preview");
   else if (a === "soon") toast("Not connected in this preview");
   else if (a === "signin"){ if (S.accounts) openAccount("login"); else openSignin(); }
@@ -1229,6 +1250,11 @@ document.addEventListener("submit", function(e){
   else if (f.id === "gate"){
     var inp = $("#gate-in"), err = $("#gate-err");
     if (parseInt(inp.value, 10) !== gateAnswer){ err.textContent = "That is not it. Ask a grown-up to try."; err.hidden = false; inp.focus(); return; }
+    if (S.billing){
+      var gbtn = f.querySelector('button[type="submit"]'); gbtn.disabled = true; err.hidden = true;
+      startCheckout().catch(function(e){ gbtn.disabled = false; err.textContent = e.message; err.hidden = false; });
+      return;
+    }
     S.tier = "member"; store.set("tier", "member"); closeSheet(); render(false); toast("Now showing the member view");
   }
   else if (f.id === "report"){

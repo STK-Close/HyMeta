@@ -397,6 +397,55 @@ function makeAudit(p, bad) {
     await ctx.close();
   }
   server.close();
+
+  // ---------- payments: the same site with a pretend Stripe ----------
+  server = await start({ pretend: true, password: PASSWORD, key: "pretend-key", accounts: true, payments: true });
+  url = server.url;
+  for (const [tag, w, h, scheme] of [["pay-phone-dark", 390, 844, "dark"], ["pay-desktop-light", 1366, 900, "light"]]) {
+    if (only && only !== tag) continue;
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: w < 500 });
+    const p = await ctx.newPage(); const bad = (m) => problems.push(`${tag} ${m}`);
+    for (const host of ["https://media.forgecdn.net/**", "https://checkout.stripe.test/**", "https://billing.stripe.test/**"]) await p.route(host, (r) => r.fulfill({ status: 200, contentType: host.includes("forgecdn") ? "image/svg+xml" : "text/html", body: host.includes("forgecdn") ? "<svg xmlns='http://www.w3.org/2000/svg'/>" : "<h1>Pretend Stripe page</h1>" }));
+    p.on("console", (m) => { if (m.type() === "error" && !/40[013]/.test(m.text())) bad("console: " + m.text()); });
+    p.on("pageerror", (e) => bad("page error: " + e.message));
+    p.setDefaultTimeout(6000);
+    const audit = makeAudit(p, bad), count = (sel) => p.locator(sel).count();
+    try {
+      await signIn(p, bad);
+      const post = (data) => ctx.request.post(url + "api/account", { data });
+      if (!(await post({ op: "signup", email: "owner@example.test", password: "correct-horse-9", name: "The Owner", over13: true })).ok()) {} // the first account is the owner
+      await post({ op: "logout" });
+      const email = tag + "@example.test"; await post({ op: "signup", email, password: "correct-horse-9", name: "Paying Player", over13: true });
+      await p.reload(); await p.waitForSelector(".notice:has-text('live mods')"); await p.waitForFunction(() => document.querySelector(".viewas").hidden);
+      // free: other playpacks are locked, and there is no preview switch to flip
+      await p.goto(url + "#pack-dungeon-gremlin"); await p.waitForSelector('.actions [data-action="join"]');
+      if (await count(".mod")) bad("a free account sees a members-only playpack");
+      await p.click('.actions [data-action="join"]'); await audit("membership sheet, payments on");
+      const sheetText = await p.textContent("#sheet");
+      for (const need of ["$3.99", "$24.99", "renews automatically", "Apple Pay", "secure Stripe page"]) if (!sheetText.includes(need)) bad("membership sheet is missing: " + need);
+      if (/Preview only/.test(sheetText)) bad("the membership sheet still says no payment is taken");
+      // pay: grown-up question, then off to Stripe's page
+      await p.click('[data-action="pay"]');
+      const nums = (await p.textContent('label[for="gate-in"]')).match(/\d+/g).map(Number);
+      await p.fill("#gate-in", String(nums[0] * nums[1])); await p.click('#gate button[type="submit"]');
+      await p.waitForURL("https://checkout.stripe.test/**");
+      const sessionId = p.url().split("/").pop();
+      if (server.stripe.state.sessions[sessionId].price !== server.stripe.state.prices.find((x) => x.lookup_key === "hymeta_yearly").id) bad("the yearly plan was chosen but a different price was charged");
+      // Stripe confirms the payment, the member comes back, and everything is open
+      await ctx.request.post(url + "api/billing", { data: server.stripe.pay(sessionId) });
+      await p.goto(url + "?paid=1#pack-dungeon-gremlin"); await p.waitForSelector(".mod");
+      if (/paid=1/.test(p.url())) bad("the address still carries the payment marker after returning");
+      await p.goto(url + "#you"); await p.waitForSelector("#f-mem"); await p.click("#f-mem > summary"); await p.waitForSelector("#mem-on"); await audit("member, payments on");
+      await p.click('[data-action="portal"]'); await p.waitForURL("https://billing.stripe.test/**");
+      // the membership ends: locked again
+      const customer = server.stripe.state.sessions[sessionId].customer;
+      await ctx.request.post(url + "api/billing", { data: server.stripe.end(customer) });
+      await p.goto(url + "#pack-dungeon-gremlin"); await p.waitForSelector('.actions [data-action="join"]');
+      if (await count(".mod")) bad("a cancelled membership still opens members-only playpacks");
+    } catch (e) { bad("stopped early, a step could not be done: " + e.message.split("\n").slice(0, 4).join(" ").replace(/\s+/g, " ").slice(0, 260)); }
+    await ctx.close();
+  }
+  server.close();
   await b.close();
   console.log(problems.length ? problems.join("\n") : "NO PROBLEMS");
   process.exit(problems.length ? 1 : 0);

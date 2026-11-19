@@ -68,12 +68,49 @@ function pretendCurseForge() {
   return calls;
 }
 
-function start({ port = 0, pretend = false, password, key, accounts, owners } = {}) {
+// A pretend Stripe, so payments can be checked without a real account or real money.
+function pretendStripe() {
+  const st = { prices: [], customers: [], sessions: {}, subs: {}, events: {}, webhooks: [], portalReady: false, n: 0, calls: [] };
+  const inner = global.fetch;
+  global.fetch = async (url, init) => {
+    const u = new URL(String(url));
+    if (u.hostname !== "api.stripe.com") return inner(url, init);
+    const send = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "Content-Type": "application/json" } });
+    if (!init || !init.headers || init.headers.Authorization !== "Bearer " + process.env.STRIPE_SECRET_KEY) return send({ error: { message: "Invalid API key" } }, 401);
+    const method = init.method || "GET", path = u.pathname.replace("/v1", ""), body = new URLSearchParams(init.body || "");
+    st.calls.push(method + " " + path);
+    if (path === "/prices" && method === "GET") return send({ data: st.prices.filter((p) => p.lookup_key === u.searchParams.get("lookup_keys[]")) });
+    if (path === "/prices") { const p = { id: "price_" + ++st.n, lookup_key: body.get("lookup_key"), unit_amount: +body.get("unit_amount"), interval: body.get("recurring[interval]") }; st.prices.push(p); return send(p); }
+    if (path === "/webhook_endpoints" && method === "GET") return send({ data: st.webhooks });
+    if (path === "/webhook_endpoints") { const w = { id: "we_" + ++st.n, url: body.get("url"), status: "enabled" }; st.webhooks.push(w); return send(w); }
+    if (path === "/customers") { const c = { id: "cus_" + ++st.n, email: body.get("email") }; st.customers.push(c); return send(c); }
+    if (path === "/checkout/sessions") { const id = "cs_" + ++st.n; st.sessions[id] = { id, url: "https://checkout.stripe.test/pay/" + id, customer: body.get("customer"), client_reference_id: body.get("client_reference_id"), price: body.get("line_items[0][price]"), mode: body.get("mode"), success_url: body.get("success_url") }; return send(st.sessions[id]); }
+    if (path === "/billing_portal/configurations") { st.portalReady = true; return send({ id: "bpc_1" }); }
+    if (path === "/billing_portal/sessions") return st.portalReady ? send({ url: "https://billing.stripe.test/p/" + body.get("customer") }) : send({ error: { message: "No configuration provided and your default configuration has not been created." } }, 400);
+    if (path.startsWith("/events/")) { const e = st.events[path.slice(8)]; return e ? send(e) : send({ error: { message: "No such event" } }, 404); }
+    if (path === "/subscriptions") return send({ data: Object.values(st.subs).filter((x) => x.customer === u.searchParams.get("customer")) });
+    if (path.startsWith("/subscriptions/")) { const x = st.subs[path.slice(15)]; return x ? send(x) : send({ error: { message: "No such subscription" } }, 404); }
+    return send({ error: { message: "Unknown route " + path } }, 404);
+  };
+  const event = (type, object) => { const e = { id: "evt_" + ++st.n, object: "event", type, data: { object } }; st.events[e.id] = e; return e; };
+  return {
+    state: st,
+    // what Stripe does when a member finishes paying: starts the subscription and tells HyMeta
+    pay(sessionId) { const s = st.sessions[sessionId], sub = { id: "sub_" + ++st.n, customer: s.customer, status: "active" }; st.subs[sub.id] = sub; return event("checkout.session.completed", { mode: "subscription", subscription: sub.id, customer: s.customer, client_reference_id: s.client_reference_id }); },
+    // what Stripe does when a membership ends
+    end(customer) { const sub = Object.values(st.subs).find((x) => x.customer === customer); sub.status = "canceled"; return event("customer.subscription.deleted", { id: sub.id, customer }); },
+  };
+}
+
+function start({ port = 0, pretend = false, password, key, accounts, owners, payments } = {}) {
+  if (payments !== undefined) { if (payments) process.env.STRIPE_SECRET_KEY = "sk_test_pretend"; else delete process.env.STRIPE_SECRET_KEY; }
+
   if (owners !== undefined) { if (owners) process.env.OWNER_EMAILS = owners; else delete process.env.OWNER_EMAILS; }
   if (accounts !== undefined) { if (accounts) process.env.HYMETA_LOCAL_DB = "1"; else delete process.env.HYMETA_LOCAL_DB; }
   if (password !== undefined) { if (password) process.env.SITE_PASSWORD = password; else delete process.env.SITE_PASSWORD; }
   if (key !== undefined) { if (key) process.env.CURSEFORGE_API_KEY = key; else delete process.env.CURSEFORGE_API_KEY; }
   const calls = pretend ? pretendCurseForge() : [];
+  const stripe = payments ? pretendStripe() : null; // installed last, so no payment request can slip past it to the real Stripe
   const server = http.createServer(async (req, res) => {
     try {
       const u = new URL(req.url, "http://localhost");
@@ -87,7 +124,7 @@ function start({ port = 0, pretend = false, password, key, accounts, owners } = 
       res.setHeader("Content-Type", TYPES[path.extname(file)] || "application/octet-stream"); res.end(fs.readFileSync(file));
     } catch (e) { res.statusCode = 500; res.end("Server error"); console.error(e); }
   });
-  return new Promise((resolve) => server.listen(port, "127.0.0.1", () => resolve({ url: "http://localhost:" + server.address().port + "/", close: () => server.close(), calls })));
+  return new Promise((resolve) => server.listen(port, "127.0.0.1", () => resolve({ url: "http://localhost:" + server.address().port + "/", close: () => server.close(), calls, stripe })));
 }
 module.exports = { start, pretendCurseForge };
 if (require.main === module) start({ port: +process.env.PORT || 3000 }).then((s) => console.log("HyMeta is running at " + s.url));

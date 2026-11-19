@@ -3,6 +3,7 @@
 const { guard, json } = require("../lib/gate");
 const db = require("../lib/db");
 const accounts = require("../lib/accounts");
+const billing = require("../lib/billing");
 
 const publicUser = (u) => ({ name: u.name, email: u.email, tier: u.tier });
 
@@ -12,7 +13,8 @@ module.exports = async (req, res) => {
   try {
     if (req.method === "GET") {
       const user = await accounts.currentUser(req);
-      return json(res, 200, user ? { enabled: true, user: { ...publicUser(user), owner: await accounts.isOwner(user) }, ...(await accounts.lists(user)) } : { enabled: true, user: null });
+      const paid = billing.enabled(); // once payments are on, membership is real and comes from the account
+      return json(res, 200, user ? { enabled: true, billing: paid, user: { ...publicUser(user), tier: (await accounts.isMember(user)) ? "member" : "free", owner: await accounts.isOwner(user) }, ...(await accounts.lists(user)) } : { enabled: true, billing: paid, user: null });
     }
     if (req.method !== "POST" || !/application\/json/i.test(String(req.headers["content-type"] || ""))) return json(res, 405, { error: "method" });
     const body = req.body && typeof req.body === "object" ? req.body : {};

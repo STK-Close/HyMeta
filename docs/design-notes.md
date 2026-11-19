@@ -8,6 +8,15 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 - With every build, Claude adds one thing nobody asked for and says what it was. So far: "Surprise me" in Explore.
 - `docs/app-store-checklist.md` is kept for reference only. Its safety items (review before sharing, report, block, account deletion) are built and stay.
 
+## Payments (Claude's call)
+- Stripe, in the name of Lumina Art House, LLC. Ligia's Square account belongs to a different company, Mōsa Print House, LLC, so it is not used.
+- Members pay on Stripe's own checkout page (card, Apple Pay, Google Pay) and manage or cancel on Stripe's own portal page. HyMeta never sees a card.
+- Only one setting is needed, `STRIPE_SECRET_KEY`. The two prices ($3.99 monthly, $24.99 yearly), the webhook and the portal settings are created in Stripe the first time they are needed.
+- Stripe's messages are never trusted as sent. Each one is looked up again with our own key, so a made-up message cannot grant a membership.
+- Once the key is set, membership is real: the Free and Member preview switch disappears, and the server refuses members-only playpacks to free accounts. The owner counts as a member without paying.
+- A grown-up question sits in front of the payment.
+- Not built yet: emails (receipts come from Stripe), and a way to gift or comp a membership.
+
 ## Installing (Claude's call, from research)
 - CurseForge has no way to take a whole list of Hytale mods at once, and no shareable profiles for Hytale that could be confirmed. So installing is one tap per mod: each tap hands a mod to the CurseForge app with its `curseforge://install` link, and the next mod moves up.
 - This link is confirmed for Minecraft and the CurseForge site shows "Install via App" for Hytale mods. It has not been tested on a real computer with the CurseForge app yet.
