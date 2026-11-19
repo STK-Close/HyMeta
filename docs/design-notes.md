@@ -46,7 +46,8 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 - Stamp card: one stamp per playstyle survived, with ranks.
 - Look: a game storefront at night. One key-art banner per screen, compact rows on phones, a tight grid on wide screens. Navy and gold base, hot pink only for warnings and experimental packs. Nothing taken from Hytale.
 - Each playpack keeps a small pixel crest in the corner of its artwork, so packs that share a picture can still be told apart.
-- Two pictures are each used by two playpacks (creatures and building) until more artwork exists. The spider, factory and hermit packs most need their own.
+- New playpack artwork is made with fal (FLUX.2), at about 1.2 cents a picture with commercial use allowed. Ligia approved this as the default on November 19, 2026. The prompts and the shared style line live in `scripts/make-art.py`. The spider, factory and hermit pictures were made this way.
+- One picture (creatures) is still shared by the cozy farmer and beast friend packs.
 - Phones cannot run Hytale, so the phone offers "Send to my computer" and the computer offers "Add all mods".
 - A grown-up question sits in front of the membership purchase.
 - Shared playpacks reject links, emails and phone numbers, and can be reported or their author blocked.

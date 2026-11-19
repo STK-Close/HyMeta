@@ -360,7 +360,7 @@ function rng(seed){
   var s = 7; for (var i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) >>> 0;
   return function(){ s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
 }
-var ART = { combat:"pack-combat", building:"pack-building", survival:"pack-survival", creatures:"pack-creatures", magic:"pack-magic", exploration:"pack-exploration", everything:"pack-everything", hero:"hymeta-hero" };
+var ART = { combat:"pack-combat", building:"pack-building", survival:"pack-survival", creatures:"pack-creatures", magic:"pack-magic", exploration:"pack-exploration", everything:"pack-everything", hero:"hymeta-hero", spiders:"pack-spiders", factory:"pack-factory", hermit:"pack-hermit" };
 function art(key, big){ return '<img class="art" src="images/' + (big ? "" : "thumb-") + (ART[key] || ART.hero) + '.jpg" alt="" decoding="async"' + (big ? "" : ' loading="lazy"') + ">"; }
 
 /* ---------- sample data (placeholders until CurseForge is connected) ---------- */
@@ -435,7 +435,7 @@ var PACKS = [
             cheeky:"It is just over that hill. So is the next thing. I may have fibbed about the distance.",
             unhinged:"WALK. Keep walking. I moved your house while you were gone. It is a game now." },
     core:["atlas","trail","far"], spice:["camp","rain"] },
-  { id:"too-many-legs", family:"creatures", art:"hero", name:"Too many legs", kind:"Experimental", dare:3, icon:"spider", sky:["#261a45","#144a52"], moon:"#b8ffe9", hills:["#28405a","#1c2f45","#11202f"],
+  { id:"too-many-legs", family:"creatures", art:"spiders", name:"Too many legs", kind:"Experimental", dare:3, icon:"spider", sky:["#261a45","#144a52"], moon:"#b8ffe9", hills:["#28405a","#1c2f45","#11202f"],
     blurb:"Caves full of spiders, webs that change the weather and silk worth a fortune.",
     warning:"This playpack may make you shiver if you are scared of spiders. It may make you shiver if you are not.",
     pitch:{ gentle:"A brave one. There are spiders, yes, but they are mostly busy.",
@@ -456,14 +456,14 @@ var PACKS = [
             cheeky:"It followed you home. So did the other nine. You live in a zoo now.",
             unhinged:"PET EVERYTHING. The big one too. Especially the big one. It looks hungry for FRIENDSHIP." },
     core:["whisper","saddle","treat"], spice:["barn","fam"] },
-  { id:"factory-goblin", family:"building", art:"building", name:"Factory goblin", kind:"Standard", dare:2, icon:"gear", sky:["#1f2a4a","#6a4a3a"], moon:"#ffc98a", hills:["#4a3d4a","#362c38","#221c26"],
+  { id:"factory-goblin", family:"building", art:"factory", name:"Factory goblin", kind:"Standard", dare:2, icon:"gear", sky:["#1f2a4a","#6a4a3a"], moon:"#ffc98a", hills:["#4a3d4a","#362c38","#221c26"],
     blurb:"Belts, gears and machines that sort your chests while you sleep.",
     warning:"It starts with one conveyor belt. It ends with you explaining a flowchart to your cat.",
     pitch:{ gentle:"Let the machines carry the boring bits so you can enjoy the rest.",
             cheeky:"You will never carry a potato by hand again. You will also never sleep again.",
             unhinged:"THE FACTORY MUST GROW. Feed it. Feed it your whole weekend. It says thank you." },
     core:["belt","wheel","sort"], spice:["scaf","ledger"] },
-  { id:"hard-mode-hermit", family:"survival", art:"survival", name:"Hard mode hermit", kind:"Standard", dare:3, icon:"skull", sky:["#161c3a","#3a4a6a"], moon:"#e6f0ff", hills:["#36456a","#283452","#182036"],
+  { id:"hard-mode-hermit", family:"survival", art:"hermit", name:"Hard mode hermit", kind:"Standard", dare:3, icon:"skull", sky:["#161c3a","#3a4a6a"], moon:"#e6f0ff", hills:["#36456a","#283452","#182036"],
     blurb:"Hunger, cold and one single life. For players who think the game is too kind.",
     warning:"Tears are a normal part of the process. So is starting over. And over.",
     pitch:{ gentle:"A real challenge for patient players. Go slowly and you will be fine.",
