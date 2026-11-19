@@ -1000,7 +1000,10 @@ function installBody(p){
   var top = next
     ? '<a class="btn btn-primary btn-big btn-full" id="inst-next" href="' + appLink(next) + '" data-action="instnext" data-id="' + p.id + '" data-mod="' + next + '">' + ic("down") + "Install " + esc(MOD[next].name) + "</a>" +
       '<p class="small muted" id="inst-count">' + done.length + " of " + ids.length + " installed. Each tap hands one mod to the CurseForge app.</p>"
-    : '<div id="inst-done" class="sec"><p><strong>All ' + ids.length + " mods are in.</strong> Last step: open Hytale, make a new world or edit one, open its mod settings and switch these mods on.</p>" + hex(say("installed")) + "</div>";
+    : '<div id="inst-done" class="sec"><p><strong>All ' + ids.length + " mods are in.</strong> One last step, because Hytale keeps mods switched off until you say so:</p>" +
+      '<ol class="steps"><li>Open Hytale and go to <strong>Worlds</strong>.</li><li><strong>Right-click</strong> your world and choose <strong>Mods</strong>. For a new world, use the settings cog while creating it.</li><li>Tick the mods to switch these mods on, then choose <strong>Save World Settings</strong>.</li></ol>' +
+      '<p class="small muted">Hytale has no single list of installed mods. They only show inside each world\'s Mods screen.</p>' + hex(say("installed")) +
+      (S.stamps.indexOf(p.id) < 0 ? '<div><button type="button" class="btn btn-ghost" data-action="stampdone" data-id="' + p.id + '">' + ic("star") + "Played it? Stamp my card</button></div>" : '<p class="small"><strong>Stamp collected.</strong></p>') + "</div>";
   return top + '<ul class="ticks inst" id="inst-list">' + ids.map(function(i){
       var m = MOD[i], on = done.indexOf(i) > -1;
       return '<li class="' + (on ? "done" : "") + '"><label class="check"><input type="checkbox" data-inst="' + p.id + '" value="' + i + '"' + (on ? " checked" : "") + '><span><span class="sr">Installed: </span>' + esc(m.name) + "</span></label>" +
@@ -1119,6 +1122,7 @@ document.addEventListener("click", function(e){
   else if (a === "playmode") openPlay(id, b.getAttribute("data-mode"));
   else if (a === "install") runInstall(id);
   else if (a === "instnext"){ p = findPack(id); markInstalled(p, b.getAttribute("data-mod"), true); setTimeout(function(){ if (sheet.open){ openSheet("Play " + esc(p.name), playBody(p, "here")); var nx = $("#inst-next") || $("#sheet-title"); nx.focus(); } }, 60); }
+  else if (a === "stampdone"){ p = findPack(id); if (S.stamps.indexOf(id) < 0){ S.stamps.push(id); remember("stamps", id, true); store.set("stamps", S.stamps); } render(false); openSheet("Play " + esc(p.name), playBody(p, "here")); toast("Stamp collected"); }
   else if (a === "code") openCode();
   else if (a === "unqueue"){ S.upnext = S.upnext.filter(function(x){ return x !== id; }); store.set("upnext", S.upnext); remember("upnext", id, false); render(false); toast("Removed from waiting"); }
   else if (a === "welcome"){ S.welcomed = true; store.set("welcomed", true); render(true); }

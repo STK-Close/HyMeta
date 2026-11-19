@@ -265,7 +265,9 @@ function makeAudit(p, bad) {
       if (await count("#inst-list input:checked") !== 1) bad("the installed mod was not ticked off");
       while (await count("#inst-list input:not(:checked)")) { await p.locator("#inst-list input:not(:checked)").first().click(); await p.waitForTimeout(80); }
       await p.waitForSelector("#inst-done");
-      if (!/switch these mods on/.test(await p.textContent("#inst-done"))) bad("the last step, switching the mods on in Hytale, is not explained");
+      const lastStep = await p.textContent("#inst-done");
+      if (!/switch these mods on/.test(lastStep) || !/Right-click/.test(lastStep) || !/Save World Settings/.test(lastStep)) bad("the last step, switching the mods on in each world, is not explained");
+      await audit("install finished"); await p.click('[data-action="stampdone"]'); await p.waitForFunction(() => /Stamp collected/.test(document.querySelector("#inst-done").textContent));
       await p.keyboard.press("Escape"); await p.reload(); await p.waitForSelector('.hero-side .chip:has-text("mods")');
       await p.click('[data-action="play"]'); await p.click('[data-mode="here"]'); if (!(await count("#inst-done"))) bad("install progress was forgotten after reloading");
       // send to my computer: a real code that opens the same playpack
@@ -347,9 +349,9 @@ function makeAudit(p, bad) {
       await q.goto(url + "#home"); await q.reload(); await q.waitForSelector("#view .page");
       try { await q.waitForSelector("#upnext .pk"); } catch (e) { bad("a playpack sent from one device is not waiting on the other"); }
       // a stamp collected on the second device shows on the first
-      await q.goto(url + "#pack-cozy-farmer"); await q.waitForSelector('[data-action="stamp"]'); await q.click('[data-action="stamp"]'); await q.waitForTimeout(400);
+      await q.goto(url + "#pack-the-wanderer"); await q.waitForSelector('[data-action="stamp"]'); await q.click('[data-action="stamp"]'); await q.waitForTimeout(400);
       await p.reload(); await p.waitForSelector("#view .page"); await go("you"); await p.waitForSelector("#acct-who, #f-acct");
-      if (!(await count(".stamp"))) bad("a stamp collected on one device did not show on the other");
+      if ((await count(".stamp")) < 2) bad("a stamp collected on one device did not show on the other");
       // ---------- community playpacks ----------
       await go("build"); await p.waitForSelector(".pickrow"); await audit("live build, signed in");
       await p.fill("#bq", "fishing"); await p.waitForFunction(() => document.querySelectorAll(".pickrow").length === 7);
