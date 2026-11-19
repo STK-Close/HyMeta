@@ -1,10 +1,11 @@
 // Everything about a member's account. GET returns who is signed in and what they have kept.
-// POST takes { op: "signup" | "login" | "logout" | "delete" | "keep" | "news", ... }.
+// POST takes { op: "signup" | "login" | "logout" | "delete" | "keep" | "news" | "vote", ... }.
 const { guard, json } = require("../lib/gate");
 const db = require("../lib/db");
 const accounts = require("../lib/accounts");
 const billing = require("../lib/billing");
 const mail = require("../lib/mail"), news = require("../lib/news");
+const openPoll = () => require("../lib/catalog").poll;
 
 const publicUser = (u) => ({ name: u.name, email: u.email, tier: u.tier, news: !!u.news });
 
@@ -15,7 +16,7 @@ module.exports = async (req, res) => {
     if (req.method === "GET") {
       const user = await accounts.currentUser(req);
       const paid = billing.enabled(); // once payments are on, membership is real and comes from the account
-      const flags = { enabled: true, billing: paid, mail: mail.enabled() && !!mail.siteUrl(req), news: news.enabled() && !!mail.siteUrl(req) };
+      const flags = { enabled: true, poll: await accounts.tally(openPoll(), user), billing: paid, mail: mail.enabled() && !!mail.siteUrl(req), news: news.enabled() && !!mail.siteUrl(req) };
       return json(res, 200, user ? { ...flags, user: { ...publicUser(user), tier: (await accounts.isMember(user)) ? "member" : "free", owner: await accounts.isOwner(user) }, ...(await accounts.lists(user)) } : { ...flags, user: null });
     }
     if (req.method !== "POST" || !/application\/json/i.test(String(req.headers["content-type"] || ""))) return json(res, 405, { error: "method" });
@@ -31,6 +32,7 @@ module.exports = async (req, res) => {
     const user = await accounts.currentUser(req);
     if (!user) return json(res, 401, { error: "signedout", message: "Sign in first." });
     if (body.op === "delete") { res.setHeader("Set-Cookie", await accounts.deleteAccount(user)); return json(res, 200, { ok: true }); }
+    if (body.op === "vote") { await accounts.vote(user, openPoll(), String(body.idea || "")); return json(res, 200, { ok: true, counts: (await accounts.tally(openPoll(), user)).counts }); }
     if (body.op === "news") { await accounts.setNews(user, body.on === true && news.enabled()); return json(res, 200, { ok: true }); }
     if (body.op === "keep") { await accounts.keep(user, body); return json(res, 200, { ok: true }); }
     return json(res, 400, { error: "unknown" });

@@ -1,0 +1,36 @@
+{
+  "id": "scenic-route",
+  "name": "The scenic route",
+  "family": "exploration",
+  "dare": 1,
+  "icon": "star",
+  "blurb": "Waterfalls, waves, northern lights and falling leaves. Nothing to fight. Just a lot to look at.",
+  "warning": "You will stop to watch the waterfall. Your friends will leave without you.",
+  "pitch": {
+    "gentle": "Slow down. The sky is doing something lovely and the river is in no rush.",
+    "cheeky": "You walked for an hour and did nothing but look at water. I am calling that a win.",
+    "unhinged": "LOOK AT THE SKY. LOOK AT IT. It is GREEN now. Nobody did that. It just happened. I LOVE IT HERE."
+  },
+  "hint": "Bring nothing. Just look up.",
+  "art": "scenic",
+  "artPrompt": "A traveller sitting on a cliff edge beside a tent and a small campfire, looking out over a huge waterfall pouring into a sea with rolling waves, green and purple northern lights rippling across a starry night sky, autumn trees dropping orange leaves, a hot air balloon in the distance.",
+  "recipe": {
+    "theme": ["waterfall", "wave", "aurora", "season", "weather", "leaves", "ambient", "scenic", "sunset", "northern lights"],
+    "avoid": ["skin pack", "dungeon", "boss", "weapon", "raid", "zombie", "pvp", "arena", "horde", "comet", "translation", "removal", "begone", "no fog", "cushion", "sapling", "bench tiers", "workbench", "sickle", "harvest"],
+    "jobs": [
+      { "label": "Water that moves", "kw": ["waterfall", "waterfalls", "waves", "river", "tide", "foam"], "q": ["waterfall", "waves"], "n": 1, "fresh": true },
+      { "label": "A sky worth looking at", "kw": ["aurora", "northern lights", "stars", "sunset", "sky"], "q": ["aurora", "stars"], "n": 1, "fresh": true },
+      { "label": "Seasons and weather", "kw": ["season", "seasons", "weather"], "q": ["season", "weather"], "n": 1 },
+      { "label": "Small things drifting past", "kw": ["falling leaves", "leaves", "ambient", "meadow", "whales", "dolphins", "butterfly", "firefly"], "q": ["ambient", "leaves", "visual"], "n": 1, "fresh": true },
+      { "label": "Lights for after dark", "kw": ["lantern", "lamp", "lighting", "light"], "q": ["lantern", "lighting"], "n": 1 },
+      { "label": "Somewhere to sit and look", "kw": ["tent", "campfire", "balloon", "picnic", "hammock"], "q": ["tent", "campfire"], "n": 1, "fresh": true }
+    ]
+  },
+  "poll": {
+    "ideas": [
+      { "id": "mayor-of-somewhere", "name": "Mayor of somewhere", "line": "Villagers, shops and a whole town that needs running. Badly." },
+      { "id": "mermaid-lagoon", "name": "Mermaid lagoon", "line": "Tails, tides and a pool that only works at full moon." },
+      { "id": "middle-of-the-world", "name": "The middle of the world", "line": "Straight down, past the caves, until the map gives up." }
+    ]
+  }
+}

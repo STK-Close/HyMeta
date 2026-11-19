@@ -17,7 +17,7 @@ function pretendCurseForge() {
     const id = 1000 + mods.length, cat = o.cat || 9212, label = (Object.values(CAT).find((c) => c[0] === cat) || [0, "Library"])[1];
     mods.push({ id, gameId: 70216, classId: 9137, isAvailable: true, allowModDistribution: true, mainFileId: id * 10, primaryCategoryId: cat,
       name: o.name, summary: o.summary || "Pretend mod about " + ((o.words || [])[0] || "things") + ".", authors: [{ name: o.author || "pretend_author_" + id }],
-      downloadCount: o.dl || Math.max(600, 900000 - mods.length * 1400), dateModified: new Date(Date.now() - (o.age || 5) * DAY).toISOString(),
+      downloadCount: o.dl || Math.max(600, 900000 - mods.length * 1400), dateCreated: new Date(Date.now() - (o.born || 400) * DAY).toISOString(), dateModified: new Date(Date.now() - (o.age || 5) * DAY).toISOString(),
       categories: [{ id: cat, name: label }], logo: { thumbnailUrl: "https://media.forgecdn.net/pretend/" + id + ".png" }, links: { websiteUrl: "https://www.curseforge.com/hytale/mods/pretend-" + id },
       latestFiles: [{ id: id * 10, gameVersions: o.versions || ["0.7", "Early Access"], dependencies: (o.needs || []).map((modId) => ({ modId, relationType: 3 })).concat((o.clashes || []).map((modId) => ({ modId, relationType: 5 }))) }],
       words: o.words || [] });
@@ -45,6 +45,9 @@ function pretendCurseForge() {
   add({ name: "Pretend machine factory heavy", words: ["machine"], dl: HUGE * 1000, needs: [helper].concat(libs) });           // needs five helper mods
   add({ name: "Pretend cozy decor superstar", words: ["decor", "cozy"], dl: HUGE });                                           // too famous to be a lesser-known pick
   Object.values(CAT).forEach(([cat, , noun]) => { for (let i = 1; i <= 8; i++) add({ name: `Pretend ${noun} ${i}`, cat }); });
+  add({ name: "Pretend Waterfall Newcomer", words: ["waterfall"], dl: 120, born: 10 });   // published ten days ago: too few downloads for an ordinary job, right for a "fresh" one
+  add({ name: "Pretend Waterfall Waves Hours Old", words: ["waterfall", "waves"], dl: 20, born: 1 }); // a better match by name, but too new to trust yet
+  add({ name: "Pretend Crop Farm Newcomer", cat: 9288, words: ["farm", "crop"], dl: 120, born: 10 }); // new and a perfect match, but the farming jobs are not "fresh" jobs
   const stale = ["staff", "wand"]; // every mod for these words is old, so that job has to fall back and warn
   require("../lib/recipes").searchWords().concat(["fishing"]).filter((w, i, all) => all.indexOf(w) === i).forEach((word) => {
     for (let i = 1; i <= 7; i++) add({ name: `Pretend ${word} mod ${i}`, words: [word], summary: `All about ${word}, number ${i}.`, ...(stale.includes(word) ? { age: 300, versions: ["Early Access"] } : {}) });
@@ -124,8 +127,9 @@ function pretendMail() {
   return { outbox, state };
 }
 
-// `week` pins the week (see lib/weeks.js). Tests use week 12 by default, when The cozy farmer is free.
-function start({ port = 0, pretend = false, password, key, accounts, owners, payments, open, mail, week = 12 } = {}) {
+// `week` pins the week (see lib/weeks.js). Tests use "after" by default: the first week after the weekly
+// list has run out, when The cozy farmer is free. That stays true however many weekly playpacks are added.
+function start({ port = 0, pretend = false, password, key, accounts, owners, payments, open, mail, week = "after" } = {}) {
   if (week === null) delete process.env.HYMETA_WEEK; else process.env.HYMETA_WEEK = String(week);
   for (const k of ["BREVO_API_KEY", "RESEND_API_KEY", "MAIL_FROM", "MAIL_ADDRESS", "SITE_URL", "MAIL_DAILY_CAP"]) delete process.env[k];
   if (mail) { process.env.BREVO_API_KEY = "pretend-mail-key"; process.env.MAIL_FROM = "hello@hymeta.test"; process.env.MAIL_ADDRESS = "1 Pretend Street, Testville, FL 00000"; }

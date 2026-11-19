@@ -6,6 +6,7 @@ const { chromium } = require("playwright");
 const path = require("path");
 const fs = require("fs");
 const { start } = require("../scripts/dev-server");
+const catalog = require("../lib/catalog"), CARD = catalog.packs, ROTA = catalog.rota, EVERY = catalog.base.length + ROTA.length;
 const out = process.argv[2] ? path.resolve(process.argv[2]) : null;
 const only = process.argv[3] || "";
 if (out) fs.mkdirSync(out, { recursive: true });
@@ -194,13 +195,13 @@ function makeAudit(p, bad) {
     if (broken) bad("home: artwork is missing or did not load (" + broken + ")");
     if (await count(".style-tile") !== 7) bad("home: expected 7 playstyle tiles");
     if (!(await count("#h-spot"))) bad("home: mod spotlight is missing");
-    if (await count("#coming")) bad("home: a next playpack is promised after the weekly list has run out");
+    if (await count("#coming, #poll")) bad("home: a next playpack is promised, or voted on, after the weekly list has run out");
     if (await count("#home-save")) bad("home: saving, a member feature, is offered in the free view");
     await p.click('[data-family="magic"]'); await p.waitForTimeout(220);
     const magic = await p.locator("#results .pk .pk-name").allTextContents();
-    if (await p.inputValue("#fam") !== "magic" || magic.slice().sort().join(" | ") !== "A potion problem | Wizard school dropout") bad("playstyle tile did not filter to the 2 magic packs, showed: " + magic.join(" | "));
+    if (await p.inputValue("#fam") !== "magic" || magic.slice().sort().join(" | ") !== Object.values(CARD).filter((c) => c.family === "magic").map((c) => c.name).sort().join(" | ")) bad("playstyle tile did not filter to the magic packs, showed: " + magic.join(" | "));
     await p.selectOption("#fam", "all"); await p.waitForTimeout(150);
-    if (await count("#results .fam-group .pk") !== 22) bad("explore: all 22 playpacks should be out once the weekly list has run out, found " + await count("#results .fam-group .pk"));
+    if (await count("#results .fam-group .pk") !== EVERY) bad("explore: all " + EVERY + " playpacks should be out once the weekly list has run out, found " + await count("#results .fam-group .pk"));
     if (await count("#results .pk-new")) bad("explore: a playpack is called new after the weekly list has run out");
     if (name === "phone") { // the filters sit in two tidy rows under the search box, not four ragged ones
       const bar = await p.evaluate(() => { const t = document.querySelector(".toolbar.filters").getBoundingClientRect(), w = [...document.querySelectorAll(".toolbar.filters select, #surprise")].map((e) => Math.round(e.getBoundingClientRect().width)); return { h: Math.round(t.height), min: Math.min(...w), max: Math.max(...w) }; });
@@ -569,10 +570,12 @@ function makeAudit(p, bad) {
   }
   server.close();
 
-  // ---------- a new week: week 3, when The deep miner makes its debut ----------
+  // ---------- a new week: week 1, the first one settled by a weekly run ----------
+  // Everything expected here is read from the app's own list, so it stays right as playpacks are added.
   // The browser's own clock says a different week, so passing also proves the server's week wins.
-  server = await start({ pretend: true, password: PASSWORD, key: "pretend-key", week: 3 });
+  server = await start({ pretend: true, password: PASSWORD, key: "pretend-key", accounts: true, week: 1 });
   url = server.url;
+  const now = CARD[ROTA[1]], before = CARD[ROTA[0]], next = CARD[ROTA[2]], later = CARD[ROTA[3]], voting = !!catalog.poll && catalog.poll.week === 2;
   for (const [tag, w, h, scheme] of [["week-phone-light", 390, 844, "light"], ["week-tablet-dark", 820, 1180, "dark"], ["week-desktop-light", 1366, 900, "light"]]) {
     if (only && only !== tag) continue;
     const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: w < 500 });
@@ -583,33 +586,58 @@ function makeAudit(p, bad) {
     const loaded = () => p.evaluate(async () => { const imgs = [...document.querySelectorAll("img.art, .free img")]; imgs.forEach((i) => { i.loading = "eager"; }); await Promise.all(imgs.map((i) => i.complete ? 0 : new Promise((r) => { i.onload = i.onerror = r; }))); return imgs.filter((i) => !i.naturalWidth).map((i) => i.getAttribute("src")); });
     try {
       await p.goto(url); await p.waitForSelector("#free-name");
-      if ((await p.textContent("#free-name")) !== "The deep miner" || (await p.textContent("#h-free")) !== "New and free this week") bad("the front door does not show this week's new playpack");
+      if ((await p.textContent("#free-name")) !== now.name || (await p.textContent("#h-free")) !== "New and free this week") bad("the front door does not show this week's new playpack");
       if ((await loaded()).length) bad("the front door picture for this week's playpack did not load"); await audit("front door, new week");
-      await signIn(p, bad); await p.waitForFunction(() => /The deep miner/.test(document.querySelector("#h-week").textContent));
+      await signIn(p, bad); await p.waitForFunction((n) => document.querySelector("#h-week").textContent.includes(n), now.name);
       if (!/New and free this week/.test(await p.textContent(".hero-top"))) bad("home: the new playpack is not marked as new and free");
       await p.waitForSelector(".hero-side .chip:has-text('mods')"); // its mods arrive from the live recipe
-      const coming = await p.textContent("#coming");
-      if (!/Do not drink the green one/.test(coming)) bad("home: Hex's hint about next week is missing");
-      if (/potion problem/i.test(await p.textContent("#view"))) bad("home: next week's playpack is named before its week");
-      const teasers = await p.locator("#h-shelf ~ .shelf .pk-name, section[aria-labelledby='h-shelf'] .pk-name").allTextContents();
-      if (teasers.length !== 3 || teasers.includes("The deep miner")) bad("home: Also this week should show three other playpacks, showed: " + teasers.join(" | "));
+      if ((await p.textContent("#view")).includes(next.name)) bad("home: next week's playpack is named before its week");
+      if (voting) { if (await count("#coming")) bad("home: a hint is given about next week while next week is still being voted on"); }
+      else if (!(await p.textContent("#coming")).includes(next.hint)) bad("home: Hex's hint about next week is missing");
+      const teasers = await p.locator("section[aria-labelledby='h-shelf'] .pk-name").allTextContents();
+      if (teasers.length !== 3 || teasers.includes(now.name)) bad("home: Also this week should show three other playpacks, showed: " + teasers.join(" | "));
       const missing = await loaded(); if (missing.length) bad("home: pictures did not load: " + missing.join(", "));
       await audit("home, new week"); if (out) await p.screenshot({ path: `${out}/${tag}-home.png`, fullPage: true });
+      // the vote: it needs an account, counts one vote each, and can be changed
+      if (catalog.poll && catalog.poll.week > 1) {
+        const ideas = catalog.poll.ideas, email = tag + "-voter@example.test";
+        if ((await p.textContent("#h-poll")) !== (voting ? "Vote for next week's playpack" : "Vote for the playpack after next")) bad("home: the vote is headed wrongly: " + await p.textContent("#h-poll"));
+        if (await count("#poll .vote") !== 3 || !(await p.textContent("#poll")).includes(ideas[0].name) || !(await p.textContent("#poll")).includes(ideas[2].line)) bad("home: the vote does not show its three ideas");
+        if (await count("#poll .tally")) bad("home: the vote shows its totals before the player has voted");
+        await p.click(`.vote[data-id="${ideas[0].id}"]`); await p.waitForSelector("#acct"); // signed out: asked to make an account first
+        if ((await ctx.request.post(url + "api/account", { data: { op: "vote", idea: ideas[0].id } })).status() !== 401) bad("a vote was counted without an account");
+        await p.fill("#a-name", "Keen Voter"); await p.fill("#a-email", email); await p.fill("#a-pass", "correct-horse-9"); await p.check("#a-age"); await p.click('#acct button[type="submit"]'); await p.waitForSelector("#poll");
+        await p.click(`.vote[data-id="${ideas[0].id}"]`); await p.waitForSelector(`.vote[data-id="${ideas[0].id}"][aria-pressed="true"]`);
+        const mine = () => p.locator(`.vote[aria-pressed="true"] .tally`).textContent();
+        if (!/Your vote\. \d+ votes?$/.test((await mine()).trim())) bad("home: the player's own vote is not marked in words: " + await mine());
+        const total = async () => (await p.locator("#poll .tally").allTextContents()).map((t) => +t.match(/(\d+) votes?/)[1]).reduce((a, n) => a + n, 0);
+        const had = await total();
+        await audit("vote, after voting"); if (out) await p.screenshot({ path: `${out}/${tag}-vote.png` });
+        await p.click(`.vote[data-id="${ideas[1].id}"]`); await p.waitForSelector(`.vote[data-id="${ideas[1].id}"][aria-pressed="true"]`);
+        if (await count('.vote[aria-pressed="true"]') !== 1 || (await total()) !== had) bad("home: changing a vote counted the player twice (" + had + " votes became " + await total() + ")");
+        await p.reload(); await p.waitForSelector(`.vote[data-id="${ideas[1].id}"][aria-pressed="true"]`);
+        const open = await (await b.newContext()).request.get(url + "api/mail?poll=1"), tally = await open.json();
+        if (open.status() !== 200 || tally.poll !== catalog.poll.id || tally.ideas.reduce((a, i) => a + i.votes, 0) !== had || /voter|example\.test/i.test(JSON.stringify(tally))) bad("the weekly run cannot read the vote totals, or they say who voted: " + JSON.stringify(tally).slice(0, 160));
+      } else if (await count("#poll")) bad("home: a vote is shown that has already been decided");
       await p.goto(url + "#explore"); await p.waitForSelector("#results .pk");
       const names = await p.locator("#results .pk .pk-name").allTextContents();
-      for (const n of ["Gone fishing", "Knights and dragons", "The cat cafe", "The deep miner", "The cozy farmer"]) if (!names.includes(n)) bad("explore: " + n + " should be on the shelf by week 3");
-      for (const n of ["A potion problem", "Are we there yet", "Pack rat"]) if (names.includes(n)) bad("explore: " + n + " is on the shelf before its week");
-      if (names.length !== 14) bad("explore: expected 14 playpacks in week 3, found " + names.length);
-      if (await count("#results .pk-new") !== 1 || !/The deep miner/.test(await p.textContent("#results .pk:has(.pk-new)"))) bad("explore: only this week's playpack should be marked new");
+      for (const n of [before.name, now.name, "The cozy farmer"]) if (!names.includes(n)) bad("explore: " + n + " should be on the shelf in week 1");
+      for (const n of [next.name, later.name]) if (names.includes(n)) bad("explore: " + n + " is on the shelf before its week");
+      if (names.length !== catalog.base.length + 2) bad("explore: expected " + (catalog.base.length + 2) + " playpacks in week 1, found " + names.length);
+      if (await count("#results .pk-new") !== 1 || !(await p.textContent("#results .pk:has(.pk-new)")).includes(now.name)) bad("explore: only this week's playpack should be marked new");
       await p.selectOption("#sort", "new"); await p.waitForTimeout(150);
       const newest = await p.locator("#results .pk .pk-name").allTextContents();
-      if (newest.slice(0, 4).join(" | ") !== "The deep miner | The cat cafe | Knights and dragons | Gone fishing") bad("explore: Newest first is in the wrong order: " + newest.slice(0, 5).join(" | "));
+      if (newest.slice(0, 2).join(" | ") !== now.name + " | " + before.name) bad("explore: Newest first is in the wrong order: " + newest.slice(0, 4).join(" | "));
       const lost = await loaded(); if (lost.length) bad("explore: pictures did not load: " + lost.join(", "));
       await audit("explore, newest first"); if (out) await p.screenshot({ path: `${out}/${tag}-explore.png`, fullPage: true });
-      await p.goto(url + "#pack-potion-problem"); await p.waitForSelector("#view h1");
+      await p.goto(url + "#pack-" + ROTA[2]); await p.waitForSelector("#view h1");
       if (!/not on the shelf/.test(await p.textContent("#view h1")) || await count(".mod")) bad("next week's playpack opens when its address is typed in");
-      if ((await ctx.request.get(url + "api/pack?id=potion-problem")).status() !== 404) bad("the server hands out next week's playpack");
-      await p.goto(url + "#pack-gone-fishing"); await p.waitForSelector('.actions [data-action="join"]'); await audit("a past week's playpack"); // members only now
+      if ((await ctx.request.get(url + "api/pack?id=" + ROTA[2])).status() !== 404) bad("the server hands out next week's playpack");
+      // this week's playpack: a mod published in the last two months is marked as a new arrival, in words
+      await p.goto(url + "#pack-" + ROTA[1]); await p.waitForSelector(".mod");
+      if (ROTA[1] === "scenic-route" && (await count(".mod .newmod") !== 1 || !/New arrival/.test(await p.textContent(".mod:has(.newmod)")) || !/Waterfall Newcomer/.test(await p.textContent(".mod:has(.newmod)")))) bad("the new mod in this week's playpack is not marked as a new arrival");
+      await audit("this week's playpack, with a new arrival"); if (out) await p.screenshot({ path: `${out}/${tag}-pack.png`, fullPage: true });
+      await p.goto(url + "#pack-" + ROTA[0]); await p.waitForSelector('.actions [data-action="join"]'); await audit("a past week's playpack"); // members only now
       if (await count(".pk-new, .badge:has-text('New')")) bad("a past week's playpack is still marked new");
     } catch (e) { bad("stopped early, a step could not be done: " + e.message.split("\n").slice(0, 4).join(" ").replace(/\s+/g, " ").slice(0, 260)); }
     await ctx.close();

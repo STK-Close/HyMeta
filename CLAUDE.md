@@ -17,6 +17,12 @@ Asked for by Ligia after a button bar and a filter row shipped broken on her pho
 ## Tests must prove themselves
 Whenever a check is added or changed, show it fails on a version with the bug and passes on the fixed one.
 
+## The weekly run
+Every Thursday a scheduled session writes next Monday's playpack: it reads the players' vote, scouts what
+is new on CurseForge, writes the recipe and Hex's words, makes the picture, tests, and pushes.
+`docs/weekly-run.md` is the whole procedure. `scripts/add-weekly.js --status` says where things stand.
+A playpack whose week is settled (`lib/ledger.json`) is never moved or edited.
+
 ## Always
 - Add one extra, unasked-for improvement to each build and tell Ligia what it was.
 - Verify the live site (https://hymeta.vercel.app) after pushing, before telling her it is live.

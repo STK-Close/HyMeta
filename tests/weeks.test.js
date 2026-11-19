@@ -3,7 +3,7 @@
 // Run: node tests/weeks.test.js
 const fs = require("fs"), path = require("path");
 const { start } = require("../scripts/dev-server");
-const weeks = require("../lib/weeks"), catalog = require("../lib/catalog"), { PACKS } = require("../lib/recipes");
+const weeks = require("../lib/weeks"), catalog = require("../lib/catalog"), { PACKS } = require("../lib/recipes"), { query } = require("../lib/db");
 (async () => {
   const problems = [], bad = (m) => problems.push(m);
   const { base, rota } = catalog, all = base.concat(rota);
@@ -41,10 +41,15 @@ const weeks = require("../lib/weeks"), catalog = require("../lib/catalog"), { PA
   }
   const lap = seenFree.slice(rota.length, rota.length + all.length);
   if (new Set(lap).size !== all.length) bad("after the weekly list runs out, not every playpack takes a turn at being free");
-  if (weeks.schedule(12).free !== "cozy-farmer") bad("week 12, which the other tests rely on, should make The cozy farmer free");
+  if (weeks.schedule(rota.length).free !== "cozy-farmer") bad("the first week after the weekly list, which the other tests rely on, should make The cozy farmer free");
+  process.env.HYMETA_WEEK = "after"; if (weeks.weekIndex() !== rota.length) bad("pinning the week to \"after\" does not land on the first week after the weekly list"); delete process.env.HYMETA_WEEK;
+  // settled weeks never move: the ledger is the record of what has already been promised
+  const ledger = require("../lib/ledger.json");
+  if (!ledger.length || ledger.join() !== rota.slice(0, ledger.length).join()) bad("a playpack whose week is settled has been moved or removed: the ledger says " + ledger.join(", "));
+  if (ledger.length < weeks.weekIndex(Date.now())) bad("the ledger is behind the calendar"); // a reminder, see docs/weekly-run.md
 
   // ----- one list of playpacks, shared by the app, the recipes and the pictures -----
-  if (all.join() !== Object.keys(catalog.packs).join() || new Set(all).size !== 22) bad("the catalog is not the 22 playpacks, each once");
+  if (all.join() !== Object.keys(catalog.packs).join() || new Set(all).size !== all.length || base.length !== 10 || rota.length < 13) bad("the catalog is not every playpack, each once");
   all.forEach((id) => { if (!PACKS[id]) bad(`${id} has no recipe`); });
   Object.keys(PACKS).forEach((id) => { if (!catalog.packs[id]) bad(`the recipe ${id} is not in the app's list`); });
   for (const [id, c] of Object.entries(catalog.packs)) {
@@ -71,7 +76,7 @@ const weeks = require("../lib/weeks"), catalog = require("../lib/catalog"), { PA
   await visit(0, async (call, server) => {
     const door = (await call("")).data;
     if (!door.includes('id="free-name">Gone fishing<') || !door.includes("/images/pack-fishing.jpg") || !door.includes("New and free this week") || door.includes("/images/pack-farm.jpg")) bad("week 0: the front door does not show Gone fishing as new and free");
-    if (door.includes("Knights and dragons")) bad("week 0: the front door gives away next week's playpack");
+    if (door.includes(catalog.packs[rota[1]].name)) bad("week 0: the front door gives away next week's playpack");
     await call("api/login", { password: pw });
     await call("api/account", { op: "signup", email: "owner@example.test", password: "correct-horse-9", name: "The Owner", over13: true }); await call("api/account", { op: "logout" });
     await call("api/account", { op: "signup", email: "fan@example.test", password: "correct-horse-9", name: "Free Fan", over13: true, news: true });
@@ -80,7 +85,7 @@ const weeks = require("../lib/weeks"), catalog = require("../lib/catalog"), { PA
     const free = await call("api/pack?id=gone-fishing");
     if (free.status !== 200 || free.data.core.length + free.data.spice.length + free.data.extras.length < 6) bad("week 0: the free playpack did not open with its mods (status " + free.status + ")");
     if ((await call("api/pack?id=cozy-farmer")).status !== 403) bad("week 0: last season's free playpack is still free to a free account");
-    if ((await call("api/pack?id=knights-and-dragons")).status !== 404) bad("week 0: next week's playpack can already be opened");
+    if ((await call("api/pack?id=" + rota[1])).status !== 404) bad("week 0: next week's playpack can already be opened");
     await call("api/mail"); await call("api/mail");
     emails.push(...server.outbox.filter((m) => m.to === "fan@example.test").map((m) => m.subject));
     const body = (server.outbox.find((m) => m.to === "fan@example.test") || { text: "" }).text;
@@ -88,18 +93,35 @@ const weeks = require("../lib/weeks"), catalog = require("../lib/catalog"), { PA
   });
   await visit(1, async (call, server) => {
     await call("api/login", { password: pw }); await call("api/account", { op: "login", email: "fan@example.test", password: "correct-horse-9" });
-    if ((await call("api/pack?id=knights-and-dragons")).status !== 200) bad("week 1: the new playpack is not free");
+    if ((await call("api/pack?id=" + rota[1])).status !== 200) bad("week 1: the new playpack is not free");
     if ((await call("api/pack?id=gone-fishing")).status !== 403) bad("week 1: last week's playpack is still free to a free account");
-    if ((await call("api/pack?id=cat-cafe")).status !== 404) bad("week 1: the playpack for week 2 can already be opened");
+    if ((await call("api/pack?id=" + rota[2] + "")).status !== 404) bad("week 1: the playpack for week 2 can already be opened");
     await call("api/mail"); await call("api/mail");
     emails.push(...server.outbox.filter((m) => m.to === "fan@example.test").map((m) => m.subject));
+    // the vote: one each, changeable, only for this week's ideas, and the totals are public but nameless
+    const poll = catalog.poll;
+    if (poll) {
+      const mine = async () => (await call("api/account")).data.poll;
+      if ((await mine()).id !== poll.id || (await mine()).mine !== null) bad("a member who has not voted is shown as having voted");
+      if ((await call("api/account", { op: "vote", idea: "free-membership-for-me" })).status !== 400) bad("a vote for something that is not on the list was counted");
+      if ((await call("api/account", { op: "vote", idea: rota[2] })).status !== 400) bad("a vote for an existing playpack was counted");
+      const first = await call("api/account", { op: "vote", idea: poll.ideas[0].id });
+      if (first.status !== 200 || first.data.counts[poll.ideas[0].id] !== 1) bad("a vote was not counted");
+      await call("api/account", { op: "vote", idea: poll.ideas[0].id }); await call("api/account", { op: "vote", idea: poll.ideas[2].id });
+      const after = await mine(), sum = Object.values(after.counts).reduce((a, n) => a + n, 0);
+      if (sum !== 1 || after.counts[poll.ideas[2].id] !== 1 || after.mine !== poll.ideas[2].id) bad("voting again should move the member's one vote, got " + JSON.stringify(after.counts));
+      await query("insert into votes (poll, user_id, idea) select 'w-old', id, $1 from users", [poll.ideas[0].id]); // an earlier vote must not leak into this one
+      const pub = await (await fetch(server.url + "api/mail?poll=1")).json();
+      if (pub.poll !== poll.id || pub.week !== poll.week || pub.ideas.length !== 3 || pub.ideas.find((i) => i.id === poll.ideas[2].id).votes !== 1 || pub.ideas.reduce((a, i) => a + i.votes, 0) !== 1) bad("the public totals are wrong: " + JSON.stringify(pub));
+      if (/example\.test|Free Fan|user/i.test(JSON.stringify(pub))) bad("the public totals say who voted");
+    }
     // the owner, a member without paying, can open past weeks but still not the future
     await call("api/account", { op: "logout" }); await call("api/account", { op: "login", email: "owner@example.test", password: "correct-horse-9" });
     if ((await call("api/pack?id=gone-fishing")).status !== 200) bad("week 1: a member cannot open a past week's playpack");
-    if ((await call("api/pack?id=cat-cafe")).status !== 404) bad("week 1: a member can open a playpack before its week");
+    if ((await call("api/pack?id=" + rota[2] + "")).status !== 404) bad("week 1: a member can open a playpack before its week");
   });
-  if (emails.join(" | ") !== "New this week on HyMeta: Gone fishing | New this week on HyMeta: Knights and dragons") bad("the weekly email should go out once for each new week, got: " + emails.join(" | "));
-  await visit(12, async (call) => { if (!(await call("")).data.includes(">Free this week<") || !(await call("")).data.includes('id="free-name">The cozy farmer<')) bad("week 12: the front door should show The cozy farmer as free, not as new"); });
+  if (emails.join(" | ") !== "New this week on HyMeta: Gone fishing | New this week on HyMeta: " + catalog.packs[rota[1]].name) bad("the weekly email should go out once for each new week, got: " + emails.join(" | "));
+  await visit("after", async (call) => { if (!(await call("")).data.includes(">Free this week<") || !(await call("")).data.includes('id="free-name">The cozy farmer<')) bad("after the weekly list: the front door should show The cozy farmer as free, not as new"); });
   console.log(problems.length ? problems.join("\n") : "WEEKS OK");
   process.exit(problems.length ? 1 : 0);
 })().catch((e) => { console.error("FAILED", e); process.exit(1); });

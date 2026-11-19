@@ -43,6 +43,13 @@ const WEEK = 7 * 24 * 3600 * 1000, NOW = Date.now();
   if (!staff) bad("wizard-dropout: no fallback pick when every wand and staff mod is old");
   else if (!staff.caution) bad("wizard-dropout: an out-of-date fallback pick carries no warning");
   if (picks("cozy-farmer").some((m) => m.caution)) bad("cozy-farmer: a well-kept mod carries a warning");
+  // new arrivals: a job marked fresh goes to a mod published in the last two months, even with few downloads
+  const newcomer = picks("scenic-route").find((m) => m.name === "Pretend Waterfall Newcomer");
+  if (!newcomer || newcomer.fresh !== true || newcomer.role !== "Water that moves") bad("scenic-route: the new waterfall mod was not given the fresh place: " + names("scenic-route").join(" | "));
+  if (has("scenic-route", "Hours Old")) bad("scenic-route: a mod published yesterday with almost no downloads got in");
+  if (picks("scenic-route").filter((m) => m.fresh).some((m) => !/Newcomer/.test(m.name))) bad("scenic-route: an old mod is labelled as a new arrival");
+  if (has("cozy-farmer", "Crop Farm Newcomer")) bad("cozy-farmer: a barely-downloaded new mod took an ordinary place");
+  if (Object.values(packs).flatMap((p) => p.core.concat(p.spice, p.extras)).some((m) => m.fresh && m.name.indexOf("Newcomer") < 0)) bad("a mod is labelled as a new arrival outside a fresh job");
   // a mod stays with the playpack it belongs to
   if (!has("beast-friend", "Taming Pets Mounts")) bad("beast-friend: the taming and pets mod is missing");
   if (has("dungeon-gremlin", "Taming Pets Mounts")) bad("dungeon-gremlin: took a mod that belongs to the pets playpack");

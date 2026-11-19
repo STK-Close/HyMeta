@@ -212,6 +212,13 @@ details.plain>summary{min-height:44px;display:flex;align-items:center;cursor:poi
 .mod .meta{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:6px}
 .mod .meta>span{display:inline-flex;align-items:center;gap:4px}
 .mod .meta svg.ic{width:16px;height:16px}
+.newmod{font-weight:400;display:flex;gap:6px;align-items:flex-start;margin-top:2px}
+.votes{display:grid;gap:10px}
+.vote{min-height:64px;text-align:left;display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg3);color:var(--fg);font:400 1rem/1.4 var(--body);cursor:pointer}
+.vote strong{font:700 1.125rem var(--display)}
+.vote[aria-pressed="true"]{border-width:3px;padding:10.5px 12.5px;border-color:var(--fg)}
+.vote .tally{display:flex;align-items:center;gap:6px;font-weight:700}
+@media (min-width:720px){.votes{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .caution{color:var(--pink-text);font-weight:700;display:flex;gap:6px;align-items:flex-start;margin-top:2px}
 .caution svg.ic{width:16px;height:16px;margin-top:2px}
 .why{margin-top:2px}
@@ -385,7 +392,7 @@ function rng(seed){
   return function(){ s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
 }
 var ART = { combat:"pack-combat", building:"pack-building", survival:"pack-survival", creatures:"pack-creatures", magic:"pack-magic", exploration:"pack-exploration", everything:"pack-everything", hero:"hymeta-hero", crawlies:"pack-crawlies", factory:"pack-factory", hermit:"pack-hermit", farm:"pack-farm",
-  fishing:"pack-fishing", knights:"pack-knights", catcafe:"pack-catcafe", miner:"pack-miner", potions:"pack-potions", roadtrip:"pack-roadtrip", plushies:"pack-plushies", archer:"pack-archer", garden:"pack-garden", quests:"pack-quests", dinos:"pack-dinos", packrat:"pack-packrat" };
+  fishing:"pack-fishing", knights:"pack-knights", catcafe:"pack-catcafe", miner:"pack-miner", potions:"pack-potions", roadtrip:"pack-roadtrip", plushies:"pack-plushies", archer:"pack-archer", garden:"pack-garden", quests:"pack-quests", dinos:"pack-dinos", packrat:"pack-packrat", scenic:"pack-scenic" };
 function art(key, big){ return '<img class="art" src="images/' + (big ? "" : "thumb-") + (ART[key] || ART.hero) + '.jpg" alt="" decoding="async"' + (big ? "" : ' loading="lazy"') + ">"; }
 
 /* ---------- sample data (placeholders until CurseForge is connected) ---------- */
@@ -511,85 +518,96 @@ var WEEKLY = [
     pitch:{ gentle:"Still water, a small boat and nowhere to be. Catch something or do not. Both are fine.",
             cheeky:"Sit in a boat. Stare at water. Call it a hobby. I will be on the dock judging your knots.",
             unhinged:"THE BIG ONE IS DOWN THERE. I have seen it. It has seen me. We have an understanding." },
-    hint:"Bring a hat and a lot of patience.", core:["hook", "rain", "pantry", "camp"], spice:["atlas"] },
+    hint:"Bring a hat and a lot of patience.", core:["hook","rain","pantry","camp"], spice:["atlas"] },
+  { id:"scenic-route", family:"exploration", art:"scenic", name:"The scenic route", kind:"Standard", dare:1, icon:"star", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"Waterfalls, waves, northern lights and falling leaves. Nothing to fight. Just a lot to look at.",
+    warning:"You will stop to watch the waterfall. Your friends will leave without you.",
+    pitch:{ gentle:"Slow down. The sky is doing something lovely and the river is in no rush.",
+            cheeky:"You walked for an hour and did nothing but look at water. I am calling that a win.",
+            unhinged:"LOOK AT THE SKY. LOOK AT IT. It is GREEN now. Nobody did that. It just happened. I LOVE IT HERE." },
+    hint:"Bring nothing. Just look up.", core:["atlas","sort","camp","far"], spice:["trail"] },
   { id:"knights-and-dragons", family:"combat", art:"knights", name:"Knights and dragons", kind:"Standard", dare:2, icon:"crown", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
     blurb:"Shiny armor, a proper castle and something large asleep on the roof.",
     warning:"The dragon is friendly until someone touches its gold. Do not touch its gold.",
     pitch:{ gentle:"Build a castle, polish your armor and make friends with a dragon. A storybook week.",
             cheeky:"You wanted a castle. The dragon wanted the same castle. I suggest sharing.",
             unhinged:"DRAGONS. On the roof. In the moat. One is wearing your helmet. I HAVE NO REGRETS." },
-    hint:"Polish your armor. Something large is coming.", core:["shield", "boss", "block", "glass"], spice:["far"] },
+    hint:"Polish your armor. Something large is coming.", core:["shield","boss","block","glass"], spice:["far"] },
   { id:"cat-cafe", family:"creatures", art:"catcafe", name:"The cat cafe", kind:"Standard", dare:1, icon:"paw", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
     blurb:"Cats on every shelf, something warm in the oven, and one dog who wandered in.",
     warning:"The cats own the cafe now. You only work here.",
     pitch:{ gentle:"A warm kitchen, a soft chair and a cat who has chosen your lap. Stay as long as you like.",
             cheeky:"Open a cafe. Fill it with cats. Sell nothing, because the cats sat on the menu.",
             unhinged:"SO MANY CATS. I counted nineteen. There were twelve yesterday. NOBODY IS BRINGING THEM IN." },
-    hint:"It purrs. That is all I am saying.", core:["whisper", "treat", "furn", "pantry"], spice:["cabin"] },
+    hint:"It purrs. That is all I am saying.", core:["whisper","treat","furn","pantry"], spice:["cabin"] },
   { id:"deep-miner", family:"survival", art:"miner", name:"The deep miner", kind:"Standard", dare:2, icon:"chest", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
     blurb:"Go down. Keep going down. Come back up with pockets full of shiny rocks.",
     warning:"You will say just one more vein at least forty times.",
     pitch:{ gentle:"Lantern light, steady digging and the quiet sparkle of something worth finding.",
             cheeky:"It is a hole. You dug it. You live here now. At least the rocks are pretty.",
             unhinged:"DEEPER. The good rocks are DEEPER. I can hear them. They are calling you by name." },
-    hint:"Pack a lantern. You are going down.", core:["delve", "ledger", "sort", "trap"], spice:["chorus"] },
+    hint:"Pack a lantern. You are going down.", core:["delve","ledger","sort","trap"], spice:["chorus"] },
   { id:"potion-problem", family:"magic", art:"potions", name:"A potion problem", kind:"Standard", dare:2, icon:"potion", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
     blurb:"Mix things. Bottle things. Find out what the green one does the hard way.",
     warning:"Label your bottles. The last apprentice did not, and now he is a very small frog.",
     pitch:{ gentle:"Herbs, bottles and a gently bubbling pot. Careful work, lovely colors.",
             cheeky:"Drink the blue one. No, the other blue one. Well. It will wear off by Tuesday.",
             unhinged:"IT IS BUBBLING. It should not be bubbling. I added the mushrooms and now it KNOWS THINGS." },
-    hint:"Do not drink the green one.", core:["spell", "wand", "sprout", "ledger"], spice:["fam"] },
+    hint:"Do not drink the green one.", core:["spell","wand","sprout","ledger"], spice:["fam"] },
   { id:"road-trip", family:"exploration", art:"roadtrip", name:"Are we there yet", kind:"Standard", dare:1, icon:"compass", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
     blurb:"Carts, boats, rails and shortcuts. Everything you need to go a very long way.",
     warning:"Somebody will ask if you are there yet. It will be you.",
     pitch:{ gentle:"Pack a bag, pick a direction and take the slow road. The view is the point.",
             cheeky:"A cart, a boat and a train. Three ways to get lost faster.",
             unhinged:"WE ARE GOING. Where? AWAY. In what? ALL OF THEM. I have tied the boat to the train." },
-    hint:"Pack snacks. It is a long way.", core:["trail", "atlas", "far", "camp"], spice:["saddle"] },
+    hint:"Pack snacks. It is a long way.", core:["trail","atlas","far","camp"], spice:["saddle"] },
   { id:"plushie-hoarder", family:"building", art:"plushies", name:"The plushie hoarder", kind:"Standard", dare:1, icon:"heart", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
     blurb:"Soft toys, paintings, statues and music. A room with far too much in it, on purpose.",
     warning:"There is no such thing as enough plushies. There is only running out of floor.",
     pitch:{ gentle:"Fill a room with soft, happy things and put on some music. That is the whole week.",
             cheeky:"You have forty plushies and one bed. The plushies have voted. You sleep on the floor.",
             unhinged:"MORE. Stack them. STACK THEM HIGHER. The pile is holding the roof up now. Do not remove the shark." },
-    hint:"Soft. Round. Far too many.", core:["furn", "glass", "cabin", "block"], spice:["fam"] },
+    hint:"Soft. Round. Far too many.", core:["furn","glass","cabin","block"], spice:["fam"] },
   { id:"sharpshooter", family:"combat", art:"archer", name:"Sharpshooter", kind:"Standard", dare:2, icon:"bolt", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
     blurb:"Bows, crossbows and a great many arrows. Stand far away and be very good at it.",
     warning:"You will miss the first twenty shots. Hex is keeping count. Out loud.",
     pitch:{ gentle:"A quiet ridge, a steady hand and a target that is not going anywhere.",
             cheeky:"Why walk over there and hit it when you can stay here and miss it?",
             unhinged:"BULLSEYE. On the wrong target. In the wrong field. I am still counting it." },
-    hint:"Stand well back.", core:["shield", "trap", "trail", "ledger"], spice:["boss"] },
+    hint:"Stand well back.", core:["shield","trap","trail","ledger"], spice:["boss"] },
   { id:"garden-party", family:"creatures", art:"garden", name:"Garden party", kind:"Standard", dare:1, icon:"leaf", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
     blurb:"Flowers, bees, lanterns and a bench. Nothing needs fighting. Possibly a wasp.",
     warning:"The bees have been told about the party. All of them are coming.",
     pitch:{ gentle:"Plant something pretty, hang a lantern and sit down. The bees will handle the rest.",
             cheeky:"You planted one flower. Now there are four hundred. This is the bees' garden now.",
             unhinged:"THE ROSES ARE WINNING. They took the bench. They took the gate. I for one welcome them." },
-    hint:"It smells lovely and it buzzes.", core:["sprout", "rain", "cabin", "furn"], spice:["scare"] },
+    hint:"It smells lovely and it buzzes.", core:["sprout","rain","cabin","furn"], spice:["scare"] },
   { id:"side-quest", family:"everything", art:"quests", name:"Side quest champion", kind:"Standard", dare:2, icon:"star", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
     blurb:"Quests, skills, levels and a whole town of people who need a favor.",
     warning:"You will forget the main quest. So did everyone else in the village.",
     pitch:{ gentle:"Help a neighbor, learn a skill, earn a little coin. One small job at a time.",
             cheeky:"Save the world? Later. First this man needs eleven mushrooms and will not say why.",
             unhinged:"FORTY QUESTS. All urgent. All from the same goose. I do not think the goose is paying." },
-    hint:"Somebody needs a favor. Everybody needs a favor.", core:["ledger", "boss", "atlas", "shield"], spice:["spell"] },
+    hint:"Somebody needs a favor. Everybody needs a favor.", core:["ledger","boss","atlas","shield"], spice:["spell"] },
   { id:"dino-rider", family:"exploration", art:"dinos", name:"Dino rider", kind:"Standard", dare:2, icon:"paw", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
     blurb:"Dinosaurs. You can ride some of them. The others have not agreed yet.",
     warning:"Check which end is the front before you climb on.",
     pitch:{ gentle:"Giant ferns, gentle giants and a slow ride through a very old jungle.",
             cheeky:"It is as tall as a house and you want to put a saddle on it. I respect the confidence.",
             unhinged:"IT HAS TEETH THE SIZE OF YOU. Ride it. RIDE IT. It likes you. That is probably what that noise means." },
-    hint:"Large. Scaly. Rideable, allegedly.", core:["whisper", "saddle", "treat", "far"], spice:["barn"] },
+    hint:"Large. Scaly. Rideable, allegedly.", core:["whisper","saddle","treat","far"], spice:["barn"] },
   { id:"pack-rat", family:"survival", art:"packrat", name:"Pack rat", kind:"Standard", dare:1, icon:"chest", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
     blurb:"More chests, bigger bags and labels on everything. You will never throw anything away again.",
     warning:"You do not need forty stacks of dirt. You will keep forty stacks of dirt.",
     pitch:{ gentle:"A tidy shelf, a labelled chest and a place for everything. Deeply calming.",
             cheeky:"You kept the stick. And the other stick. Hex kept a list of your sticks.",
             unhinged:"KEEP IT ALL. The pebble. The broken boot. ESPECIALLY the boot. We will need it. I had a dream." },
-    hint:"You are going to need more chests.", core:["sort", "ledger", "belt", "pantry"], spice:["scaf"] }
+    hint:"You are going to need more chests.", core:["sort","ledger","belt","pantry"], spice:["scaf"] }
 ];
+// The vote: three ideas for a playpack that has not been built yet. Each Thursday the weekly run
+// builds the one with the most votes for the following Monday, and puts three new ideas here.
+// (One line, rewritten by scripts/add-weekly.js.)
+var POLL = {"id":"w2","week":2,"ideas":[{"id":"mayor-of-somewhere","name":"Mayor of somewhere","line":"Villagers, shops and a whole town that needs running. Badly."},{"id":"mermaid-lagoon","name":"Mermaid lagoon","line":"Tails, tides and a pool that only works at full moon."},{"id":"middle-of-the-world","name":"The middle of the world","line":"Straight down, past the caves, until the map gives up."}]};
 // ---- the weekly switch ----
 // Week 0 began Monday 16 November 2026 at 09:00 UTC. Each week one playpack is free: a brand-new one
 // while the weekly list lasts, then every playpack takes a turn. The server works out the same thing
@@ -611,7 +629,9 @@ function setWeek(w){
 }
 setWeek(scheduleFor((Date.now() - LAUNCH) / WEEK_MS));
 // next week's playpack stays a secret: only Hex's hint is shown
-function comingNext(){ var n = ALL_PACKS.filter(function(p){ return p.id === ROTA[WEEK.index + 1]; })[0]; return n && WEEK.fresh ? n.hint : ""; }
+// and not even a hint while next week is still being voted on
+function pollOpen(){ return !!POLL && POLL.week > WEEK.index; }
+function comingNext(){ var n = ALL_PACKS.filter(function(p){ return p.id === ROTA[WEEK.index + 1]; })[0]; return n && WEEK.fresh && !(pollOpen() && POLL.week === WEEK.index + 1) ? n.hint : ""; }
 var FAMILIES = [["combat","Combat"],["building","Building"],["survival","Survival"],["creatures","Creatures and farming"],["magic","Magic"],["exploration","Exploration"],["everything","A bit of everything"]];
 var FAMILY = {}; FAMILIES.forEach(function(f){ FAMILY[f[0]] = f[1]; });
 var SPOTLIGHT = "atlas";
@@ -697,8 +717,8 @@ function nMods(p){ return ready(p) ? modCount(p) + " mods" : ""; }
 function loadPack(p){
   if (!LIVE || !p || p.by || p.ready || fetching[p.id]) return;
   fetching[p.id] = true; p.failed = false;
-  api("api/pack?id=" + encodeURIComponent(p.id)).then(function(d){ p.why = {}; p.warn = {}; p.gameVersion = String(d.gameVersion || "");
-      d.core.concat(d.spice, d.extras || []).forEach(function(m){ p.why[m.id] = String(m.role || ""); p.warn[m.id] = String(m.caution || ""); });
+  api("api/pack?id=" + encodeURIComponent(p.id)).then(function(d){ p.why = {}; p.warn = {}; p.fresh = {}; p.gameVersion = String(d.gameVersion || "");
+      d.core.concat(d.spice, d.extras || []).forEach(function(m){ p.why[m.id] = String(m.role || ""); p.warn[m.id] = String(m.caution || ""); p.fresh[m.id] = m.fresh === true; });
       p.core = d.core.map(adopt); p.spice = d.spice.map(adopt); p.extras = (d.extras || []).map(adopt); p.helpers = (d.helpers || []).map(adopt); p.ready = true; })
     .catch(function(){ p.failed = true; })
     .then(function(){ delete fetching[p.id]; if (current === "pack-" + p.id || (current === "home" && p.id === FEATURED)) render(false); });
@@ -715,6 +735,7 @@ function liveSearch(){
       .then(function(){ S.bbusy = false; var l = $("#b-list"); if (l) l.innerHTML = pickList(); });
   }, 350);
 }
+(function(){ var v = store.get("vote", null); if (POLL && v && v.poll === POLL.id && POLL.ideas.some(function(i){ return i.id === v.idea; })){ S.pollMine = v.idea; S.pollCounts = {}; S.pollCounts[v.idea] = 1; } })();
 /* ---------- accounts (only when the server has a database) ---------- */
 var KEPT = ["saved", "savedMods", "stamps", "upnext"];
 function post(body, route){
@@ -727,6 +748,7 @@ function loadAccount(merge){
     S.accounts = !!d.enabled; S.user = d.user || null;
     // once payments are switched on, membership is real: it comes from the account, not the preview switch
     S.billing = !!d.billing; if (S.billing) S.tier = d.user ? d.user.tier : "free";
+    if (POLL && d.poll && d.poll.id === POLL.id){ S.pollCounts = d.poll.counts || {}; S.pollMine = d.poll.mine || null; }
     S.mail = !!d.mail; S.news = !!d.news; // password reset and the weekly email, once an email service is connected
     if (d.user) KEPT.forEach(function(k){
       var server = d[k] || [];
@@ -767,7 +789,7 @@ function ensureMods(p){
 function remember(list, id, on){
   if (S.user) post({ op:"keep", list:list, id:id, on:on }).catch(function(){ toast("That did not reach your account. Check your connection."); });
 }
-function forgetLocal(){ S.user = null; if (S.billing) S.tier = "free"; S.queue = null; S.blockedMembers = []; S.mine = []; COMMUNITY.length = 0; KEPT.forEach(function(k){ S[k] = []; store.set(k, []); }); }
+function forgetLocal(){ S.pollMine = null; S.user = null; if (S.billing) S.tier = "free"; S.queue = null; S.blockedMembers = []; S.mine = []; COMMUNITY.length = 0; KEPT.forEach(function(k){ S[k] = []; store.set(k, []); }); }
 function openAccount(mode){
   var up = mode === "signup";
   openSheet(up ? "Make an account" : "Sign in",
@@ -839,6 +861,17 @@ function head(id, title, href, label){
 }
 
 /* ---------- views ---------- */
+// The vote card on the home screen.
+function pollCard(){
+  if (!pollOpen()) return "";
+  var mine = S.pollMine, counts = S.pollCounts || {}, needAccount = LIVE && S.accounts && !S.user;
+  return '<section class="card pad sec" id="poll" aria-labelledby="h-poll"><h2 id="h-poll">' + (POLL.week === WEEK.index + 1 ? "Vote for next week's playpack" : "Vote for the playpack after next") + "</h2>" +
+    '<p class="muted">Hex has three ideas and cannot choose. The one with the most votes gets built on Thursday.</p><div class="votes">' +
+    POLL.ideas.map(function(i){ var n = counts[i.id] || 0;
+      return '<button type="button" class="vote" data-action="vote" data-id="' + esc(i.id) + '" data-fk="vote-' + esc(i.id) + '" aria-pressed="' + (mine === i.id) + '"><strong>' + esc(i.name) + "</strong><span>" + esc(i.line) + "</span>" +
+        (mine ? '<span class="small tally">' + (mine === i.id ? ic("check") + "Your vote. " : "") + n + (n === 1 ? " vote" : " votes") + "</span>" : "") + "</button>"; }).join("") + "</div>" +
+    '<p class="small muted" id="poll-note">' + (mine ? "Changed your mind? Tap another one any time before Thursday." : needAccount ? "Voting needs a free account, so every player gets one vote." : "One vote each. You can change it until Thursday.") + "</p></section>";
+}
 function vHome(){
   var p = findPack(FEATURED), n = modCount(p), comm = communityPacks().slice(0, 3), spot = LIVE ? MOD[S.spot] : MOD[SPOTLIGHT], waiting = S.upnext.map(findPack).filter(function(w){ return w && shown(w); });
   return '<div class="page">' +
@@ -861,6 +894,7 @@ function vHome(){
       '<p class="muted">' + (S.tier === "free" ? "Free players can read about these. Members get the " + term("mod", "mods") + " and the links." : "All yours. Open any " + term("playpack", "playpack") + " to see its mods.") + "</p>" +
       shelf(TEASERS.map(findPack), true) + "</section>" +
     (comingNext() ? '<section class="card pad sec" id="coming" aria-labelledby="h-coming"><h2 id="h-coming">Coming next week</h2><p class="muted">A brand-new playpack arrives every Monday. Hex will only give a hint.</p>' + hex(comingNext()) + "</section>" : "") +
+    pollCard() +
     '<section class="sec" aria-labelledby="h-style">' + head("h-style", "Pick your playstyle") +
       '<div class="styles">' + FAMILIES.map(function(f){
         var c = PACKS.filter(function(x){ return x.family === f[0]; }).length;
@@ -881,6 +915,7 @@ function modRow(m, p){
   return '<div class="mod">' + tile(m) + "<div><h4>" + esc(m.name) + (m.live ? "" : '<span class="tag-sample">Sample</span>') + "</h4>" +
     '<p class="small muted">By ' + (m.live ? esc(m.by || "an unnamed author") : "sample author") + "</p><p>" + esc(m.blurb) + "</p>" +
     (why ? '<p class="small why"><strong>Picked for:</strong> ' + esc(why) + "</p>" : "") +
+    (p && p.fresh && p.fresh[m.id] ? '<p class="small newmod">' + ic("star") + "<span><strong>New arrival.</strong> Published in the last two months.</span></p>" : "") +
     (warn ? '<p class="small caution">' + ic("warn") + "<span>" + esc(warn) + "</span></p>" : "") +
     '<div class="meta small"><span class="chips">' + m.tags.map(function(t){ return '<span class="chip">' + esc(t) + "</span>"; }).join("") + "</span>" +
     "<span>" + ic("down") + '<span class="sr">Downloads: </span>' + m.dl + "</span><span>" + ic("clock") + '<span class="sr">Updated: </span>' + m.upd + "</span>" + (m.version ? '<span><span class="sr">Game version: </span>Hytale ' + esc(m.version) + "</span>" : "") + "</div>" +
@@ -1386,6 +1421,11 @@ document.addEventListener("click", function(e){
   else if (a === "signin"){ if (S.accounts) openAccount("login"); else openSignin(); }
   else if (a === "signup") openAccount("signup");
   else if (a === "forgot") openForgot();
+  else if (a === "vote"){
+    if (LIVE && S.accounts && !S.user){ openAccount("signup"); toast("Make a free account to vote."); }
+    else if (LIVE && S.accounts) post({ op:"vote", idea:id }).then(function(d){ S.pollMine = id; S.pollCounts = d.counts || {}; render(false); toast("Vote counted"); }, function(e){ toast(e.message); });
+    else { S.pollMine = id; S.pollCounts = {}; S.pollCounts[id] = 1; store.set("vote", { poll:POLL.id, idea:id }); render(false); toast("Vote counted"); }
+  }
   else if (a === "share") openShare(id);
   else if (a === "sharecopy"){ var sl = shareNow && shareNow.link; (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(sl) : Promise.reject()).then(function(){ toast("Link copied"); }, function(){ toast("Could not copy. The link is shown below the buttons."); }); }
   else if (a === "sharesave"){ if (shareNow && $("#share-card").src){ var dl = document.createElement("a"); dl.href = $("#share-card").src; dl.download = "hymeta-" + shareNow.p.id + ".jpg"; document.body.appendChild(dl); dl.click(); dl.remove(); toast("Picture saved"); } }

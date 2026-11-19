@@ -26,8 +26,9 @@ const { start } = require("../scripts/dev-server");
 
   const older = await get("p/cozy-farmer");
   if (older.status !== 200 || meta(older.html, "og:title") !== "The cozy farmer" || older.html.includes('id="free-tag"')) bad("a playpack that is not free this week should open, without the free flag");
-  const early = await get("p/knights-and-dragons");
-  if (early.status !== 404 || /Knights|dragon|pack-knights/i.test(early.html)) bad("next week's playpack can be seen through a shared link");
+  const next = require("../lib/catalog"), nextId = next.rota[1], nextCard = next.packs[nextId];
+  const early = await get("p/" + nextId);
+  if (early.status !== 404 || early.html.includes(nextCard.name) || early.html.includes(nextCard.art)) bad("next week's playpack can be seen through a shared link");
   for (const odd of ["p/no-such-pack", "p/potato-empire", "p/%3Cscript%3Ealert(1)%3C%2Fscript%3E", "p/..%2F..%2Fapi%2Fhealth", "p/" + "a".repeat(300)]) {
     const r = await get(odd);
     if (r.status !== 404 || /<script>alert|og:image/.test(r.html)) bad("an odd shared link was not turned away cleanly: " + odd.slice(0, 40) + " (status " + r.status + ")");

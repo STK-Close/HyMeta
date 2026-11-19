@@ -2,6 +2,7 @@
 // These work without the site password, because an email link must open for anyone who holds it:
 //   GET  ?reset=<secret>   the page for choosing a new password
 //   GET  ?unsub=<secret>   the page for stopping the weekly email
+//   GET  ?poll             the running totals of the weekly vote (counts only)
 //   GET  (nothing)         the daily run. Safe for anyone to call: nobody is ever sent an issue twice.
 //   POST { op: "forgot" | "reset" | "unsub" | "test", ... }
 const { json, query } = require("../lib/gate");
@@ -52,6 +53,9 @@ module.exports = async (req, res) => {
     if (req.method === "GET") {
       if (q.has("reset")) return resetPage(res, secret("reset"));
       if (q.has("unsub")) return unsubPage(res, secret("unsub"));
+      // the running totals of the weekly vote, for the weekly run to read. Only counts, never who voted.
+      if (q.has("poll")) { const poll = require("../lib/catalog").poll, t = poll && db.enabled() ? await accounts.tally(poll, null) : null;
+        return json(res, 200, { poll: poll ? poll.id : null, week: poll ? poll.week : null, ideas: poll ? poll.ideas.map((i) => ({ id: i.id, name: i.name, votes: t ? t.counts[i.id] : 0 })) : [] }); }
       const done = await news.sendBatch(site);
       return json(res, 200, { ok: true, on: done.on, sent: done.sent, left: done.left });
     }

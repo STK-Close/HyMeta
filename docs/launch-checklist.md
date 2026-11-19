@@ -26,6 +26,8 @@ password away: strangers see the front door, tap "Come in", and are in. Tick the
       16 November 2026 (`WEEKLY` in `src/app.html`, recipes in `lib/recipes.js`, the calendar in `lib/weeks.js`).
       Nothing is stored, so it does not wait on CurseForge. **The list runs out after the week of 1 February 2027.**
       After that every playpack takes a turn at being free until more are written.
+- [x] The weekly run: every Thursday a scheduled session writes next Monday's playpack from the players' vote
+      and the newest mods, with new art (`docs/weekly-run.md`). The twelve written in advance are now the reserve.
 - [ ] A record of exactly which mods were in each past week (needs CurseForge's answer).
 - [ ] Decide whether search engines may list the site. It is hidden from them today, even when open.
 - [x] A way to be told when a playpack is waiting for review: an email to the owner, at most one an hour (needs the email service).
