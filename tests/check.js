@@ -172,6 +172,7 @@ function makeAudit(p, bad) {
     if (await count(".style-tile") !== 7) bad("home: expected 7 playstyle tiles");
     if (!(await count("#h-spot"))) bad("home: mod spotlight is missing");
     if (await count("#coming")) bad("home: a next playpack is promised after the weekly list has run out");
+    if (await count("#home-save")) bad("home: saving, a member feature, is offered in the free view");
     await p.click('[data-family="magic"]'); await p.waitForTimeout(220);
     const magic = await p.locator("#results .pk .pk-name").allTextContents();
     if (await p.inputValue("#fam") !== "magic" || magic.slice().sort().join(" | ") !== "A potion problem | Wizard school dropout") bad("playstyle tile did not filter to the 2 magic packs, showed: " + magic.join(" | "));
@@ -207,6 +208,12 @@ function makeAudit(p, bad) {
     if (!(await count("#g-spice[open] .group-about"))) bad("the spice group starts closed or does not say what it is");
     await audit("pack"); await shot("pack");
 
+    // the free playpack on the home screen can be saved with a heart, by members
+    await go("home"); await p.click("#home-save"); await p.waitForFunction(() => /^Saved$/.test(document.querySelector("#home-save").textContent.trim()) && document.querySelector("#home-save").getAttribute("aria-pressed") === "true");
+    await audit("home, free playpack saved"); await go("saved");
+    if (!(await p.textContent("#view")).includes("The cozy farmer")) bad("saving the free playpack from the home screen did not put it in Saved");
+    await go("home"); await p.click("#home-save"); await p.waitForFunction(() => /^Save$/.test(document.querySelector("#home-save").textContent.trim()));
+    await go("pack-too-many-legs");
     // save a playpack and a mod, collect a stamp
     await p.click('[data-action="save"]'); await p.click('[data-action="savemod"]'); await p.click('[data-action="stamp"]'); await p.waitForTimeout(550);
     await go("saved"); await audit("saved playpacks"); await shot("saved-packs");

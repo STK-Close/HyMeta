@@ -837,7 +837,8 @@ function vHome(){
       '<div class="hero-body"><div class="sec"><p class="lede">' + esc(p.blurb) + "</p>" + hex(p.pitch[S.mood]) + warnBox(p) + "</div>" +
         '<div class="hero-side"><div class="chips">' + dareChip(p) + (nMods(p) ? '<span class="chip">' + nMods(p) + "</span>" : "") + "</div>" +
         '<button type="button" class="btn btn-primary btn-big btn-full" data-action="play" data-id="' + p.id + '">' + ic("play") + "Play this pack</button>" +
-        '<a class="btn btn-ghost btn-full" href="#pack-' + p.id + '">' + (ready(p) ? "See the " + n + " mods" : "See the mods") + "</a>" + (LIVE && !onTouch() ? '<button type="button" class="linkbtn" data-action="code" id="have-code">I have a code from my phone</button>' : "") + "</div></div></section>" +
+        '<a class="btn btn-ghost btn-full" href="#pack-' + p.id + '">' + (ready(p) ? "See the " + n + " mods" : "See the mods") + "</a>" + (S.tier === "member" ? '<button type="button" class="btn btn-ghost btn-full" id="home-save" data-action="save" data-id="' + p.id + '" data-fk="home-save" aria-pressed="' + (S.saved.indexOf(p.id) > -1) + '">' + ic("heart") + (S.saved.indexOf(p.id) > -1 ? "Saved" : "Save") + "</button>" : "") +
+        (LIVE && !onTouch() ? '<button type="button" class="linkbtn" data-action="code" id="have-code">I have a code from my phone</button>' : "") + "</div></div></section>" +
     '<section class="sec" aria-labelledby="h-shelf">' + head("h-shelf", "Also this week", "#explore", "See all") +
       '<p class="muted">' + (S.tier === "free" ? "Free players can read about these. Members get the " + term("mod", "mods") + " and the links." : "All yours. Open any " + term("playpack", "playpack") + " to see its mods.") + "</p>" +
       shelf(TEASERS.map(findPack), true) + "</section>" +
