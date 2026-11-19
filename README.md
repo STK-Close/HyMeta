@@ -44,6 +44,7 @@ Two private values, entered in the host's own settings and never written in this
 | --- | --- |
 | `SITE_PASSWORD` | The password visitors type to get in. With none set, the site stays locked. |
 | `CURSEFORGE_API_KEY` | The CurseForge key. With none set, the app shows sample mods. |
+| `DATABASE_URL` | The connection address of the Neon database that holds accounts. With none set, accounts stay switched off and the rest of the site works as before. |
 
 ## How it follows the CurseForge rules
 

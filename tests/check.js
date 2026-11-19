@@ -77,7 +77,7 @@ function makeAudit(p, bad) {
     const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: name !== "desktop" });
     const p = await ctx.newPage();
     const bad = (m) => problems.push(`${tag} ${m}`);
-    p.on("console", (m) => { if (m.type() === "error" && !(expecting401 && /401/.test(m.text()))) bad("console: " + m.text()); });
+    p.on("console", (m) => { if (m.type() === "error" && !(expecting401 && /40[01]/.test(m.text()))) bad("console: " + m.text()); });
     p.on("pageerror", (e) => bad("page error: " + e.message));
     const go = async (hash) => { await p.goto(url + "#" + hash); await p.waitForTimeout(220); };
     const shot = async (n) => { if (out) await p.screenshot({ path: `${out}/${tag}-${n}.png`, fullPage: true }); };
@@ -216,7 +216,7 @@ function makeAudit(p, bad) {
   server.close();
 
   // ---------- live mods: the same server with a key set, still talking to the pretend CurseForge ----------
-  server = await start({ pretend: true, password: PASSWORD, key: "pretend-key" });
+  server = await start({ pretend: true, password: PASSWORD, key: "pretend-key", accounts: true });
   url = server.url;
   for (const [tag, w, h, scheme] of [["live-phone-light", 390, 844, "light"], ["live-desktop-dark", 1366, 900, "dark"]]) {
     if (only && only !== tag) continue;
@@ -224,7 +224,7 @@ function makeAudit(p, bad) {
     const p = await ctx.newPage();
     const bad = (m) => problems.push(`${tag} ${m}`);
     await p.route("https://media.forgecdn.net/**", (r) => r.fulfill({ status: 200, contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="#888"/></svg>' }));
-    p.on("console", (m) => { if (m.type() === "error" && !(expecting401 && /401/.test(m.text()))) bad("console: " + m.text()); });
+    p.on("console", (m) => { if (m.type() === "error" && !(expecting401 && /40[01]/.test(m.text()))) bad("console: " + m.text()); });
     p.on("pageerror", (e) => bad("page error: " + e.message));
     const leaked = new Set();
     p.on("response", async (r) => { if (!r.url().startsWith(url)) return; try { if ((await r.text()).includes("pretend-key")) leaked.add(new URL(r.url()).pathname); } catch (e) {} });
@@ -280,6 +280,45 @@ function makeAudit(p, bad) {
       await p.check(".pickrow input"); await p.click("#bq-clear"); await p.waitForFunction(() => document.querySelectorAll(".pickrow").length > 7);
       if (!/1 picked/.test(await p.textContent("#b-status"))) bad("live build lost the picked mod");
       if (out) await p.screenshot({ path: `${out}/${tag}-build.png`, fullPage: true });
+      // ---------- accounts ----------
+      const email = tag + "@example.test", pass = "correct-horse-9";
+      const refused = await ctx.request.post(url + "api/account", { data: { op: "keep", list: "saved", id: "cozy-farmer", on: true } });
+      if (refused.status() !== 401) bad("an item was saved to an account without signing in (status " + refused.status() + ")");
+      await go("you"); await p.click('dialog [data-action="leave"]'); await p.waitForSelector("#f-acct"); // leaving the half-built playpack behind
+      await p.click("#f-acct > summary"); await p.click('[data-action="signup"]');
+      await audit("make an account");
+      await p.fill("#a-name", "Test Player"); await p.fill("#a-email", email); await p.fill("#a-pass", pass);
+      expecting401 = true; // refused sign-ups and sign-ins are meant to be refused
+      await p.click('#acct button[type="submit"]'); await p.waitForSelector("#a-err:not([hidden])");
+      if (!/13 and up/.test(await p.textContent("#a-err"))) bad("an account was allowed without confirming age 13 or older");
+      await p.check("#a-age"); await p.fill("#a-pass", "short"); await p.click('#acct button[type="submit"]'); await p.waitForFunction(() => /8 characters/.test(document.querySelector("#a-err").textContent));
+      await p.fill("#a-name", "call 5551234567"); await p.fill("#a-pass", pass); await p.click('#acct button[type="submit"]'); await p.waitForFunction(() => /friendlier/.test(document.querySelector("#a-err").textContent));
+      expecting401 = false;
+      await p.fill("#a-name", "Test Player"); await p.click('#acct button[type="submit"]'); await p.waitForSelector("#acct-who");
+      if (!/Test Player/.test(await p.textContent("#acct-who"))) bad("signed-in name is not shown");
+      await audit("signed in");
+      // what was saved on this device before signing up is now in the account, on any device
+      const other = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme });
+      const q = await other.newPage(); await q.route("https://media.forgecdn.net/**", (r) => r.fulfill({ status: 200, contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg'/>" }));
+      q.setDefaultTimeout(6000);
+      await q.goto(url); await q.fill("#pw", PASSWORD); await q.click('button[type="submit"]'); await q.waitForSelector("#view .page");
+      await q.goto(url + "#you"); await q.waitForSelector("#f-acct"); await q.click("#f-acct > summary"); await q.click('[data-action="signin"]');
+      await q.fill("#a-email", email); await q.fill("#a-pass", "not-the-password"); await q.click('#acct button[type="submit"]'); await q.waitForSelector("#a-err:not([hidden])");
+      if (await q.locator("#acct-who").count()) bad("a wrong account password was accepted");
+      await q.fill("#a-pass", pass); await q.click('#acct button[type="submit"]'); await q.waitForSelector("#acct-who");
+      await q.click("#tier-member"); await q.goto(url + "#saved"); await q.click('[data-tab="mods"]');
+      try { await q.waitForSelector("#view .mod"); } catch (e) { bad("a mod saved before signing up did not follow the account to a second device"); }
+      // a stamp collected on the second device shows on the first
+      await q.goto(url + "#pack-cozy-farmer"); await q.waitForSelector('[data-action="stamp"]'); await q.click('[data-action="stamp"]'); await q.waitForTimeout(400);
+      await p.reload(); await p.waitForSelector("#view .page"); await go("you"); await p.waitForSelector("#acct-who, #f-acct");
+      if (!(await count(".stamp"))) bad("a stamp collected on one device did not show on the other");
+      // deleting the account signs out every device and the login stops working
+      await p.click("#f-acct > summary"); await p.click('[data-action="delacct"]'); await p.click('[data-action="delacct"]'); await p.waitForSelector('[data-action="signup"]');
+      const after = await (await other.request.get(url + "api/account")).json();
+      if (after.user) bad("the account was deleted but another device is still signed in");
+      const again = await other.request.post(url + "api/account", { data: { op: "login", email, password: pass } });
+      if (again.status() !== 400) bad("a deleted account can still sign in (status " + again.status() + ")");
+      await other.close();
       if (leaked.size) bad("the CurseForge key was sent to the browser by " + [...leaked].join(", "));
     } catch (e) { bad("stopped early, a step could not be done: " + e.message.split("\n").slice(0, 4).join(" ").replace(/\s+/g, " ").slice(0, 260)); }
     await ctx.close();

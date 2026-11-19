@@ -4,10 +4,18 @@
   "private": true,
   "description": "HyMeta: playpacks for Hytale. Owned by Lumina Art House, LLC.",
   "license": "UNLICENSED",
-  "engines": { "node": "22.x" },
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "build": "node scripts/build.js",
     "start": "node scripts/dev-server.js",
-    "test": "node scripts/build.js && node tests/recipes.test.js && node tests/check.js"
+    "test": "node scripts/build.js && node tests/recipes.test.js && node tests/accounts.test.js && node tests/check.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16"
   }
 }

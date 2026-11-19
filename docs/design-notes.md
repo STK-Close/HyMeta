@@ -68,6 +68,15 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 - Mods whose name or description contains a blocked word never appear.
 - Free players never trigger a fetch for a locked playpack. Real enforcement arrives with accounts.
 
+## Accounts (Claude's call)
+- Sign up with an email, a password and a display name, after ticking "I am 13 or older". Sign in with Apple is added when the Apple developer account is ready.
+- Passwords are never stored, only a salted hash. Sign-in sessions are stored hashed too, and last 30 days.
+- An account holds saved playpacks, saved mods and stamps. Anything saved on a device before signing in is added to the account.
+- Deleting an account removes everything in it at once and signs out every device.
+- Display names reject links, emails, phone numbers and rude words.
+- Not built yet: password reset by email, playpacks a member built, and member-only access enforced by the server. The Free and Member switch is still a preview control until payments exist.
+- The database is Neon, the same service Heckle uses.
+
 ## Not decided
 - How one-tap installing will really work for Hytale through CurseForge.
 - Whether a paid app is allowed under the CurseForge API terms.

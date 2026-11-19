@@ -1,7 +1,7 @@
 {
   "framework": null,
   "buildCommand": "node scripts/build.js",
-  "installCommand": "",
+  "installCommand": "npm install --omit=dev",
   "outputDirectory": "web",
   "rewrites": [{ "source": "/", "destination": "/api/app" }],
   "headers": [

@@ -88,7 +88,7 @@ main.has-actions{padding-bottom:calc(var(--tabs-h) + 104px + env(safe-area-inset
 .term{background:none;border:0;padding:6px 0;margin:0;color:inherit;font:inherit;text-decoration:underline dotted;text-underline-offset:3px;cursor:help}
 .field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .field label,.legend{font-weight:700}
-input[type="text"],input[type="search"],select{font:400 1rem var(--body);min-height:44px;padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg2);color:var(--fg);width:100%}
+input[type="text"],input[type="search"],input[type="password"],select{font:400 1rem var(--body);min-height:44px;padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg2);color:var(--fg);width:100%}
 .search{position:relative;flex:1 1 220px;min-width:0}
 .search input{padding-left:40px;padding-right:48px}
 .search input::-webkit-search-cancel-button{display:none}
@@ -518,7 +518,7 @@ var S = {
   tier: store.get("tier", "free"), mood: store.get("mood", "cheeky"), theme: store.get("theme", "device"),
   saved: store.get("saved", []), savedMods: store.get("savedMods", []), stamps: store.get("stamps", []), mine: store.get("mine", []),
   hidden: store.get("hidden", []), blocked: store.get("blocked", []),
-  q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false, bres: [], bbusy: false, spot: null,
+  user: null, accounts: false, q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false, bres: [], bbusy: false, spot: null,
   draft: { name:"", blurb:"", mods:[] }, dirty: false, justStamped: null, open: {}
 };
 var hostTheme = document.documentElement.getAttribute("data-theme");
@@ -575,12 +575,46 @@ function liveSearch(){
       .then(function(){ S.bbusy = false; var l = $("#b-list"); if (l) l.innerHTML = pickList(); });
   }, 350);
 }
+/* ---------- accounts (only when the server has a database) ---------- */
+var KEPT = ["saved", "savedMods", "stamps"];
+function post(body){
+  return fetch("api/account", { method:"POST", credentials:"same-origin", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) })
+    .then(function(r){ return r.json().then(function(d){ if (!r.ok) throw new Error(d.message || "Something went wrong. Try again."); return d; }); });
+}
+// merge: on signing in, anything saved on this device before is added to the account
+function loadAccount(merge){
+  return api("api/account").then(function(d){
+    S.accounts = !!d.enabled; S.user = d.user || null;
+    if (d.user) KEPT.forEach(function(k){
+      var server = d[k] || [];
+      if (merge) S[k].forEach(function(id){ if (server.indexOf(id) < 0 && /^[a-z0-9-]{1,80}$/.test(id)){ server.push(id); post({ op:"keep", list:k, id:id, on:true }).catch(function(){}); } });
+      S[k] = server; store.set(k, server);
+    });
+    loadMissing(); render(false);
+  }).catch(function(){});
+}
+function remember(list, id, on){
+  if (S.user) post({ op:"keep", list:list, id:id, on:on }).catch(function(){ toast("That did not reach your account. Check your connection."); });
+}
+function forgetLocal(){ S.user = null; KEPT.forEach(function(k){ S[k] = []; store.set(k, []); }); }
+function openAccount(mode){
+  var up = mode === "signup";
+  openSheet(up ? "Make an account" : "Sign in",
+    '<form id="acct" data-mode="' + (up ? "signup" : "login") + '" class="sec" novalidate>' +
+    (up ? '<div class="field"><label for="a-name">Display name</label><input type="text" id="a-name" maxlength="24" autocomplete="nickname"><span class="small muted">Other members see this. Do not use your real name.</span></div>' : "") +
+    '<div class="field"><label for="a-email">Email</label><input type="text" inputmode="email" id="a-email" autocomplete="email" autocapitalize="none"></div>' +
+    '<div class="field"><label for="a-pass">Password</label><input type="password" id="a-pass" autocomplete="' + (up ? "new-password" : "current-password") + '">' + (up ? '<span class="small muted">At least 8 characters.</span>' : "") + "</div>" +
+    (up ? '<label class="check"><input type="checkbox" id="a-age">I am 13 or older</label>' : "") +
+    '<p id="a-err" class="err" role="alert" hidden></p>' +
+    '<div class="row"><button type="submit" class="btn btn-primary">' + (up ? "Make my account" : "Sign in") + "</button>" +
+    '<button type="button" class="linkbtn" data-action="acctmode" data-mode="' + (up ? "login" : "signup") + '">' + (up ? "I already have an account" : "Make an account") + "</button></div></form>");
+}
 function goLive(){
   LIVE = true;
   PACKS.forEach(function(p){ p.core = []; p.spice = []; p.extras = []; p.helpers = []; p.ready = false; });
   COMMUNITY.length = 0;
   S.savedMods = S.savedMods.filter(isLiveId); S.saved = S.saved.filter(findPack); S.mine = S.mine.filter(function(p){ return p.core.every(isLiveId); });
-  loadPack(findPack(FEATURED)); loadMissing();
+  loadPack(findPack(FEATURED)); loadMissing(); loadAccount(false);
   api("api/spotlight").then(function(d){ if (d.mod){ S.spot = adopt(d.mod); if (current === "home") render(false); } }).catch(function(){});
   render(false);
 }
@@ -823,16 +857,22 @@ function vYou(){
       '<div class="moods" role="radiogroup" aria-label="Hex\'s mood">' + [["gentle","Gentle"],["cheeky","Cheeky"],["unhinged","Unhinged"]].map(function(o){
         return '<label><input type="radio" name="mood" value="' + o[0] + '"' + (S.mood === o[0] ? " checked" : "") + ">" + o[1] + "</label>"; }).join("") + '</div><div id="mood-sample">' + hex(say("greet")) + "</div>", true) +
     fold("f-look", "Appearance", '<div class="field" style="max-width:320px"><label for="theme">Light or dark</label><select id="theme">' + options([["device","Match my device"],["light","Light"],["dark","Dark"]], S.theme) + "</select></div>", false) +
-    fold("f-acct", "Account", '<p>You are not signed in. This preview keeps your choices on this device only.</p>' +
-      '<div class="row"><button type="button" class="btn btn-ghost" data-action="signin">Sign in</button><button type="button" class="btn btn-danger" data-action="delacct">Delete my account</button></div>' +
+    fold("f-acct", "Account", (S.user
+      ? '<p id="acct-who">Signed in as <strong>' + esc(S.user.name) + "</strong> (" + esc(S.user.email) + ').</p><p class="muted">Your saved playpacks, saved mods and stamps follow you to any device.</p>' +
+        '<div class="row"><button type="button" class="btn btn-ghost" data-action="signout">Sign out</button><button type="button" class="btn btn-danger" data-action="delacct">Delete my account</button></div>'
+      : S.accounts
+      ? '<p>You are not signed in. Make an account to keep your saved playpacks, saved mods and stamps on every device.</p>' +
+        '<div class="row"><button type="button" class="btn btn-primary" data-action="signup">Make an account</button><button type="button" class="btn btn-ghost" data-action="signin">Sign in</button></div>'
+      : '<p>You are not signed in. This preview keeps your choices on this device only.</p>' +
+        '<div class="row"><button type="button" class="btn btn-ghost" data-action="signin">Sign in</button><button type="button" class="btn btn-danger" data-action="delacct">Delete my account</button></div>') +
       "<h3>Blocked members</h3>" + blocked, false) +
     fold("f-mem", "Membership", "<p>Membership is $3.99 a month or $24.99 a year. You are looking at the " + (S.tier === "member" ? "member" : "free") + " view.</p>" +
       '<div class="row"><button type="button" class="btn btn-ghost" data-action="join">See what members get</button><button type="button" class="btn btn-ghost" data-action="restore">Restore purchases</button></div>', false) +
     fold("f-legal", "Help and legal", '<div style="display:flex;flex-direction:column;align-items:flex-start">' +
       [["support","Help and contact"],["privacy","Privacy policy"],["terms","Terms of use"],["rules","Community rules"],["credits","Copyright and credits"]].map(function(d){
         return '<button type="button" class="linkbtn" data-action="doc" data-doc="' + d[0] + '">' + d[1] + "</button>"; }).join("") + "</div>", false) +
-    fold("f-reset", "Start over", '<p class="muted">Clears your stamps, saved items and anything you built in this preview.</p>' +
-      '<div><button type="button" class="btn btn-danger" data-action="reset">Clear my preview data</button></div>', false) +
+    (S.user ? "" : fold("f-reset", "Start over", '<p class="muted">Clears your stamps, saved items and anything you built in this preview.</p>' +
+      '<div><button type="button" class="btn btn-danger" data-action="reset">Clear my preview data</button></div>', false)) +
     "</div></section></div>";
 }
 
@@ -963,7 +1003,7 @@ function openSignin(){
 }
 var toastTimer;
 function toast(msg){ var t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.hidden = true; }, 3200); }
-function toggle(list, key, id){ var i = list.indexOf(id); if (i > -1) list.splice(i, 1); else list.push(id); store.set(key, list); return i < 0; }
+function toggle(list, key, id){ var i = list.indexOf(id); if (i > -1) list.splice(i, 1); else list.push(id); store.set(key, list); remember(key, id, i < 0); return i < 0; }
 
 /* ---------- events ---------- */
 document.addEventListener("click", function(e){
@@ -977,7 +1017,10 @@ document.addEventListener("click", function(e){
   else if (a === "gate") openGate();
   else if (a === "restore") toast("Nothing to restore in this preview");
   else if (a === "soon") toast("Not connected in this preview");
-  else if (a === "signin") openSignin();
+  else if (a === "signin"){ if (S.accounts) openAccount("login"); else openSignin(); }
+  else if (a === "signup") openAccount("signup");
+  else if (a === "acctmode") openAccount(b.getAttribute("data-mode"));
+  else if (a === "signout") post({ op:"logout" }).catch(function(){}).then(function(){ forgetLocal(); render(false); toast("Signed out"); });
   else if (a === "doc") openDoc(b.getAttribute("data-doc"));
   else if (a === "term") openTerm(b.getAttribute("data-term"));
   else if (a === "close") closeSheet();
@@ -988,7 +1031,7 @@ document.addEventListener("click", function(e){
   else if (a === "dare"){ S.filter = b.getAttribute("data-dare"); S.fam = "all"; S.q = ""; location.hash = "explore"; }
   else if (a === "family"){ S.fam = b.getAttribute("data-family"); S.filter = "all"; S.q = ""; location.hash = "explore"; }
   else if (a === "approve"){ p = findPack(id); if (p){ p.status = "approved"; store.set("mine", S.mine); render(false); toast("Approved. Other members can see it now."); } }
-  else if (a === "stamp"){ if (S.stamps.indexOf(id) < 0) S.stamps.push(id); store.set("stamps", S.stamps); S.justStamped = id; render(false); toast("Stamp collected"); }
+  else if (a === "stamp"){ if (S.stamps.indexOf(id) < 0) { S.stamps.push(id); remember("stamps", id, true); } store.set("stamps", S.stamps); S.justStamped = id; render(false); toast("Stamp collected"); }
   else if (a === "clear"){ S.q = ""; S.filter = "all"; S.fam = "all"; render(false); var q = $("#q"); if (q) q.focus(); }
   else if (a === "bqclear"){ S.bq = ""; var bq = $("#bq"); bq.value = ""; $("#bq-clear").hidden = true; if (LIVE) liveSearch(); $("#b-list").innerHTML = pickList(); bq.focus(); }
   else if (a === "retry"){ p = findPack(id); loadPack(p); render(false); }
@@ -1003,6 +1046,10 @@ document.addEventListener("click", function(e){
     p = findPack(id); if (p && S.blocked.indexOf(p.by) < 0) S.blocked.push(p.by); store.set("blocked", S.blocked); toast("Member blocked. Their playpacks are hidden."); location.hash = "explore";
   }
   else if (a === "unblock"){ S.blocked = S.blocked.filter(function(x){ return x !== b.getAttribute("data-by"); }); store.set("blocked", S.blocked); render(false); toast("Member unblocked"); }
+  else if (a === "delacct" && S.user){
+    if (!twoTap(b, "Tap again to delete everything")) return;
+    post({ op:"delete" }).then(function(){ forgetLocal(); render(false); toast("Your account and everything in it has been deleted"); }, function(e){ toast(e.message); });
+  }
   else if (a === "delacct"){ if (!twoTap(b, "Tap again to delete everything")) return; b.removeAttribute("data-armed"); b.innerHTML = b.getAttribute("data-label"); toast("In the real app this deletes your account and all its data"); }
   else if (a === "reset"){
     if (!twoTap(b, "Tap again to clear everything")) return;
@@ -1039,7 +1086,15 @@ document.addEventListener("change", function(e){
 document.addEventListener("toggle", function(e){ var d = e.target; if (d.classList && d.classList.contains("fold") && d.id) S.open[d.id] = d.open; }, true);
 document.addEventListener("submit", function(e){
   var f = e.target; e.preventDefault();
-  if (f.id === "gate"){
+  if (f.id === "acct"){
+    var aerr = $("#a-err"), up = f.getAttribute("data-mode") === "signup", btn = f.querySelector('button[type="submit"]');
+    var body = { op: up ? "signup" : "login", email: $("#a-email").value, password: $("#a-pass").value };
+    if (up){ body.name = $("#a-name").value; body.over13 = $("#a-age").checked; }
+    btn.disabled = true; aerr.hidden = true;
+    post(body).then(function(){ return loadAccount(true); }).then(function(){ closeSheet(); toast(up ? "Account made. You are signed in." : "Signed in"); },
+      function(e){ btn.disabled = false; aerr.textContent = e.message; aerr.hidden = false; aerr.focus && $("#a-email").focus(); });
+  }
+  else if (f.id === "gate"){
     var inp = $("#gate-in"), err = $("#gate-err");
     if (parseInt(inp.value, 10) !== gateAnswer){ err.textContent = "That is not it. Ask a grown-up to try."; err.hidden = false; inp.focus(); return; }
     S.tier = "member"; store.set("tier", "member"); closeSheet(); render(false); toast("Now showing the member view");

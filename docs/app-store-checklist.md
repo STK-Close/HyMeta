@@ -43,7 +43,7 @@ Status key: **Designed** = already in the preview. **Build** = needs the real ap
 | Apple requires | Status |
 | --- | --- |
 | A privacy policy linked in the app and on the store page | **Designed**: draft in the app. **You**: lawyer review, and a public web address for it. |
-| Account deletion inside the app | **Designed**: You, Account, Delete my account (two taps). **Build**: make it delete for real. |
+| Account deletion inside the app | **Built**: You, Account, Delete my account (two taps) removes the account and everything in it. |
 | If a third-party sign-in is offered, also offer one that limits data to name and email and lets people hide their email | **Designed**: Sign in with Apple plus email. **Build**. |
 | Privacy details on the store page | **Build**: fill in from what the real app collects. Plan: no ads, no tracking, nothing sold. |
 
