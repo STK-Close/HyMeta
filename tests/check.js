@@ -71,6 +71,36 @@ function makeAudit(p, bad) {
   let server = await start({ pretend: true, password: PASSWORD, key: "" });
   url = server.url;
   const problems = [];
+  // ---------- the front door, private: what a stranger sees before the password ----------
+  for (const [tag, w, h, scheme] of [["door-phone-light", 390, 844, "light"], ["door-desktop-dark", 1366, 900, "dark"]]) {
+    if (only && only !== tag) continue;
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: w < 500 });
+    const p = await ctx.newPage(); const bad = (m) => problems.push(`${tag} ${m}`);
+    p.on("console", (m) => { if (m.type() === "error" && !/401/.test(m.text())) bad("console: " + m.text()); });
+    p.on("pageerror", (e) => bad("page error: " + e.message)); p.setDefaultTimeout(6000);
+    const audit = makeAudit(p, bad), count = (sel) => p.locator(sel).count();
+    try {
+      await p.goto(url); await p.waitForSelector("#h-main"); await p.evaluate(async () => { const imgs = [...document.images]; imgs.forEach((i) => { i.loading = "eager"; }); await Promise.all(imgs.map((i) => i.decode().catch(() => {}))); });
+      await audit("front door"); if (out) await p.screenshot({ path: `${out}/${tag}.png`, fullPage: true });
+      if (await count("#view, .mod")) bad("the front door shows parts of the app before the password");
+      if (await count(".steps li") !== 3 || await count(".style") !== 7) bad("the front door is missing its three steps or seven playstyles");
+      if (await p.evaluate(() => [...document.images].filter((i) => !i.naturalWidth).length)) bad("a front door picture did not load");
+      const doorText = await p.textContent("main");
+      for (const need of ["$24.99 a year", "$3.99 a month", "Lumina Art House, LLC", "not affiliated", "13 and up", "CurseForge"]) if (!doorText.includes(need)) bad("the front door does not mention: " + need);
+      // Hex's three questions choose a playstyle
+      if (!(await p.locator("#result").isHidden())) bad("the quiz shows a result before any question is answered");
+      // two of the three answers point at magic, so magic wins even though the first answer said exploring
+      for (const [qi, ai] of [[0, 3], [1, 2], [2, 1]]) await p.click(`.opt[data-q="${qi}"][data-a="${ai}"]`);
+      await p.waitForSelector("#result:not([hidden])"); await audit("front door quiz result");
+      if (!/Wizard school dropout/.test(await p.textContent("#result"))) bad("the quiz picked the wrong playstyle: " + (await p.textContent("#result")).slice(0, 60));
+      // the password takes the visitor straight to the playstyle Hex picked
+      await p.fill("#pw", "wrong-guess"); await p.click('#f button[type="submit"]'); await p.waitForSelector("#err:not([hidden])");
+      await p.fill("#pw", PASSWORD); await p.click('#f button[type="submit"]'); await p.waitForSelector("#view .page");
+      if (!/#pack-wizard-dropout$/.test(p.url())) bad("after the password the visitor was not taken to the playstyle Hex picked: " + p.url());
+      await p.goto(url + "?door=1"); if (!(await count("#h-main")) || await count("#view")) bad("the owner cannot preview the front door once signed in");
+    } catch (e) { bad("stopped early, a step could not be done: " + e.message.split("\n").slice(0, 4).join(" ").replace(/\s+/g, " ").slice(0, 260)); }
+    await ctx.close();
+  }
   for (const scheme of ["light", "dark"]) for (const [name, [w, h]] of Object.entries(sizes)) {
     const tag = `${name}-${scheme}`;
     if (only && only !== tag) continue;
@@ -394,6 +424,29 @@ function makeAudit(p, bad) {
       await other.close();
       if (leaked.size) bad("the CurseForge key was sent to the browser by " + [...leaked].join(", "));
     } catch (e) { if (process.env.HYMETA_DEBUG) console.log("DEBUG", p.url(), (await p.textContent("#view").catch(() => "")).slice(0, 300)); bad("stopped early, a step could not be done: " + e.message.split("\n").slice(0, 4).join(" ").replace(/\s+/g, " ").slice(0, 260)); }
+    await ctx.close();
+  }
+  server.close();
+
+  // ---------- the front door, open: the switch that takes the password away ----------
+  server = await start({ pretend: true, password: PASSWORD, key: "pretend-key", open: true });
+  url = server.url;
+  if (!only || only === "open-phone-dark") {
+    const tag = "open-phone-dark", ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: "dark", deviceScaleFactor: 1, hasTouch: true });
+    const p = await ctx.newPage(); const bad = (m) => problems.push(`${tag} ${m}`);
+    await p.route("https://media.forgecdn.net/**", (r) => r.fulfill({ status: 200, contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg'/>" }));
+    p.on("console", (m) => { if (m.type() === "error") bad("console: " + m.text()); }); p.on("pageerror", (e) => bad("page error: " + e.message)); p.setDefaultTimeout(6000);
+    const audit = makeAudit(p, bad), count = (sel) => p.locator(sel).count();
+    try {
+      await p.goto(url); await p.waitForSelector("#come-in"); await audit("open front door");
+      if (await count("#pw")) bad("the open front door still asks for a password");
+      for (let i = 0; i < 3; i++) await p.click(`.opt[data-q="${i}"][data-a="0"]`);
+      await p.click("#take-me"); await p.waitForSelector("#view .page");
+      if (!/#pack-cozy-farmer$/.test(p.url())) bad("Take me there did not open the playstyle Hex picked: " + p.url());
+      await p.waitForSelector(".mod"); // live mods load for a visitor who never typed a password
+      await p.goto(url); await p.waitForSelector("#view .page"); if (await count("#come-in")) bad("a returning visitor is shown the front door again");
+      await p.goto(url + "?door=1"); await p.waitForSelector("#come-in");
+    } catch (e) { bad("stopped early, a step could not be done: " + e.message.split("\n").slice(0, 4).join(" ").replace(/\s+/g, " ").slice(0, 260)); }
     await ctx.close();
   }
   server.close();

@@ -102,7 +102,8 @@ function pretendStripe() {
   };
 }
 
-function start({ port = 0, pretend = false, password, key, accounts, owners, payments } = {}) {
+function start({ port = 0, pretend = false, password, key, accounts, owners, payments, open } = {}) {
+  if (open) process.env.SITE_OPEN = "1"; else delete process.env.SITE_OPEN;
   if (payments !== undefined) { if (payments) process.env.STRIPE_SECRET_KEY = "sk_test_pretend"; else delete process.env.STRIPE_SECRET_KEY; }
 
   if (owners !== undefined) { if (owners) process.env.OWNER_EMAILS = owners; else delete process.env.OWNER_EMAILS; }
