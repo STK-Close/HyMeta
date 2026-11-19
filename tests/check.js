@@ -83,6 +83,24 @@ function makeAudit(p, bad) {
       await p.goto(url); await p.waitForSelector("#h-main"); await p.evaluate(async () => { const imgs = [...document.images]; imgs.forEach((i) => { i.loading = "eager"; }); await Promise.all(imgs.map((i) => i.decode().catch(() => {}))); });
       await audit("front door"); if (out) await p.screenshot({ path: `${out}/${tag}.png`, fullPage: true });
       if (await count("#view, .mod")) bad("the front door shows parts of the app before the password");
+      // the terms and the privacy policy can be read from here, before any password
+      for (const [file, title, words] of [["terms", "Terms of use", "State of Florida"], ["privacy", "Privacy policy", "do not sell"], ["rules", "Community rules", "Be kind"], ["help", "Help and contact", "real person"]]) {
+        await p.click(`footer a[href="/${file}.html"]`); await p.waitForSelector("#doc-title");
+        if ((await p.textContent("#doc-title")) !== title || !(await p.textContent("main")).includes(words)) bad(`the ${file} page does not show the ${title}`);
+        if (await count("#view, #pw")) bad(`the ${file} page is not a plain page of its own`);
+        await audit(file + " page");
+        if (file === "terms") {
+          const before = await p.evaluate(() => getComputedStyle(document.body).backgroundColor); await p.click("#theme-switch");
+          if (before === await p.evaluate(() => getComputedStyle(document.body).backgroundColor)) bad("the light and dark switch on the legal pages does nothing");
+          await audit("terms page, other theme"); if (out) await p.screenshot({ path: `${out}/${tag}-terms.png`, fullPage: true });
+          await p.click("#theme-switch");
+          await p.click('nav a[href="/privacy.html"]'); await p.waitForFunction(() => document.querySelector("#doc-title").textContent === "Privacy policy"); await p.goBack();
+        }
+        await p.click("a.back"); await p.waitForSelector("#h-main");
+      }
+      // the same words as inside the app, so the two can never say different things
+      { const inApp = require("fs").readFileSync(path.join(__dirname, "../src/app.html"), "utf8"), onPage = require("fs").readFileSync(path.join(__dirname, "../web/terms.html"), "utf8");
+        if (!inApp.includes("auto-renewing subscription at $3.99 a month or $24.99 a year") || !onPage.includes("auto-renewing subscription at $3.99 a month or $24.99 a year")) bad("the terms page and the app's terms have drifted apart"); }
       if (await count(".steps li") !== 3 || await count(".style") !== 7) bad("the front door is missing its three steps or seven playstyles");
       if (await p.evaluate(() => [...document.images].filter((i) => !i.naturalWidth).length)) bad("a front door picture did not load");
       const doorText = await p.textContent("main");
@@ -387,6 +405,7 @@ function makeAudit(p, bad) {
       q.setDefaultTimeout(6000);
       await q.goto(url); await q.fill("#pw", PASSWORD); await q.click('button[type="submit"]'); await q.waitForSelector("#view .page");
       await q.goto(url + "#you"); await q.waitForSelector("#f-acct"); await q.click("#f-acct > summary"); await q.click('[data-action="signin"]');
+      if (await q.locator('[data-action="forgot"], #a-news, #news-on').count()) bad("password reset or the weekly email is offered with no email service connected");
       await q.fill("#a-email", email); await q.fill("#a-pass", "not-the-password"); await q.click('#acct button[type="submit"]'); await q.waitForSelector("#a-err:not([hidden])");
       if (await q.locator("#acct-who").count()) bad("a wrong account password was accepted");
       await q.fill("#a-pass", pass); await q.click('#acct button[type="submit"]'); await q.waitForSelector("#acct-who");
@@ -468,6 +487,55 @@ function makeAudit(p, bad) {
     await ctx.close();
   }
   server.close();
+
+  // ---------- email: password reset and the weekly email, with a pretend email service ----------
+  server = await start({ pretend: true, password: PASSWORD, key: "pretend-key", accounts: true, mail: true });
+  url = server.url; process.env.SITE_URL = url.replace(/\/$/, "");
+  for (const [tag, w, h, scheme] of [["mail-phone-light", 390, 844, "light"], ["mail-desktop-dark", 1366, 900, "dark"]]) {
+    if (only && only !== tag) continue;
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: w < 500 });
+    const p = await ctx.newPage(); const bad = (m) => problems.push(`${tag} ${m}`);
+    await p.route("https://media.forgecdn.net/**", (r) => r.fulfill({ status: 200, contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg'/>" }));
+    p.on("console", (m) => { if (m.type() === "error" && !/40[01]/.test(m.text())) bad("console: " + m.text()); }); p.on("pageerror", (e) => bad("page error: " + e.message)); p.setDefaultTimeout(6000);
+    const audit = makeAudit(p, bad), count = (sel) => p.locator(sel).count();
+    const email = tag + "@example.test", linkTo = (kind) => { const m = [...server.outbox].reverse().find((x) => x.to === email && x.text.includes("?" + kind + "=")); return m ? m.text.match(new RegExp("http://localhost:\\d+/api/mail\\?" + kind + "=[a-f0-9]+"))[0] : ""; };
+    try {
+      await signIn(p, bad);
+      await p.goto(url + "#you"); await p.waitForSelector("#f-acct"); await p.click("#f-acct > summary"); await p.click('[data-action="signup"]');
+      await p.fill("#a-name", "Mail Tester"); await p.fill("#a-email", email); await p.fill("#a-pass", "first-password-1"); await p.check("#a-age");
+      if (await p.isChecked("#a-news")) bad("the weekly email box is ticked before the member chooses it");
+      await p.check("#a-news"); await audit("sign up with weekly email"); await p.click('#acct button[type="submit"]'); await p.waitForSelector("#acct-who");
+      if (!(await p.isChecked("#news-on"))) bad("the weekly email choice made at sign-up is not shown under Account");
+      await audit("account with weekly email");
+      // the weekly email arrives, and its link stops it
+      await ctx.request.get(url + "api/mail");
+      const stop = linkTo("unsub"); if (!stop) bad("no weekly email arrived for a member who asked for it");
+      await p.goto(stop); await p.waitForSelector("#go"); await audit("stop the weekly email page"); if (out) await p.screenshot({ path: `${out}/${tag}-unsub.png` });
+      await p.click("#go"); await p.waitForSelector("#done:not([hidden])"); await audit("weekly email stopped");
+      await p.click("#done a.btn"); await p.waitForSelector("#view .page"); await p.goto(url + "#you"); await p.waitForSelector("#f-acct"); await p.click("#f-acct > summary"); await p.waitForSelector("#news-on");
+      if (await p.isChecked("#news-on")) bad("the weekly email still shows as on after stopping it");
+      await p.check("#news-on"); await p.waitForFunction(() => /Weekly email is on/.test(document.querySelector("#toast").textContent));
+      await p.reload(); await p.waitForSelector("#f-acct"); await p.click("#f-acct > summary"); await p.waitForSelector("#news-on");
+      if (!(await p.isChecked("#news-on"))) bad("switching the weekly email back on under Account did not save");
+      // forgotten password, start to finish
+      await p.click('[data-action="signout"]'); await p.waitForSelector('#f-acct [data-action="signin"]'); await p.click('#f-acct [data-action="signin"]');
+      await p.click('[data-action="forgot"]'); await p.waitForSelector("#forgot"); await audit("forgot password");
+      await p.click('#forgot button[type="submit"]'); await p.waitForSelector("#fg-err:not([hidden])");
+      await p.fill("#fg-email", email); await p.click('#forgot button[type="submit"]'); await p.waitForSelector("#fg-sent"); await audit("reset link sent");
+      const reset = linkTo("reset"); if (!reset) bad("no reset email arrived");
+      await p.goto(reset); await p.waitForSelector("#pw"); await audit("choose a new password page"); if (out) await p.screenshot({ path: `${out}/${tag}-reset.png` });
+      await p.fill("#pw", "short"); await p.click('#f button[type="submit"]'); await p.waitForSelector("#err:not([hidden])"); await audit("new password refused");
+      await p.check("#show"); if ((await p.getAttribute("#pw", "type")) !== "text") bad("Show the password does not show it");
+      await p.fill("#pw", "second-password-2"); await p.click('#f button[type="submit"]'); await p.waitForSelector("#done:not([hidden])"); await audit("password changed");
+      await p.click("#done a.btn"); await p.waitForSelector("#view .page"); await p.goto(url + "#you"); await p.waitForSelector("#f-acct"); await p.click("#f-acct > summary"); await p.click('#f-acct [data-action="signin"]');
+      await p.fill("#a-email", email); await p.fill("#a-pass", "first-password-1"); await p.click('#acct button[type="submit"]'); await p.waitForSelector("#a-err:not([hidden])");
+      await p.fill("#a-pass", "second-password-2"); await p.click('#acct button[type="submit"]'); await p.waitForSelector("#acct-who");
+      await p.goto(reset); await p.waitForSelector("#pw"); await p.fill("#pw", "third-password-3"); await p.click('#f button[type="submit"]'); await p.waitForSelector("#err:not([hidden])");
+      if (!/already used/.test(await p.textContent("#err"))) bad("a used reset link does not say it was already used");
+    } catch (e) { bad("stopped early, a step could not be done: " + e.message.split("\n").slice(0, 4).join(" ").replace(/\s+/g, " ").slice(0, 260)); }
+    await ctx.close();
+  }
+  server.close(); delete process.env.SITE_URL;
 
   // ---------- payments: the same site with a pretend Stripe ----------
   server = await start({ pretend: true, password: PASSWORD, key: "pretend-key", accounts: true, payments: true });

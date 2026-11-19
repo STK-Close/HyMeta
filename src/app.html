@@ -598,6 +598,7 @@ function loadAccount(merge){
     S.accounts = !!d.enabled; S.user = d.user || null;
     // once payments are switched on, membership is real: it comes from the account, not the preview switch
     S.billing = !!d.billing; if (S.billing) S.tier = d.user ? d.user.tier : "free";
+    S.mail = !!d.mail; S.news = !!d.news; // password reset and the weekly email, once an email service is connected
     if (d.user) KEPT.forEach(function(k){
       var server = d[k] || [];
       if (merge) S[k].forEach(function(id){ if (server.indexOf(id) < 0 && /^[a-z0-9-]{1,80}$/.test(id)){ server.push(id); post({ op:"keep", list:k, id:id, on:true }).catch(function(){}); } });
@@ -646,9 +647,18 @@ function openAccount(mode){
     '<div class="field"><label for="a-email">Email</label><input type="text" inputmode="email" id="a-email" autocomplete="email" autocapitalize="none"></div>' +
     '<div class="field"><label for="a-pass">Password</label><input type="password" id="a-pass" autocomplete="' + (up ? "new-password" : "current-password") + '">' + (up ? '<span class="small muted">At least 8 characters.</span>' : "") + "</div>" +
     (up ? '<label class="check"><input type="checkbox" id="a-age">I am 13 or older</label>' : "") +
+    (up && S.news ? '<label class="check"><input type="checkbox" id="a-news">Email me the new playpacks each week</label>' : "") +
     '<p id="a-err" class="err" role="alert" hidden></p>' +
     '<div class="row"><button type="submit" class="btn btn-primary">' + (up ? "Make my account" : "Sign in") + "</button>" +
-    '<button type="button" class="linkbtn" data-action="acctmode" data-mode="' + (up ? "login" : "signup") + '">' + (up ? "I already have an account" : "Make an account") + "</button></div></form>");
+    '<button type="button" class="linkbtn" data-action="acctmode" data-mode="' + (up ? "login" : "signup") + '">' + (up ? "I already have an account" : "Make an account") + "</button>" +
+    (!up && S.mail ? '<button type="button" class="linkbtn" data-action="forgot">Forgot your password?</button>' : "") + "</div></form>");
+}
+function openForgot(){
+  openSheet("Forgot your password?",
+    '<form id="forgot" class="sec" novalidate><p>Enter the email on your account. Hex will send a link for choosing a new password.</p>' +
+    '<div class="field"><label for="fg-email">Email</label><input type="text" inputmode="email" id="fg-email" autocomplete="email" autocapitalize="none"></div>' +
+    '<p id="fg-err" class="err" role="alert" hidden></p>' +
+    '<div class="row"><button type="submit" class="btn btn-primary">Send the link</button><button type="button" class="linkbtn" data-action="signin">Back to sign in</button></div></form>');
 }
 function goLive(){
   LIVE = true;
@@ -937,6 +947,8 @@ function vYou(){
     fold("f-look", "Appearance", '<div class="field" style="max-width:320px"><label for="theme">Light or dark</label><select id="theme">' + options([["device","Match my device"],["light","Light"],["dark","Dark"]], S.theme) + "</select></div>", false) +
     fold("f-acct", "Account", (S.user
       ? '<p id="acct-who">Signed in as <strong>' + esc(S.user.name) + "</strong> (" + esc(S.user.email) + ').</p><p class="muted">Your saved playpacks, saved mods and stamps follow you to any device.</p>' +
+        (S.news ? '<label class="check"><input type="checkbox" id="news-on"' + (S.user.news ? " checked" : "") + '>Email me the new playpacks each week</label>' : "") +
+        (S.news && S.user.owner ? '<div><button type="button" class="btn btn-ghost" data-action="testnews">Send me a test of the weekly email</button></div>' : "") +
         '<div class="row"><button type="button" class="btn btn-ghost" data-action="signout">Sign out</button><button type="button" class="btn btn-danger" data-action="delacct">Delete my account</button></div>'
       : S.accounts
       ? '<p>You are not signed in. Make an account to keep your saved playpacks, saved mods and stamps on every device.</p>' +
@@ -1108,7 +1120,7 @@ function openGate(){
 }
 var DOCS = {
   support:["Help and contact", "<p>Stuck, or spotted something wrong? Write to us and a real person will answer.</p><p><strong>Email:</strong> to be added before release.</p><p>To report a shared playpack, open it and tap Report this playpack. We review every report within 24 hours.</p>"],
-  privacy:["Privacy policy", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What we keep</h3><p>If you make an account we keep your sign-in email, the playpacks and mods you save, your stamps and anything you choose to share. Payments are handled by Stripe. We never see your card details.</p><h3>What we never do</h3><p>We do not sell or share your data. We do not show ads. We do not track you across other apps or websites.</p><h3>Children</h3><p>HyMeta is kept clean so it is safe for younger players to browse. Accounts and sharing are for ages 13 and up. We do not knowingly collect personal information from children under 13, and we delete it if we find any.</p><h3>Your choices</h3><p>You can delete your account, and everything in it, at any time from You, Account, Delete my account. Deleted data is removed within 30 days.</p><h3>Contact</h3><p>Lumina Art House, LLC. Contact email to be added before release.</p>"],
+  privacy:["Privacy policy", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What we keep</h3><p>If you make an account we keep your sign-in email, the playpacks and mods you save, your stamps and anything you choose to share. Payments are handled by Stripe. We never see your card details.</p><h3>Email</h3><p>We email you only to reset a password you asked to reset, and, if you ask for it, once a week about new playpacks. Every weekly email has a link that stops them. A sending service delivers these emails for us and is given your email address for that purpose only.</p><h3>What we never do</h3><p>We do not sell or share your data. We do not show ads. We do not track you across other apps or websites.</p><h3>Children</h3><p>HyMeta is kept clean so it is safe for younger players to browse. Accounts and sharing are for ages 13 and up. We do not knowingly collect personal information from children under 13, and we delete it if we find any.</p><h3>Your choices</h3><p>You can delete your account, and everything in it, at any time from You, Account, Delete my account. Deleted data is removed within 30 days.</p><h3>Contact</h3><p>Lumina Art House, LLC. Contact email to be added before release.</p>"],
   terms:["Terms of use", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What HyMeta is</h3><p>HyMeta is an unofficial guide to Hytale mods. It suggests sets of mods and links to their CurseForge pages. It is not made, endorsed or supported by Hypixel Studios, CurseForge or Overwolf.</p><h3>Mods belong to their creators</h3><p>Every mod, name and logo shown belongs to the person who made it. Mods are downloaded from CurseForge under its own terms. We cannot promise that any mod works, or that mods work together.</p><h3>Membership</h3><p>Membership is an auto-renewing subscription at $3.99 a month or $24.99 a year, paid through Stripe. It renews until you cancel, which you can do at any time under You.</p><h3>Accounts</h3><p>You must be 13 or older to make an account or share a playpack.</p><h3>Sharing</h3><p>Anything you share must follow the community rules. A person reviews every playpack before other members see it. We may remove content or close accounts that break the rules.</p><h3>Governing law</h3><p>These terms are governed by the laws of the State of Florida, United States.</p><h3>Owner</h3><p>HyMeta is owned and run by Lumina Art House, LLC. &copy; 2026 Lumina Art House, LLC. All rights reserved.</p>"],
   rules:["Community rules", "<p>Shared playpacks are seen by other players, including children. Keep it friendly.</p><ul class=\"perks\"><li>Be kind. No insults, bullying or hate.</li><li>Keep it clean. No swearing or grown-up content.</li><li>Stay private. No real names, links, emails, phone numbers or addresses.</li><li>Be honest. No scams, spam or pretending to be someone else.</li></ul><p>A person checks every playpack before other members can see it. Break the rules and your playpack is removed. Do it again and your account is closed.</p><p>See something wrong? Open the playpack and tap Report this playpack, or block the member who shared it. We review every report within 24 hours.</p>"],
   credits:["Copyright and credits", "<p>&copy; 2026 Lumina Art House, LLC. All rights reserved.</p><p>HyMeta is an unofficial fan app. Hytale is a trademark of Hypixel Studios. CurseForge is a trademark of Overwolf. HyMeta is not affiliated with or endorsed by either company.</p><p>Every mod belongs to its creator. Mod names, logos and details come from CurseForge.</p><p>In this preview, all mods, authors, download counts and artwork are placeholders.</p>"]
@@ -1164,6 +1176,8 @@ document.addEventListener("click", function(e){
   else if (a === "soon") toast("Not connected in this preview");
   else if (a === "signin"){ if (S.accounts) openAccount("login"); else openSignin(); }
   else if (a === "signup") openAccount("signup");
+  else if (a === "forgot") openForgot();
+  else if (a === "testnews"){ b.disabled = true; post({ op:"test" }, "api/mail").then(function(){ b.disabled = false; toast("Test sent. Check your inbox."); }, function(e){ b.disabled = false; toast(e.message); }); }
   else if (a === "acctmode") openAccount(b.getAttribute("data-mode"));
   else if (a === "signout") post({ op:"logout" }).catch(function(){}).then(function(){ forgetLocal(); render(false); toast("Signed out"); });
   else if (a === "doc") openDoc(b.getAttribute("data-doc"));
@@ -1226,6 +1240,7 @@ document.addEventListener("change", function(e){
   else if (t.id === "bonly"){ S.bonly = t.checked; $("#b-list").innerHTML = pickList(); }
   else if (t.getAttribute("data-inst")){ var ip = findPack(t.getAttribute("data-inst")); markInstalled(ip, t.value, t.checked); openSheet("Play " + esc(ip.name), playBody(ip, "here")); var back = sheet.querySelector('input[value="' + t.value + '"]'); if (back) back.focus(); }
   else if (t.id === "sort"){ S.sort = t.value; $("#results").innerHTML = resultsHtml(); }
+  else if (t.id === "news-on"){ var want = t.checked; post({ op:"news", on:want }).then(function(){ S.user.news = want; toast(want ? "Weekly email is on" : "Weekly email is off"); }, function(){ t.checked = !want; toast("That did not save. Check your connection."); }); }
   else if (t.id === "theme"){ S.theme = t.value; store.set("theme", S.theme); applyTheme(); }
   else if (t.name === "mood"){ S.mood = t.value; store.set("mood", S.mood); $("#mood-sample").innerHTML = hex(say("greet")); }
   else if (t.name === "mods"){
@@ -1248,10 +1263,19 @@ document.addEventListener("submit", function(e){
   else if (f.id === "acct"){
     var aerr = $("#a-err"), up = f.getAttribute("data-mode") === "signup", btn = f.querySelector('button[type="submit"]');
     var body = { op: up ? "signup" : "login", email: $("#a-email").value, password: $("#a-pass").value };
-    if (up){ body.name = $("#a-name").value; body.over13 = $("#a-age").checked; }
+    if (up){ body.name = $("#a-name").value; body.over13 = $("#a-age").checked; body.news = !!($("#a-news") && $("#a-news").checked); }
     btn.disabled = true; aerr.hidden = true;
     post(body).then(function(){ return loadAccount(true); }).then(function(){ closeSheet(); toast(up ? "Account made. You are signed in." : "Signed in"); },
       function(e){ btn.disabled = false; aerr.textContent = e.message; aerr.hidden = false; aerr.focus && $("#a-email").focus(); });
+  }
+  else if (f.id === "forgot"){
+    var ferr = $("#fg-err"), fbtn = f.querySelector('button[type="submit"]'), fmail = $("#fg-email").value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fmail)){ ferr.textContent = "Enter the email on your account."; ferr.hidden = false; $("#fg-email").focus(); return; }
+    fbtn.disabled = true; ferr.hidden = true;
+    post({ op:"forgot", email:fmail }, "api/mail").then(function(){
+      openSheet("Check your email", '<p id="fg-sent">If that email has a HyMeta account, a link is on its way. It works once, for one hour.</p><p class="muted">Nothing after a few minutes? Look in your spam folder, then try again.</p>' +
+        '<div><button type="button" class="btn btn-ghost" data-action="close">Done</button></div>');
+    }, function(e){ fbtn.disabled = false; ferr.textContent = e.message; ferr.hidden = false; });
   }
   else if (f.id === "gate"){
     var inp = $("#gate-in"), err = $("#gate-err");

@@ -3,15 +3,40 @@
   "buildCommand": "node scripts/build.js",
   "installCommand": "npm install --omit=dev",
   "outputDirectory": "web",
-  "rewrites": [{ "source": "/", "destination": "/api/app" }],
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/api/app"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
       ]
     }
-  ]
+  ],
+  "crons": [
+    {
+      "path": "/api/mail",
+      "schedule": "0 16 * * *"
+    }
+  ],
+  "functions": {
+    "api/mail.js": {
+      "maxDuration": 60
+    }
+  }
 }

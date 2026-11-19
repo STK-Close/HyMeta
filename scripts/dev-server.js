@@ -102,7 +102,31 @@ function pretendStripe() {
   };
 }
 
-function start({ port = 0, pretend = false, password, key, accounts, owners, payments, open } = {}) {
+// A pretend email service. Nothing is ever sent: every message lands in `outbox` for the tests to read.
+// It answers for both services HyMeta can use, and checks the key and the shape of each request.
+function pretendMail() {
+  const outbox = [], state = { refuse: false }, inner = global.fetch;
+  global.fetch = async (url, init) => {
+    const u = new URL(String(url));
+    if (u.hostname !== "api.brevo.com" && u.hostname !== "api.resend.com") return inner(url, init);
+    const send = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "Content-Type": "application/json" } });
+    const h = (init && init.headers) || {}, body = JSON.parse((init && init.body) || "{}");
+    if (state.refuse) return send({ message: "refused" }, 500);
+    if (u.hostname === "api.brevo.com") {
+      if (u.pathname !== "/v3/smtp/email" || h["api-key"] !== process.env.BREVO_API_KEY || !body.sender || !body.sender.email || !body.to || !body.to[0].email || !body.subject || !body.textContent || !body.htmlContent) return send({ message: "bad request" }, 400);
+      outbox.push({ via: "brevo", from: body.sender.email, to: body.to[0].email, subject: body.subject, text: body.textContent, html: body.htmlContent, headers: body.headers || {} });
+    } else {
+      if (u.pathname !== "/emails" || h.Authorization !== "Bearer " + process.env.RESEND_API_KEY || !body.from || !Array.isArray(body.to) || !body.subject || !body.text || !body.html) return send({ message: "bad request" }, 400);
+      outbox.push({ via: "resend", from: body.from, to: body.to[0], subject: body.subject, text: body.text, html: body.html, headers: body.headers || {} });
+    }
+    return send({ id: "msg_" + outbox.length }, 201);
+  };
+  return { outbox, state };
+}
+
+function start({ port = 0, pretend = false, password, key, accounts, owners, payments, open, mail } = {}) {
+  for (const k of ["BREVO_API_KEY", "RESEND_API_KEY", "MAIL_FROM", "MAIL_ADDRESS", "SITE_URL", "MAIL_DAILY_CAP"]) delete process.env[k];
+  if (mail) { process.env.BREVO_API_KEY = "pretend-mail-key"; process.env.MAIL_FROM = "hello@hymeta.test"; process.env.MAIL_ADDRESS = "1 Pretend Street, Testville, FL 00000"; }
   if (open) process.env.SITE_OPEN = "1"; else delete process.env.SITE_OPEN;
   if (payments !== undefined) { if (payments) process.env.STRIPE_SECRET_KEY = "sk_test_pretend"; else delete process.env.STRIPE_SECRET_KEY; }
 
@@ -111,11 +135,13 @@ function start({ port = 0, pretend = false, password, key, accounts, owners, pay
   if (password !== undefined) { if (password) process.env.SITE_PASSWORD = password; else delete process.env.SITE_PASSWORD; }
   if (key !== undefined) { if (key) process.env.CURSEFORGE_API_KEY = key; else delete process.env.CURSEFORGE_API_KEY; }
   const calls = pretend ? pretendCurseForge() : [];
-  const stripe = payments ? pretendStripe() : null; // installed last, so no payment request can slip past it to the real Stripe
+  const stripe = payments ? pretendStripe() : null; // installed after CurseForge, so no payment request can slip past it to the real Stripe
+  const post = pretendMail(); // installed last of all and always, so no test can ever reach a real email service
   const server = http.createServer(async (req, res) => {
     try {
       const u = new URL(req.url, "http://localhost");
       const name = u.pathname === "/" ? "app" : (u.pathname.match(/^\/api\/([a-z]+)$/) || [])[1];
+      // the host answers form posts too (mail apps use one for one-click unsubscribe)
       if (name && fs.existsSync(path.join(root, "api", name + ".js"))) {
         if (req.method === "POST") { let raw = ""; for await (const c of req) raw += c; try { req.body = JSON.parse(raw); } catch (e) { req.body = {}; } }
         return await require(path.join(root, "api", name + ".js"))(req, res);
@@ -125,7 +151,7 @@ function start({ port = 0, pretend = false, password, key, accounts, owners, pay
       res.setHeader("Content-Type", TYPES[path.extname(file)] || "application/octet-stream"); res.end(fs.readFileSync(file));
     } catch (e) { res.statusCode = 500; res.end("Server error"); console.error(e); }
   });
-  return new Promise((resolve) => server.listen(port, "127.0.0.1", () => resolve({ url: "http://localhost:" + server.address().port + "/", close: () => server.close(), calls, stripe })));
+  return new Promise((resolve) => server.listen(port, "127.0.0.1", () => resolve({ url: "http://localhost:" + server.address().port + "/", close: () => server.close(), calls, stripe, outbox: post.outbox, mail: post.state })));
 }
-module.exports = { start, pretendCurseForge };
+module.exports = { start, pretendCurseForge, pretendMail };
 if (require.main === module) start({ port: +process.env.PORT || 3000 }).then((s) => console.log("HyMeta is running at " + s.url));

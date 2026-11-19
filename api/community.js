@@ -5,6 +5,18 @@ const db = require("../lib/db");
 const accounts = require("../lib/accounts");
 const community = require("../lib/community");
 
+// A note to the owner that something is waiting for review. At most one an hour.
+async function tellOwner(req) {
+  const mail = require("../lib/mail"), site = mail.siteUrl(req);
+  if (!mail.enabled() || !site) return;
+  const to = await accounts.ownerEmail(); if (!to) return;
+  const fresh = await db.query("insert into settings (key, value) values ('review-note', now()::text) on conflict (key) do update set value = now()::text where settings.value::timestamptz < now() - interval '1 hour' returning value");
+  if (!fresh.length) return;
+  const { text, html } = mail.layout({ heading: "A playpack is waiting for review", lines: ["A member has sent a playpack to be shared. Nobody else can see it until you approve it.", "You will get at most one of these notes an hour, however many arrive."],
+    button: ["Open the review queue", site + "/#you"], footer: ["Sent to the owner of HyMeta only."] });
+  await mail.send({ to, subject: "HyMeta: a playpack is waiting for review", text, html });
+}
+
 module.exports = async (req, res) => {
   if (!guard(req, res)) return;
   if (!db.enabled()) return json(res, 200, { enabled: false });
@@ -15,7 +27,11 @@ module.exports = async (req, res) => {
     if (req.method === "GET") return json(res, 200, { enabled: true, ...(await community.view(user)), ...(owner ? { queue: await community.queue() } : {}) });
     if (req.method !== "POST" || !/application\/json/i.test(String(req.headers["content-type"] || ""))) return json(res, 405, { error: "method" });
     const body = req.body && typeof req.body === "object" ? req.body : {};
-    if (body.op === "submit") return json(res, 200, { ok: true, id: await community.submit(user, body) });
+    if (body.op === "submit") {
+      const id = await community.submit(user, body);
+      await tellOwner(req).catch((e) => console.error("review note not sent", e && e.message)); // never blocks the member
+      return json(res, 200, { ok: true, id });
+    }
     if (body.op === "delete") { await community.remove(user, body); return json(res, 200, { ok: true }); }
     if (body.op === "report") { await community.report(user, body); return json(res, 200, { ok: true }); }
     if (body.op === "block") { await community.block(user, body); return json(res, 200, { ok: true }); }

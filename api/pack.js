@@ -1,9 +1,8 @@
 // The mods in one playpack, fetched live from CurseForge.
 const { guard, json, query } = require("../lib/gate");
 const { fail } = require("../lib/cf");
-const { resolve } = require("../lib/recipes");
+const { resolve, FREE_PACK } = require("../lib/recipes");
 const db = require("../lib/db"), accounts = require("../lib/accounts"), billing = require("../lib/billing");
-const FREE_PACK = "cozy-farmer"; // this week's free playpack
 module.exports = async (req, res) => {
   if (!guard(req, res)) return;
   try {

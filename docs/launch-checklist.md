@@ -9,6 +9,7 @@ password away: strangers see the front door, tap "Come in", and are in. Tick the
 - [ ] A lawyer reads the privacy policy, the terms, the community rules and the 13-and-up rule.
 - [ ] An accountant says where sales tax applies to memberships. Stripe Tax can then be switched on.
 - [ ] A support email address, added to the Help and contact page.
+- [ ] Connect an email service so password reset and the weekly email switch on (see "Email" below).
 - [ ] Check Perplexity's terms allow commercial use of the eight original pictures. The four newer ones were made with fal, which allows it.
 - [ ] Check Hypixel Studios' rules for fan sites, including the "Hy" in the name.
 
@@ -18,11 +19,24 @@ password away: strangers see the front door, tap "Come in", and are in. Tick the
 - [ ] Opening to the public means many more requests to CurseForge with one key. Ask them about usage limits.
 
 ## Claude can build these
-- [ ] Privacy policy and terms readable from the front door, without entering the site.
-- [ ] Password reset and the weekly email (needs a free email-sending account).
+- [x] Privacy policy and terms readable from the front door, without entering the site
+      (`/terms.html`, `/privacy.html`, `/rules.html`, `/help.html`, `/credits.html`).
+- [x] Password reset and the weekly email. Built and tested, waiting for an email service to be connected.
 - [ ] The weekly playpack generator and archive (needs CurseForge's answer).
 - [ ] Decide whether search engines may list the site. It is hidden from them today, even when open.
-- [ ] A way to be told when a playpack is waiting for review.
+- [x] A way to be told when a playpack is waiting for review: an email to the owner, at most one an hour (needs the email service).
+
+## Email
+Off until these are added under Settings, Environment Variables in Vercel, followed by a redeploy.
+- `BREVO_API_KEY`: the key from a free Brevo account (300 emails a day, checked November 2026). `RESEND_API_KEY` works instead.
+- `MAIL_FROM`: the address the emails come from. It must be verified with the email service.
+- `MAIL_ADDRESS`: Lumina Art House's postal address. United States law (CAN-SPAM) requires one on every
+  newsletter, so the weekly email stays off without it. Password reset works without it.
+- HyMeta stops itself at 280 emails a day with Brevo (90 with Resend), and the weekly email stops 20 short of
+  that so password resets always get through. `MAIL_DAILY_CAP` changes the number.
+- The weekly email goes out once a day at 16:00 UTC to anyone who asked for it and has not had the current issue.
+  An issue is the playpack that is free right now (`FREE_PACK` in `lib/recipes.js`), so nobody is emailed again
+  until that changes.
 
 ## How to open, and how to close again
 - Open: add `SITE_OPEN` = `1` under Settings, Environment Variables in Vercel, then redeploy.
