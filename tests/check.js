@@ -250,8 +250,10 @@ function makeAudit(p, bad) {
     if (!(await p.textContent("#view")).includes("The cozy farmer")) bad("saving the free playpack from the home screen did not put it in Saved");
     await go("home"); await p.click("#home-save"); await p.waitForFunction(() => /^Save$/.test(document.querySelector("#home-save").textContent.trim()));
     await go("pack-too-many-legs");
-    // save a playpack and a mod, collect a stamp
-    await p.click('[data-action="save"]'); await p.click('[data-action="savemod"]'); await p.click('[data-action="stamp"]'); await p.waitForTimeout(550);
+    // save a playpack and a mod. Stamps are gone: nothing could show a playpack had really been played
+    await p.click('[data-action="save"]'); await p.click('[data-action="savemod"]'); await p.waitForTimeout(300);
+    if (await count('[data-action="stamp"], [data-action="stampdone"], .stamp, #h-stamp')) bad("pack: a stamp is still offered");
+    if (await count(".brokenbtn, #badge-offer")) bad("pack: reporting a mod or the maker's badge is offered in the offline preview, where neither can work");
     // the bar of buttons under a playpack: every button fully on screen, each on one line,
     // at this size and, on a phone, on the smallest phones too (320px wide)
     for (const narrow of name === "phone" ? [0, 320] : [0]) {
@@ -262,7 +264,7 @@ function makeAudit(p, bad) {
       for (const x of bar) { if (x.l < 0 || x.r > vw) bad(`pack at ${vw}px: the ${x.t} button runs off the screen (${x.l} to ${x.r})`); if (x.h > 64 || x.cut) bad(`pack at ${vw}px: the ${x.t} button wraps or is cut off (${x.h}px tall)`); }
       if (narrow) { await audit("pack on a very small phone"); await p.setViewportSize({ width: w, height: h }); await p.waitForTimeout(120); }
     }
-    // share: a picture card drawn in the browser, a link, and a stamp for players who finished it
+    // share: a picture card drawn in the browser, and a link
     await p.click('[data-action="share"]'); await p.waitForFunction(() => { const i = document.querySelector("#share-card"); return i && i.naturalWidth === 1080 && i.naturalHeight === 1080; });
     const cardInfo = (sel) => p.evaluate(async () => { const i = document.querySelector("#share-card"), c = document.createElement("canvas"); c.width = c.height = 1080; const x = c.getContext("2d"); x.drawImage(i, 0, 0);
       const seen = new Set(); for (let yy = 20; yy < 1080; yy += 40) for (let xx = 20; xx < 1080; xx += 40) { const d = x.getImageData(xx, yy, 1, 1).data; seen.add((d[0] >> 4) + "," + (d[1] >> 4) + "," + (d[2] >> 4)); }
@@ -273,11 +275,8 @@ function makeAudit(p, bad) {
     if (withStamp.colors < 60) bad("the share card is blank or nearly blank (" + withStamp.colors + " colors)");
     if (withStamp.nameInk < 3000) bad("the share card does not show the playpack's name");
     if (withStamp.bubbleInk < 1500) bad("the share card does not show what Hex says");
-    if (!(await p.isChecked("#share-stamp")) || withStamp.stampInk < 2500) bad("the Survived stamp is missing from the share card of a finished playpack");
+    if (await count("#share-stamp") || withStamp.stampInk > 300) bad("the share card still carries a Survived stamp");
     await audit("share sheet"); await shot("share");
-    const firstSrc = await p.getAttribute("#share-card", "src");
-    await p.uncheck("#share-stamp"); await p.waitForFunction((old) => document.querySelector("#share-card").src !== old, firstSrc);
-    if ((await cardInfo()).stampInk > 300) bad("the Survived stamp stays on the share card after it is switched off");
     const [download] = await Promise.all([p.waitForEvent("download"), p.click("#share-save")]);
     if (download.suggestedFilename() !== "hymeta-too-many-legs.jpg") bad("the saved picture has the wrong name: " + download.suggestedFilename());
     await p.click('[data-action="sharecopy"]'); await p.waitForFunction(() => /Link copied/.test(document.querySelector("#toast").textContent));
@@ -384,7 +383,7 @@ function makeAudit(p, bad) {
   url = server.url;
   for (const [tag, w, h, scheme] of [["live-phone-light", 390, 844, "light"], ["live-desktop-dark", 1366, 900, "dark"]]) {
     if (only && only !== tag) continue;
-    const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: w < 500 });
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: w < 500, permissions: ["clipboard-read", "clipboard-write"] });
     const p = await ctx.newPage();
     const bad = (m) => problems.push(`${tag} ${m}`);
     await p.route("https://media.forgecdn.net/**", (r) => r.fulfill({ status: 200, contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="#888"/></svg>' }));
@@ -420,7 +419,7 @@ function makeAudit(p, bad) {
       await p.waitForSelector("#inst-done");
       const lastStep = await p.textContent("#inst-done");
       if (!/switch these mods on/.test(lastStep) || !/Right-click/.test(lastStep) || !/Save World Settings/.test(lastStep)) bad("the last step, switching the mods on in each world, is not explained");
-      await audit("install finished"); await p.click('[data-action="stampdone"]'); await p.waitForFunction(() => /Stamp collected/.test(document.querySelector("#inst-done").textContent));
+      await audit("install finished");
       await p.keyboard.press("Escape"); await p.reload(); await p.waitForSelector('.hero-side .chip:has-text("mods")');
       await p.click('[data-action="play"]'); await p.click('[data-mode="here"]'); if (!(await count("#inst-done"))) bad("install progress was forgotten after reloading");
       // send to my computer: a real code that opens the same playpack
@@ -490,6 +489,39 @@ function makeAudit(p, bad) {
       await p.fill("#a-name", "Test Player"); await p.click('#acct button[type="submit"]'); await p.waitForSelector("#acct-who");
       if (!/Test Player/.test(await p.textContent("#acct-who"))) bad("signed-in name is not shown");
       await audit("signed in");
+      // "It did not work": on every mod of the playpack, with a reason, and it can be taken back
+      await go("pack-cozy-farmer"); await p.waitForSelector(".mod .brokenbtn");
+      if (await count(".mod .brokenbtn") !== await count(".mod")) bad("not every mod in the playpack can be reported as not working");
+      const firstMod = (await p.locator(".mod h4").first().textContent()).trim();
+      await p.click(".mod .brokenbtn >> nth=0"); await p.waitForSelector(".whys");
+      if (await count(".whys .btn") !== 4 || !(await p.textContent("#sheet")).includes(firstMod)) bad("the report sheet does not name the mod or offer four reasons");
+      await audit("what went wrong"); if (out) await p.screenshot({ path: `${out}/${tag}-broken.png` });
+      await p.click('.whys [data-why="1"]'); await p.waitForFunction(() => /Thank you/.test(document.querySelector("#toast").textContent));
+      await p.waitForSelector('.mod .brokenbtn[aria-pressed="true"]');
+      if (await count('.brokenbtn[aria-pressed="true"]') !== 1 || !/You said this did not work/.test(await p.textContent('.brokenbtn[aria-pressed="true"]'))) bad("a reported mod is not marked, in words, as reported");
+      await audit("pack with a reported mod"); if (out) await p.screenshot({ path: `${out}/${tag}-pack-reported.png`, fullPage: true });
+      await p.reload(); await p.waitForSelector('.mod .brokenbtn[aria-pressed="true"]'); // remembered on the account
+      // the owner sees the report: which mod, how many, in which playpack and why, and can clear it
+      { await boss.goto(url + "#you"); await boss.reload(); await boss.waitForSelector("#h-broken"); await boss.waitForFunction((n) => document.querySelector(".brow").textContent.includes(n), firstMod);
+        const row = await boss.textContent(".brow"), auditBoss = makeAudit(boss, bad);
+        if (!/1 of 3 reports/.test(row) || !/The cozy farmer/.test(row) || !/crashed/.test(row) || /Benched/.test(row) || /Test Player/.test(row)) bad("the owner's list of reported mods is wrong: " + row.slice(0, 160));
+        await auditBoss("owner: reported mods"); if (out) await boss.locator("#f-queue").screenshot({ path: `${out}/${tag}-owner-broken.png` });
+        await boss.click('[data-action="brokenclear"]'); await boss.waitForFunction(() => !document.querySelector(".brow"));
+        await p.reload(); await p.waitForSelector(".mod .brokenbtn"); if (await count('.brokenbtn[aria-pressed="true"]')) bad("the owner cleared the reports but the player still sees theirs");
+        await p.click(".mod .brokenbtn >> nth=0"); await p.click('.whys [data-why="0"]'); await p.waitForSelector('.mod .brokenbtn[aria-pressed="true"]'); }
+      await p.click('.mod .brokenbtn[aria-pressed="true"]'); await p.waitForFunction(() => /taken back/.test(document.querySelector("#toast").textContent));
+      if (await count('.brokenbtn[aria-pressed="true"]')) bad("a report could not be taken back");
+      // the badge for mod makers: a picture, a code to paste, and a link to this playpack
+      await p.click("#badge-offer button"); await p.waitForSelector("#badge-code");
+      const badgeCode = await p.inputValue("#badge-code");
+      if (!badgeCode.includes('href="' + url + 'p/cozy-farmer"') || !badgeCode.includes('src="https://hymeta.vercel.app/picked-by-hex.png"') || !/alt="Picked by Hex on HyMeta"/.test(badgeCode)) bad("the badge code does not link to this playpack or show the badge: " + badgeCode);
+      if (!(await p.evaluate(async () => { const i = document.querySelector(".badge-pic"); if (!i.complete) await new Promise((r) => { i.onload = i.onerror = r; }); return i.naturalWidth === 480 && i.naturalHeight === 150; }))) bad("the badge picture did not load");
+      await audit("badge for mod makers"); if (out) await p.screenshot({ path: `${out}/${tag}-badge.png` });
+      await p.click('[data-copy="code"]'); await p.waitForFunction(() => /Badge code copied/.test(document.querySelector("#toast").textContent));
+      if ((await p.evaluate(() => navigator.clipboard.readText())) !== badgeCode) bad("Copy the badge code copied something else");
+      await p.click('[data-copy="link"]'); await p.waitForFunction(() => /Link copied/.test(document.querySelector("#toast").textContent));
+      if ((await p.evaluate(() => navigator.clipboard.readText())) !== url + "p/cozy-farmer") bad("Copy just the link copied something else");
+      await p.keyboard.press("Escape"); await go("you"); await p.waitForSelector("#acct-who, #f-acct");
       // what was saved on this device before signing up is now in the account, on any device
       const other = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme });
       const q = await other.newPage(); await q.route("https://media.forgecdn.net/**", (r) => r.fulfill({ status: 200, contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg'/>" }));
@@ -506,10 +538,11 @@ function makeAudit(p, bad) {
       await p.goto(url + "#home"); await p.waitForSelector('.hero-side [data-action="play"]'); await p.click('.hero-side [data-action="play"]'); await p.click('[data-mode="send"]'); await p.waitForSelector("#code-also"); await p.waitForTimeout(400); await p.keyboard.press("Escape");
       await q.goto(url + "#home"); await q.reload(); await q.waitForSelector("#view .page");
       try { await q.waitForSelector("#upnext .pk"); } catch (e) { bad("a playpack sent from one device is not waiting on the other"); }
-      // a stamp collected on the second device shows on the first
-      await q.goto(url + "#pack-the-wanderer"); await q.waitForSelector('[data-action="stamp"]'); await q.click('[data-action="stamp"]'); await q.waitForTimeout(400);
-      await p.reload(); await p.waitForSelector("#view .page"); await go("you"); await p.waitForSelector("#acct-who, #f-acct");
-      if ((await count(".stamp")) < 2) bad("a stamp collected on one device did not show on the other");
+      // a playpack saved on the second device shows on the first
+      await q.goto(url + "#pack-the-wanderer"); await q.waitForSelector('.actions [data-action="save"]'); await q.click('.actions [data-action="save"]'); await q.waitForTimeout(400);
+      await p.reload(); await p.waitForSelector("#view .page"); await go("saved"); await p.waitForSelector("#view .pk");
+      if (!(await p.textContent("#view")).includes("The wanderer")) bad("a playpack saved on one device did not show on the other");
+      await go("you"); if (await count(".stamp, #h-card")) bad("you: the stamp card is still shown");
       // ---------- community playpacks ----------
       await go("build"); await p.waitForSelector(".pickrow"); await audit("live build, signed in");
       await p.fill("#bq", "fishing"); await p.waitForFunction(() => document.querySelectorAll(".pickrow").length === 7);

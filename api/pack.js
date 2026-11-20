@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
       const user = await accounts.currentUser(req);
       if (!user || !(await accounts.isMember(user))) return json(res, 403, { error: "members" });
     }
-    const pack = await resolve(id);
+    const pack = await resolve(id, Date.now(), db.enabled() ? await require("../lib/broken").benched() : new Set());
     if (!pack) return json(res, 404, { error: "unknown" });
     json(res, 200, pack);
   } catch (e) { fail(res, json, e); }

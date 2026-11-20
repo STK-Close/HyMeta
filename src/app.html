@@ -219,6 +219,9 @@ details.plain>summary{min-height:44px;display:flex;align-items:center;cursor:poi
 .vote[aria-pressed="true"]{border-width:3px;padding:10.5px 12.5px;border-color:var(--fg)}
 .vote .tally{display:flex;align-items:center;gap:6px;font-weight:700}
 @media (min-width:720px){.votes{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.brokenbtn{gap:6px;display:flex}
+.badge-pic{width:240px;max-width:100%;height:auto;display:block}
+textarea{font:400 .875rem/1.4 ui-monospace,Menlo,Consolas,monospace;width:100%;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);resize:vertical}
 .caution{color:var(--pink-text);font-weight:700;display:flex;gap:6px;align-items:flex-start;margin-top:2px}
 .caution svg.ic{width:16px;height:16px;margin-top:2px}
 .why{margin-top:2px}
@@ -237,13 +240,6 @@ details.plain>summary{min-height:44px;display:flex;align-items:center;cursor:poi
 .moods label,.radios label{min-height:44px;display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg2);cursor:pointer;font-weight:700}
 .radios{flex-direction:column}
 
-/* stamps */
-.stamps{display:flex;flex-wrap:wrap;gap:12px}
-.stamp{width:96px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
-.stamp .ink{width:76px;height:76px;border-radius:50%;border:4px double var(--pink-text);color:var(--pink-text);display:grid;place-items:center;transform:rotate(-8deg);padding:16px}
-.stamp .ink svg{width:100%;height:100%}
-.stamp.new .ink{animation:slam .45s cubic-bezier(.2,1.6,.4,1)}
-@keyframes slam{from{transform:rotate(-30deg) scale(2.4);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
 
 /* sheets */
 dialog{border:1.5px solid var(--line);border-radius:16px;background:var(--bg2);color:var(--fg);padding:0;width:min(520px,calc(100vw - 24px));max-height:calc(100dvh - 32px);box-shadow:0 24px 48px -16px var(--shade)}
@@ -654,7 +650,6 @@ var LINES = {
            unhinged:"LOCKED. I swallowed the key. Members get the spare. It is a little damp." },
   savedEmpty:{ gentle:"Nothing saved yet. Take your time.", cheeky:"Nothing saved. Your shelf is so clean it frightens me.", unhinged:"EMPTY. An empty shelf. I can hear it echo. Fill it. FILL IT." },
   installed:{ gentle:"All set. Have a wonderful time.", cheeky:"Done. Whatever happens next is technically your fault.", unhinged:"IT IS DONE. Go. Run. Do not look behind the barn." },
-  stamped:{ gentle:"Stamp earned. Well played.", cheeky:"You survived. I owe the scarecrow five coins.", unhinged:"YOU LIVED. Incredible. I had already picked out your replacement." },
   community:{ gentle:"Made by a fellow player. Be kind to it.", cheeky:"A member built this. I take no responsibility and all of the credit.", unhinged:"A MEMBER MADE THIS. I did not check it. I simply released it into the wild." }
 };
 // a phone or tablet: the place codes are sent from, never where they are typed in
@@ -676,10 +671,10 @@ var term = function(t, label){ return '<button type="button" class="term" data-a
 /* ---------- state ---------- */
 var S = {
   tier: store.get("tier", "free"), mood: store.get("mood", "cheeky"), theme: store.get("theme", "device"),
-  saved: store.get("saved", []), savedMods: store.get("savedMods", []), stamps: store.get("stamps", []), mine: store.get("mine", []),
+  saved: store.get("saved", []), savedMods: store.get("savedMods", []), mine: store.get("mine", []), brokenMine: [],
   hidden: store.get("hidden", []), blocked: store.get("blocked", []),
   user: null, accounts: false, billing: false, plan: "year", queue: null, blockedMembers: [], upnext: store.get("upnext", []), installed: store.get("installed", {}), welcomed: store.get("welcomed", false), sort: (["new", "style", "az", "gentle", "wild"].indexOf(store.get("sort", "new")) > -1 ? store.get("sort", "new") : "new"), q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false, bres: [], bbusy: false, spot: null,
-  draft: { name:"", blurb:"", mods:[] }, dirty: false, justStamped: null, open: {}
+  draft: { name:"", blurb:"", mods:[] }, dirty: false, open: {}
 };
 var hostTheme = document.documentElement.getAttribute("data-theme");
 function applyTheme(){
@@ -695,6 +690,32 @@ function isMine(p){ return S.mine.indexOf(p) > -1; }
 function isLocked(p){ return S.tier === "free" && p.id !== FEATURED; }
 function modCount(p){ return p.core.length + p.spice.length + (p.extras ? p.extras.length : 0) + (p.helpers ? p.helpers.length : 0); }
 function allMods(p){ return p.core.concat(p.spice, p.extras || [], p.helpers || []).filter(function(i){ return MOD[i]; }); }
+// "It did not work": on every mod in one of HyMeta's own playpacks, once accounts are switched on.
+var BROKEN_WHY = ["It would not install", "It crashed the game", "It needs something that is missing", "It did not do what it says"];
+function brokenBtn(m, p){
+  if (!LIVE || !S.accounts || !m.live || !p || !p.pitch || p.by) return "";
+  var told = S.brokenMine.indexOf(m.id) > -1;
+  return '<button type="button" class="linkbtn brokenbtn" data-action="broken" data-id="' + esc(m.id) + '" data-pack="' + esc(p.id) + '" data-fk="br-' + esc(m.id) + '" aria-pressed="' + told + '">' +
+    (told ? ic("check") + "You said this did not work. Undo" : ic("flag") + "It did not work") + "</button>";
+}
+function openBroken(modId, packId){
+  var m = MOD[modId]; if (!m) return;
+  openSheet("What went wrong?", "<p>Tell Hex what happened with <strong>" + esc(m.name) + "</strong>. If a few players say the same, she swaps it for a better one.</p>" +
+    '<div class="sec whys">' + BROKEN_WHY.map(function(w, i){ return '<button type="button" class="btn btn-ghost btn-full" data-action="brokenwhy" data-id="' + esc(modId) + '" data-pack="' + esc(packId) + '" data-why="' + i + '">' + w + "</button>"; }).join("") + "</div>" +
+    '<p class="small muted">One report each. It goes to HyMeta, not to the person who made the mod.</p>');
+}
+// "Picked by Hex": a badge a mod's maker can put on their own page, linking back to the playpack.
+function openBadge(id){
+  var p = findPack(id); if (!p || !p.pitch || p.by) return;
+  var link = shareLink(p), img = PUBLIC_SITE + "/picked-by-hex.png";
+  var code = '<a href="' + link + '"><img src="' + img + '" alt="Picked by Hex on HyMeta" width="240" height="75"></a>';
+  openSheet("Picked by Hex", "<p>Did you make one of the mods in <strong>" + esc(p.name) + "</strong>? Hex picked it out of thousands. Put this badge on your mod's page and it will link back to this playpack.</p>" +
+    '<img class="badge-pic" src="picked-by-hex.png" alt="A badge that reads: Picked by Hex, HyMeta" width="240" height="75">' +
+    '<div class="field"><label for="badge-code">Badge code</label><textarea id="badge-code" rows="4" readonly>' + esc(code) + "</textarea>" +
+    '<span class="small muted">Paste it into your mod description. It is free, and yours to keep for as long as the mod is in a playpack.</span></div>' +
+    '<div class="row"><button type="button" class="btn btn-primary" data-action="badgecopy" data-copy="code">Copy the badge code</button><button type="button" class="btn btn-ghost" data-action="badgecopy" data-copy="link">Copy just the link</button></div>' +
+    '<p class="small muted" id="badge-link">' + esc(link) + "</p>");
+}
 function group(id, title, about, ids, p){
   return ids && ids.length ? fold(id, title + " (" + ids.length + ")", '<p class="small muted group-about">' + about + "</p>" + rows(ids, p), true) : "";
 }
@@ -737,7 +758,7 @@ function liveSearch(){
 }
 (function(){ var v = store.get("vote", null); if (POLL && v && v.poll === POLL.id && POLL.ideas.some(function(i){ return i.id === v.idea; })){ S.pollMine = v.idea; S.pollCounts = {}; S.pollCounts[v.idea] = 1; } })();
 /* ---------- accounts (only when the server has a database) ---------- */
-var KEPT = ["saved", "savedMods", "stamps", "upnext"];
+var KEPT = ["saved", "savedMods", "upnext"];
 function post(body, route){
   return fetch(route || "api/account", { method:"POST", credentials:"same-origin", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) })
     .then(function(r){ return r.json().then(function(d){ if (!r.ok) throw new Error(d.message || "Something went wrong. Try again."); return d; }); });
@@ -775,7 +796,10 @@ function loadCommunity(){
     if (!d.enabled) return;
     COMMUNITY.length = 0; d.packs.forEach(function(x){ COMMUNITY.push(toPack(x)); });
     S.mine = d.mine.map(toPack); S.blockedMembers = d.blocked || [];
-    S.queue = d.queue ? { waiting:d.queue.waiting.map(toPack), reported:d.queue.reported || [] } : null;
+    S.queue = d.queue ? { waiting:d.queue.waiting.map(toPack), reported:d.queue.reported || [], broken:d.queue.broken || [] } : null;
+    S.brokenMine = (d.broken || []).filter(isLiveId);
+    var unknown = (S.queue ? S.queue.broken.map(function(x){ return x.mod; }) : []).filter(function(i){ return isLiveId(i) && !MOD[i]; });
+    if (unknown.length) api("api/mods?ids=" + unknown.slice(0, 50).join(",")).then(function(m){ m.mods.forEach(adopt); render(false); }).catch(function(){});
     render(false);
   }).catch(function(){});
 }
@@ -789,7 +813,7 @@ function ensureMods(p){
 function remember(list, id, on){
   if (S.user) post({ op:"keep", list:list, id:id, on:on }).catch(function(){ toast("That did not reach your account. Check your connection."); });
 }
-function forgetLocal(){ S.pollMine = null; S.user = null; if (S.billing) S.tier = "free"; S.queue = null; S.blockedMembers = []; S.mine = []; COMMUNITY.length = 0; KEPT.forEach(function(k){ S[k] = []; store.set(k, []); }); }
+function forgetLocal(){ S.brokenMine = []; S.pollMine = null; S.user = null; if (S.billing) S.tier = "free"; S.queue = null; S.blockedMembers = []; S.mine = []; COMMUNITY.length = 0; KEPT.forEach(function(k){ S[k] = []; store.set(k, []); }); }
 function openAccount(mode){
   var up = mode === "signup";
   openSheet(up ? "Make an account" : "Sign in",
@@ -919,7 +943,7 @@ function modRow(m, p){
     (warn ? '<p class="small caution">' + ic("warn") + "<span>" + esc(warn) + "</span></p>" : "") +
     '<div class="meta small"><span class="chips">' + m.tags.map(function(t){ return '<span class="chip">' + esc(t) + "</span>"; }).join("") + "</span>" +
     "<span>" + ic("down") + '<span class="sr">Downloads: </span>' + m.dl + "</span><span>" + ic("clock") + '<span class="sr">Updated: </span>' + m.upd + "</span>" + (m.version ? '<span><span class="sr">Game version: </span>Hytale ' + esc(m.version) + "</span>" : "") + "</div>" +
-    '<a class="linkbtn" href="' + esc(m.url || "https://www.curseforge.com/hytale") + '" target="_blank" rel="noopener">View on CurseForge' + ic("ext") + '<span class="sr"> (opens in a new tab)</span></a></div>' +
+    '<a class="linkbtn" href="' + esc(m.url || "https://www.curseforge.com/hytale") + '" target="_blank" rel="noopener">View on CurseForge' + ic("ext") + '<span class="sr"> (opens in a new tab)</span></a>' + brokenBtn(m, p) + "</div>" +
     (S.tier === "member" ? '<button type="button" class="iconbtn" data-action="savemod" data-id="' + m.id + '" data-fk="sm-' + m.id + '" aria-pressed="' + saved + '" aria-label="' + (saved ? "Saved. Remove " : "Save ") + esc(m.name) + '">' + ic("heart") + "</button>" : "<span></span>") +
     "</div>";
 }
@@ -928,7 +952,7 @@ function vPack(id){
   if (!p || !shown(p)) return '<div class="page"><h1 tabindex="-1">That playpack is not on the shelf</h1><p>It may have been removed.</p><div><a class="btn btn-primary" href="#explore">Browse playpacks</a></div></div>';
   if (!isLocked(p)) loadPack(p);
   if (LIVE && p.by) ensureMods(p);
-  var locked = isLocked(p), n = modCount(p), saved = S.saved.indexOf(p.id) > -1, stamped = S.stamps.indexOf(p.id) > -1, mine = isMine(p);
+  var locked = isLocked(p), n = modCount(p), saved = S.saved.indexOf(p.id) > -1, mine = isMine(p);
   var line = locked ? say("locked") : (p.pitch ? p.pitch[S.mood] : say("community"));
   var acts = locked
     ? '<button type="button" class="btn btn-primary btn-big" data-action="join" data-fk="join">' + ic("lock") + "Unlock with membership</button>"
@@ -948,12 +972,9 @@ function vPack(id){
         group("g-core", "The essentials", "The main pick for each part of this playstyle.", p.core, p) +
         group("g-spice", "The spice", "Lesser-known mods that deserve a turn. These change every week.", p.spice, p) +
         group("g-extra", "Handy extras", "Everyday helpers that suit any playstyle.", p.extras, p) +
-        group("g-help", "Helpers these mods need", "Some mods cannot run without these. Hex found them so you do not have to.", p.helpers, p) + "</div></section>" +
-      '<section class="sec" aria-labelledby="h-stamp"><h2 id="h-stamp">Played it?</h2>' +
-      (stamped
-        ? '<div class="stamps"><div class="stamp' + (S.justStamped === p.id ? " new" : "") + '"><span class="ink">' + glyph(p.icon) + '</span><span class="small"><strong>Survived</strong></span></div></div>' + hex(say("stamped"))
-        : '<p class="muted">Collect a stamp for every playstyle you try.</p><div><button type="button" class="btn btn-ghost" data-action="stamp" data-id="' + p.id + '" data-fk="stamp">' + ic("star") + "Stamp my card</button></div>") +
-      "</section>";
+        group("g-help", "Helpers these mods need", "Some mods cannot run without these. Hex found them so you do not have to.", p.helpers, p) + "</div>" +
+        (LIVE && p.pitch && !p.by ? '<p class="small muted" id="badge-offer">Did you make one of these mods? <button type="button" class="linkbtn" data-action="badge" data-id="' + p.id + '">Get your Picked by Hex badge</button></p>' : "") + "</section>" +
+      "";
   var care = "";
   if (mine) care = '<section class="sec"><h2>Your playpack</h2>' + (p.status === "pending" ? '<div class="panel" id="review-note"><p><strong>Waiting for review.</strong> Only you can see this playpack until a person approves it. We review within 24 hours.</p>' + (p.server ? "" : '<button type="button" class="btn btn-ghost" data-action="approve" data-id="' + p.id + '" data-fk="approve">Approve it now (preview only)</button>') + "</div>"
     : p.status === "rejected" ? '<div class="panel" id="review-note"><p><strong>Not approved.</strong> ' + esc(p.reason || "It does not follow the community rules.") + " Only you can see it.</p></div>"
@@ -1084,17 +1105,12 @@ function vBuild(){
     '<p class="small muted">A person checks every playpack before other members see it. Leave out names, links and anything personal.</p></form></div>';
 }
 
-function rank(){
-  var n = S.stamps.length;
-  return n >= 6 ? "Legend of bad ideas" : n >= 3 ? "Certified menace" : n >= 1 ? "Trouble seeker" : "New sprout";
-}
 function vYou(){
-  var st = S.stamps.map(findPack).filter(Boolean);
   var blockList = serverMode() ? S.blockedMembers : S.blocked.map(function(b){ return { id:b, name:b }; });
   var blocked = blockList.length
     ? '<ul class="ticks">' + blockList.map(function(b){ return "<li>" + esc(b.name) + ' <button type="button" class="linkbtn" data-action="unblock" data-by="' + esc(b.id) + '">Unblock</button></li>'; }).join("") + "</ul>"
     : '<p class="muted">You have not blocked anyone.</p>';
-  var q = S.queue, ownerFold = !q ? "" : fold("f-queue", "Review queue (" + (q.waiting.length + q.reported.length) + ")",
+  var q = S.queue, ownerFold = !q ? "" : fold("f-queue", "Review queue (" + (q.waiting.length + q.reported.length + q.broken.length) + ")",
     '<p class="muted">Only you see this. Playpacks wait here until you approve them.</p>' +
     (q.waiting.length ? "<h3>Waiting for review</h3>" + q.waiting.map(function(p){
       return '<div class="qrow"><p><strong>' + esc(p.name) + "</strong> by " + esc(p.by) + ", " + p.core.length + ' mods<br><span class="muted">' + esc(p.blurb) + '</span></p><div class="row">' +
@@ -1103,23 +1119,25 @@ function vYou(){
     (q.reported.length ? "<h3>Reported by members</h3>" + q.reported.map(function(r){
       return '<div class="qrow"><p><strong>' + esc(r.name) + "</strong> by " + esc(r.by) + '<br><span class="muted">' + r.count + (r.count === 1 ? " report: " : " reports: ") + esc(r.reasons) + '</span></p><div class="row">' +
         '<a class="btn btn-ghost" href="#pack-' + esc(r.id) + '">Open</a><button type="button" class="btn btn-danger" data-action="review" data-ok="0" data-id="' + esc(r.id) + '">Remove it</button>' +
-        '<button type="button" class="btn btn-ghost" data-action="dismiss" data-id="' + esc(r.id) + '">Keep it</button></div></div>'; }).join("") : ""), true);
+        '<button type="button" class="btn btn-ghost" data-action="dismiss" data-id="' + esc(r.id) + '">Keep it</button></div></div>'; }).join("") : "") +
+    (q.broken.length ? '<h3 id="h-broken">Mods players say did not work</h3><p class="muted small">Three reports bench a mod: Hex leaves it out and picks the next best. Reports fade after 30 days.</p>' + q.broken.map(function(r){
+      var m = MOD[r.mod];
+      return '<div class="qrow brow"><p><strong>' + esc(m ? m.name : "A mod") + "</strong>" + (r.benched ? ' <span class="chip chip-exp">Benched</span>' : "") + '<br><span class="muted">' + r.count + " of " + r.needed + " reports, in " + esc(r.packs) + ". " + esc(r.reasons) + ".</span></p><div class=\"row\">" +
+        (m && m.url ? '<a class="btn btn-ghost" href="' + esc(m.url) + '" target="_blank" rel="noopener">Look at it' + ic("ext") + '<span class="sr"> (opens in a new tab)</span></a>' : "") +
+        '<button type="button" class="btn btn-ghost" data-action="brokenclear" data-id="' + esc(r.mod) + '">Clear the reports</button></div></div>'; }).join("") : ""), true);
   return '<div class="page"><h1 tabindex="-1">You</h1>' +
-    '<section class="sec" aria-labelledby="h-card"><h2 id="h-card">Stamp card</h2><p>Your rank: <strong>' + rank() + "</strong>. " + st.length + " of " + PACKS.length + " playstyles survived.</p>" +
-    (st.length ? '<div class="stamps">' + st.map(function(p){ return '<div class="stamp"><span class="ink">' + glyph(p.icon) + '</span><span class="small">' + esc(p.name) + "</span></div>"; }).join("") + "</div>"
-               : '<div class="panel"><p>No stamps yet. Play a playpack, then tap Stamp my card on its page.</p><a class="btn btn-ghost" href="#home">Start with this week</a></div>') + "</section>" +
     '<section class="sec" aria-labelledby="h-set"><h2 id="h-set">Settings</h2><div class="card pad" style="padding-block:0">' +
     ownerFold + fold("f-mood", "Hex's mood", '<p class="muted">How much mischief you want from your host. Always clean, never mean.</p>' +
       '<div class="moods" role="radiogroup" aria-label="Hex\'s mood">' + [["gentle","Gentle"],["cheeky","Cheeky"],["unhinged","Unhinged"]].map(function(o){
         return '<label><input type="radio" name="mood" value="' + o[0] + '"' + (S.mood === o[0] ? " checked" : "") + ">" + o[1] + "</label>"; }).join("") + '</div><div id="mood-sample">' + hex(say("greet")) + "</div>", true) +
     fold("f-look", "Appearance", '<div class="field" style="max-width:320px"><label for="theme">Light or dark</label><select id="theme">' + options([["device","Match my device"],["light","Light"],["dark","Dark"]], S.theme) + "</select></div>", false) +
     fold("f-acct", "Account", (S.user
-      ? '<p id="acct-who">Signed in as <strong>' + esc(S.user.name) + "</strong> (" + esc(S.user.email) + ').</p><p class="muted">Your saved playpacks, saved mods and stamps follow you to any device.</p>' +
+      ? '<p id="acct-who">Signed in as <strong>' + esc(S.user.name) + "</strong> (" + esc(S.user.email) + ').</p><p class="muted">Your saved playpacks and saved mods follow you to any device.</p>' +
         (S.news ? '<label class="check"><input type="checkbox" id="news-on"' + (S.user.news ? " checked" : "") + '>Email me the new playpacks each week</label>' : "") +
         (S.news && S.user.owner ? '<div><button type="button" class="btn btn-ghost" data-action="testnews">Send me a test of the weekly email</button></div>' : "") +
         '<div class="row"><button type="button" class="btn btn-ghost" data-action="signout">Sign out</button><button type="button" class="btn btn-danger" data-action="delacct">Delete my account</button></div>'
       : S.accounts
-      ? '<p>You are not signed in. Make an account to keep your saved playpacks, saved mods and stamps on every device.</p>' +
+      ? '<p>You are not signed in. Make an account to keep your saved playpacks and saved mods on every device.</p>' +
         '<div class="row"><button type="button" class="btn btn-primary" data-action="signup">Make an account</button><button type="button" class="btn btn-ghost" data-action="signin">Sign in</button></div>'
       : '<p>You are not signed in. This preview keeps your choices on this device only.</p>' +
         '<div class="row"><button type="button" class="btn btn-ghost" data-action="signin">Sign in</button><button type="button" class="btn btn-danger" data-action="delacct">Delete my account</button></div>') +
@@ -1132,7 +1150,7 @@ function vYou(){
     fold("f-legal", "Help and legal", '<div style="display:flex;flex-direction:column;align-items:flex-start">' +
       [["support","Help and contact"],["privacy","Privacy policy"],["terms","Terms of use"],["rules","Community rules"],["credits","Copyright and credits"]].map(function(d){
         return '<button type="button" class="linkbtn" data-action="doc" data-doc="' + d[0] + '">' + d[1] + "</button>"; }).join("") + "</div>", false) +
-    (S.user ? "" : fold("f-reset", "Start over", '<p class="muted">Clears your stamps, saved items and anything you built in this preview.</p>' +
+    (S.user ? "" : fold("f-reset", "Start over", '<p class="muted">Clears your saved items and anything you built in this preview.</p>' +
       '<div><button type="button" class="btn btn-danger" data-action="reset">Clear my preview data</button></div>', false)) +
     "</div></section></div>";
 }
@@ -1155,7 +1173,6 @@ function render(focusHeading){
   $("#main").classList.toggle("has-actions", !!$(".actions", v));
   if (focusHeading){ window.scrollTo(0, 0); var h = $("h1", v); if (h) h.focus({ preventScroll:true }); }
   else if (keep){ var el = $('[data-fk="' + keep + '"]', v) || $("h1", v); if (el) el.focus({ preventScroll:true }); }
-  S.justStamped = null;
 }
 function onRoute(){
   var next = routeName();
@@ -1200,7 +1217,7 @@ function installBody(p){
     : '<div id="inst-done" class="sec"><p><strong>All ' + ids.length + " mods are in.</strong> One last step, because Hytale keeps mods switched off until you say so:</p>" +
       '<ol class="steps"><li>Open Hytale and go to <strong>Worlds</strong>.</li><li><strong>Right-click</strong> your world and choose <strong>Mods</strong>. For a new world, use the settings cog while creating it.</li><li>Tick the mods to switch these mods on, then choose <strong>Save World Settings</strong>.</li></ol>' +
       '<p class="small muted">Hytale has no single list of installed mods. They only show inside each world\'s Mods screen.</p>' + hex(say("installed")) +
-      (S.stamps.indexOf(p.id) < 0 ? '<div><button type="button" class="btn btn-ghost" data-action="stampdone" data-id="' + p.id + '">' + ic("star") + "Played it? Stamp my card</button></div>" : '<p class="small"><strong>Stamp collected.</strong></p>') + "</div>";
+      "</div>";
   return top + '<ul class="ticks inst" id="inst-list">' + ids.map(function(i){
       var m = MOD[i], on = done.indexOf(i) > -1;
       return '<li class="' + (on ? "done" : "") + '"><label class="check"><input type="checkbox" data-inst="' + p.id + '" value="' + i + '"' + (on ? " checked" : "") + '><span><span class="sr">Installed: </span>' + esc(m.name) + "</span></label>" +
@@ -1288,7 +1305,7 @@ function openGate(){
 }
 var DOCS = {
   support:["Help and contact", "<p>Stuck, or spotted something wrong? Write to us and a real person will answer.</p><p><strong>Email:</strong> to be added before release.</p><p>To report a shared playpack, open it and tap Report this playpack. We review every report within 24 hours.</p>"],
-  privacy:["Privacy policy", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What we keep</h3><p>If you make an account we keep your sign-in email, the playpacks and mods you save, your stamps and anything you choose to share. Payments are handled by Stripe. We never see your card details.</p><h3>Email</h3><p>We email you only to reset a password you asked to reset, and, if you ask for it, once a week about new playpacks. Every weekly email has a link that stops them. A sending service delivers these emails for us and is given your email address for that purpose only.</p><h3>What we never do</h3><p>We do not sell or share your data. We do not show ads. We do not track you across other apps or websites.</p><h3>Children</h3><p>HyMeta is kept clean so it is safe for younger players to browse. Accounts and sharing are for ages 13 and up. We do not knowingly collect personal information from children under 13, and we delete it if we find any.</p><h3>Your choices</h3><p>You can delete your account, and everything in it, at any time from You, Account, Delete my account. Deleted data is removed within 30 days.</p><h3>Contact</h3><p>Lumina Art House, LLC. Contact email to be added before release.</p>"],
+  privacy:["Privacy policy", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What we keep</h3><p>If you make an account we keep your sign-in email, the playpacks and mods you save, your vote, any mod you report as not working, and anything you choose to share. Payments are handled by Stripe. We never see your card details.</p><h3>Email</h3><p>We email you only to reset a password you asked to reset, and, if you ask for it, once a week about new playpacks. Every weekly email has a link that stops them. A sending service delivers these emails for us and is given your email address for that purpose only.</p><h3>What we never do</h3><p>We do not sell or share your data. We do not show ads. We do not track you across other apps or websites.</p><h3>Children</h3><p>HyMeta is kept clean so it is safe for younger players to browse. Accounts and sharing are for ages 13 and up. We do not knowingly collect personal information from children under 13, and we delete it if we find any.</p><h3>Your choices</h3><p>You can delete your account, and everything in it, at any time from You, Account, Delete my account. Deleted data is removed within 30 days.</p><h3>Contact</h3><p>Lumina Art House, LLC. Contact email to be added before release.</p>"],
   terms:["Terms of use", "<p class=\"small muted\">Draft for review. Last updated November 2026.</p><h3>What HyMeta is</h3><p>HyMeta is an unofficial guide to Hytale mods. It suggests sets of mods and links to their CurseForge pages. It is not made, endorsed or supported by Hypixel Studios, CurseForge or Overwolf.</p><h3>Mods belong to their creators</h3><p>Every mod, name and logo shown belongs to the person who made it. Mods are downloaded from CurseForge under its own terms. We cannot promise that any mod works, or that mods work together.</p><h3>Membership</h3><p>Membership is an auto-renewing subscription at $3.99 a month or $24.99 a year, paid through Stripe. It renews until you cancel, which you can do at any time under You.</p><h3>Accounts</h3><p>You must be 13 or older to make an account or share a playpack.</p><h3>Sharing</h3><p>Anything you share must follow the community rules. A person reviews every playpack before other members see it. We may remove content or close accounts that break the rules.</p><h3>Governing law</h3><p>These terms are governed by the laws of the State of Florida, United States.</p><h3>Owner</h3><p>HyMeta is owned and run by Lumina Art House, LLC. &copy; 2026 Lumina Art House, LLC. All rights reserved.</p>"],
   rules:["Community rules", "<p>Shared playpacks are seen by other players, including children. Keep it friendly.</p><ul class=\"perks\"><li>Be kind. No insults, bullying or hate.</li><li>Keep it clean. No swearing or grown-up content.</li><li>Stay private. No real names, links, emails, phone numbers or addresses.</li><li>Be honest. No scams, spam or pretending to be someone else.</li></ul><p>A person checks every playpack before other members can see it. Break the rules and your playpack is removed. Do it again and your account is closed.</p><p>See something wrong? Open the playpack and tap Report this playpack, or block the member who shared it. We review every report within 24 hours.</p>"],
   credits:["Copyright and credits", "<p>&copy; 2026 Lumina Art House, LLC. All rights reserved.</p><p>HyMeta is an unofficial fan app. Hytale is a trademark of Hypixel Studios. CurseForge is a trademark of Overwolf. HyMeta is not affiliated with or endorsed by either company.</p><p>Every mod belongs to its creator. Mod names, logos and details come from CurseForge.</p><p>In this preview, all mods, authors, download counts and artwork are placeholders.</p>"]
@@ -1303,7 +1320,7 @@ function wrapText(ctx, text, width){
   if (line) lines.push(line); return lines;
 }
 // Draws the card: the playpack's picture, its name, Hex and her line, and where to find it.
-function drawCard(p, stamp){
+function drawCard(p){
   var W = 1080, c = document.createElement("canvas"), x = c.getContext("2d"), display = '"Grandstander","Trebuchet MS",sans-serif', body = '"Atkinson Hyperlegible",Verdana,sans-serif';
   c.width = W; c.height = W;
   var fonts = document.fonts && document.fonts.load ? Promise.all([document.fonts.load("900 72px Grandstander"), document.fonts.load("500 40px Grandstander"), document.fonts.load('700 30px "Atkinson Hyperlegible"')]).catch(function(){}) : Promise.resolve();
@@ -1333,12 +1350,6 @@ function drawCard(p, stamp){
     // where to find it
     x.fillStyle = "#f2b94b"; x.font = "900 40px " + display; x.fillText("HyMeta", 60, W - 50);
     x.fillStyle = "#b9c1de"; x.font = "400 28px " + body; var site = PUBLIC_SITE.replace("https://", "") + "  \u00b7  mod playpacks for Hytale"; x.fillText(site, W - 60 - x.measureText(site).width, W - 52);
-    // the stamp, for players who finished it
-    if (stamp){
-      x.save(); x.translate(W - 210, 190); x.rotate(-0.22); x.strokeStyle = "#ff5aa5"; x.fillStyle = "rgba(14,18,35,.78)"; x.lineWidth = 10;
-      x.beginPath(); x.roundRect(-170, -70, 340, 140, 18); x.fill(); x.stroke(); x.lineWidth = 3; x.beginPath(); x.roundRect(-154, -54, 308, 108, 10); x.stroke();
-      x.fillStyle = "#ff5aa5"; x.font = "900 64px " + display; x.textAlign = "center"; x.fillText("SURVIVED", 0, 22); x.restore();
-    }
     return c;
   });
 }
@@ -1346,12 +1357,11 @@ var shareNow = null;
 function canShareFiles(file){ try { return !!(navigator.canShare && navigator.share && navigator.canShare({ files:[file] })); } catch (e) { return false; } }
 function openShare(id){
   var p = findPack(id); if (!p || !p.pitch || p.by) return;
-  var stamped = S.stamps.indexOf(id) > -1, link = shareLink(p);
-  shareNow = { p:p, stamp:stamped, link:link, file:null };
+  var link = shareLink(p);
+  shareNow = { p:p, link:link, file:null };
   openSheet("Share " + esc(p.name),
     '<p class="muted">A picture to post or send, and a link that opens this playpack.</p>' +
     '<img class="share-card" id="share-card" alt="Share card for ' + esc(p.name) + '. It shows the picture, the name and what Hex says." width="1080" height="1080">' +
-    (stamped ? '<label class="check"><input type="checkbox" id="share-stamp" checked>Show my Survived stamp</label>' : "") +
     '<div class="row"><button type="button" class="btn btn-primary" data-action="sharesend" id="share-send" hidden>' + ic("share") + "Share</button>" +
     '<button type="button" class="btn btn-ghost" data-action="sharesave" id="share-save" disabled>Save the picture</button>' +
     '<button type="button" class="btn btn-ghost" data-action="sharecopy">Copy the link</button></div>' +
@@ -1360,7 +1370,7 @@ function openShare(id){
 }
 function paintShare(){
   var st = shareNow; if (!st) return;
-  drawCard(st.p, st.stamp).then(function(c){
+  drawCard(st.p).then(function(c){
     if (shareNow !== st || !$("#share-card")) return;
     $("#share-card").src = c.toDataURL("image/jpeg", 0.9); $("#share-save").disabled = false;
     c.toBlob(function(blob){ if (!blob || shareNow !== st) return;
@@ -1381,7 +1391,7 @@ function openReport(id){
     '</div><p class="small muted">We review every report within 24 hours. The playpack is hidden for you right away.</p><div class="row"><button type="submit" class="btn btn-primary">Send report</button></div></form>');
 }
 function openSignin(){
-  openSheet("Sign in", "<p>An account keeps your saved playpacks, mods and stamps on every device.</p>" +
+  openSheet("Sign in", "<p>An account keeps your saved playpacks and mods on every device.</p>" +
     '<div class="row"><button type="button" class="btn btn-ghost" data-action="soon">Sign in with Apple</button><button type="button" class="btn btn-ghost" data-action="soon">Sign in with email</button></div>' +
     '<p class="small muted">Accounts are for ages 13 and up. You can browse without one. Preview only. Sign-in is not connected yet.</p>');
 }
@@ -1399,7 +1409,6 @@ document.addEventListener("click", function(e){
   else if (a === "playmode") openPlay(id, b.getAttribute("data-mode"));
   else if (a === "install") runInstall(id);
   else if (a === "instnext"){ p = findPack(id); markInstalled(p, b.getAttribute("data-mod"), true); setTimeout(function(){ if (sheet.open){ openSheet("Play " + esc(p.name), playBody(p, "here")); var nx = $("#inst-next") || $("#sheet-title"); nx.focus(); } }, 60); }
-  else if (a === "stampdone"){ p = findPack(id); if (S.stamps.indexOf(id) < 0){ S.stamps.push(id); remember("stamps", id, true); store.set("stamps", S.stamps); } render(false); openSheet("Play " + esc(p.name), playBody(p, "here")); toast("Stamp collected"); }
   else if (a === "quip"){ var ql = QUIPS[S.mood]; quipAt = (quipAt + 1) % ql.length; toast("Hex: " + ql[quipAt]); }
   else if (a === "code") openCode();
   else if (a === "unqueue"){ S.upnext = S.upnext.filter(function(x){ return x !== id; }); store.set("upnext", S.upnext); remember("upnext", id, false); render(false); toast("Removed from waiting"); }
@@ -1421,6 +1430,15 @@ document.addEventListener("click", function(e){
   else if (a === "signin"){ if (S.accounts) openAccount("login"); else openSignin(); }
   else if (a === "signup") openAccount("signup");
   else if (a === "forgot") openForgot();
+  else if (a === "broken"){
+    if (!S.user){ openAccount("signup"); toast("Make a free account to report a mod."); }
+    else if (S.brokenMine.indexOf(id) > -1) cpost({ op:"broken", mod:id, pack:b.getAttribute("data-pack"), on:false }).then(function(d){ S.brokenMine = d.broken || []; render(false); toast("Report taken back"); }, function(e){ toast(e.message); });
+    else openBroken(id, b.getAttribute("data-pack"));
+  }
+  else if (a === "brokenwhy") cpost({ op:"broken", mod:id, pack:b.getAttribute("data-pack"), why:+b.getAttribute("data-why"), on:true }).then(function(d){ S.brokenMine = d.broken || []; closeSheet(); render(false); toast("Thank you. Hex will have words with it."); }, function(e){ toast(e.message); });
+  else if (a === "brokenclear") cpost({ op:"brokenclear", mod:id }).then(function(){ toast("Reports cleared. The mod is back in."); return loadCommunity(); }, function(e){ toast(e.message); });
+  else if (a === "badge") openBadge(id);
+  else if (a === "badgecopy"){ var bt = b.getAttribute("data-copy") === "link" ? $("#badge-link").textContent : $("#badge-code").value; (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(bt) : Promise.reject()).then(function(){ toast(b.getAttribute("data-copy") === "link" ? "Link copied" : "Badge code copied"); }, function(){ $("#badge-code").focus(); $("#badge-code").select(); toast("Could not copy. Select the code and copy it by hand."); }); }
   else if (a === "vote"){
     if (LIVE && S.accounts && !S.user){ openAccount("signup"); toast("Make a free account to vote."); }
     else if (LIVE && S.accounts) post({ op:"vote", idea:id }).then(function(d){ S.pollMine = id; S.pollCounts = d.counts || {}; render(false); toast("Vote counted"); }, function(e){ toast(e.message); });
@@ -1445,7 +1463,6 @@ document.addEventListener("click", function(e){
   else if (a === "dare"){ S.filter = b.getAttribute("data-dare"); S.fam = "all"; S.q = ""; location.hash = "explore"; }
   else if (a === "family"){ S.fam = b.getAttribute("data-family"); S.filter = "all"; S.q = ""; location.hash = "explore"; }
   else if (a === "approve"){ p = findPack(id); if (p){ p.status = "approved"; store.set("mine", S.mine); render(false); toast("Approved. Other members can see it now."); } }
-  else if (a === "stamp"){ if (S.stamps.indexOf(id) < 0) { S.stamps.push(id); remember("stamps", id, true); } store.set("stamps", S.stamps); S.justStamped = id; render(false); toast("Stamp collected"); }
   else if (a === "clear"){ S.q = ""; S.filter = "all"; S.fam = "all"; render(false); var q = $("#q"); if (q) q.focus(); }
   else if (a === "bqclear"){ S.bq = ""; var bq = $("#bq"); bq.value = ""; $("#bq-clear").hidden = true; if (LIVE) liveSearch(); $("#b-list").innerHTML = pickList(); bq.focus(); }
   else if (a === "retry"){ p = findPack(id); loadPack(p); render(false); }
@@ -1471,7 +1488,7 @@ document.addEventListener("click", function(e){
   else if (a === "delacct"){ if (!twoTap(b, "Tap again to delete everything")) return; b.removeAttribute("data-armed"); b.innerHTML = b.getAttribute("data-label"); toast("In the real app this deletes your account and all its data"); }
   else if (a === "reset"){
     if (!twoTap(b, "Tap again to clear everything")) return;
-    ["saved","savedMods","stamps","mine","hidden","blocked"].forEach(function(k){ S[k] = []; store.set(k, []); }); render(false); toast("Preview data cleared");
+    ["saved","savedMods","mine","hidden","blocked"].forEach(function(k){ S[k] = []; store.set(k, []); }); render(false); toast("Preview data cleared");
   }
   else if (a === "del"){
     if (!twoTap(b, "Tap again to delete")) return;
@@ -1496,7 +1513,6 @@ document.addEventListener("change", function(e){
   else if (t.getAttribute("data-inst")){ var ip = findPack(t.getAttribute("data-inst")); markInstalled(ip, t.value, t.checked); openSheet("Play " + esc(ip.name), playBody(ip, "here")); var back = sheet.querySelector('input[value="' + t.value + '"]'); if (back) back.focus(); }
   else if (t.id === "sort"){ S.sort = t.value; store.set("sort", S.sort); $("#results").innerHTML = resultsHtml(); }
   else if (t.id === "news-on"){ var want = t.checked; post({ op:"news", on:want }).then(function(){ S.user.news = want; toast(want ? "Weekly email is on" : "Weekly email is off"); }, function(){ t.checked = !want; toast("That did not save. Check your connection."); }); }
-  else if (t.id === "share-stamp"){ if (shareNow){ shareNow.stamp = t.checked; shareNow.file = null; paintShare(); } }
   else if (t.id === "theme"){ S.theme = t.value; store.set("theme", S.theme); applyTheme(); }
   else if (t.name === "mood"){ S.mood = t.value; store.set("mood", S.mood); $("#mood-sample").innerHTML = hex(say("greet")); }
   else if (t.name === "mods"){
