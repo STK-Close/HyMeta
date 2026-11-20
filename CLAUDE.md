@@ -14,6 +14,16 @@ Asked for by Ligia after a button bar and a filter row shipped broken on her pho
 - Adding a button, a filter or a label to an existing row? Check that row at 390px and 320px.
 - Say plainly what could not be tested (a real phone, the live signed-in screens).
 
+## Compact, simple layouts (Ligia's rule for all her apps, November 2026)
+"Use professional layout skills to rework these so it's more compact and simplistic while retaining or
+improving functionality." She said it about the list of mods in a playpack, which ran very long on a phone.
+- A list of several things is a list of short rows, not a stack of tall cards. One row shows the name and the
+  one fact worth knowing. Everything else opens on a tap.
+- Anything that changes what a person would do (new, older, reported, locked) stays visible on the closed row, in words.
+- Count the screens: eight items should fit in about one phone screen.
+- Hex says one thing at a time. A second thing waits behind a tap on her.
+- Nothing is removed to save space. It is folded away, and still reachable by tap and by keyboard.
+
 ## Tests must prove themselves
 Whenever a check is added or changed, show it fails on a version with the bug and passes on the fixed one.
 

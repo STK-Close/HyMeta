@@ -120,7 +120,8 @@ input[type="text"],input[type="search"],input[type="password"],select{font:400 1
 .hex .say{background:var(--bg2);border:1.5px solid var(--line);border-radius:4px 14px 14px 14px;padding:8px 12px}
 .hex .who{font-size:.8125rem;font-weight:700;color:var(--muted)}
 .hex .line{font:500 1.0625rem/1.4 var(--display)}
-.hex .say .more{margin-top:6px}
+.hex-more{position:relative}
+.hex-more::after{content:"\2026";position:absolute;left:30px;top:30px;pointer-events:none;width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--gold-ink);font:900 .875rem/20px var(--display);text-align:center;border:1.5px solid var(--bg2)}
 
 /* key art banner */
 .hero{overflow:hidden}
@@ -204,11 +205,27 @@ details.plain>summary{min-height:44px;display:flex;align-items:center;cursor:poi
 .inst .linkbtn{padding:0;font-size:.8125rem}
 .inst .check{font-weight:400;flex:1;min-width:0}
 .qrow{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--line-soft)}
-.mod{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;padding:14px 0;border-top:1px solid var(--line-soft)}
+.mod{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;align-items:start;border-top:1px solid var(--line-soft)}
+.mod .iconbtn{margin-top:8px}
+.mod-d>summary{display:grid;grid-template-columns:40px minmax(0,1fr) 20px;gap:10px;align-items:center;min-height:60px;padding:8px 0;cursor:pointer;list-style:none}
+.mod-d>summary::-webkit-details-marker{display:none}
+.mod-d>summary>svg.ic{width:20px;height:20px;color:var(--muted);transition:transform .15s}
+.mod-d[open]>summary>svg.ic{transform:rotate(180deg)}
+.mod .tile{width:40px;height:40px;padding:6px;border-radius:8px}
+.mod-top{display:flex;flex-direction:column;gap:1px;min-width:0}
+.mod-sub{display:flex;align-items:center;gap:6px;min-width:0}
+.mod-d:not([open]) h4,.mod-d:not([open]) .mod-sub>.muted{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;min-width:0}
+.mflag{display:inline-flex;align-items:center;gap:3px;flex:none;font-weight:700;color:var(--fg)}
+.mflag svg.ic{width:14px;height:14px}
+.mflag-old{color:var(--pink-text)}
+.mod-more{display:flex;flex-direction:column;gap:6px;padding:0 0 12px}
+.mod:has(.iconbtn) .mod-more{margin-right:-52px}
+.mod-links{display:flex;flex-wrap:wrap;gap:0 20px}
+@media (min-width:640px){.mod-more{padding-left:50px}}
 .tile{width:56px;height:56px;border-radius:10px;padding:9px;display:block;flex:none}
 .tile svg{width:100%;height:100%;display:block}
-.mod h4{font:700 1.0625rem/1.25 var(--display);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.mod .meta{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:6px}
+.mod h4{font:700 1rem/1.25 var(--display)}
+.mod .meta{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
 .mod .meta>span{display:inline-flex;align-items:center;gap:4px}
 .mod .meta svg.ic{width:16px;height:16px}
 .newmod{font-weight:400;display:flex;gap:6px;align-items:flex-start;margin-top:2px}
@@ -218,7 +235,7 @@ details.plain>summary{min-height:44px;display:flex;align-items:center;cursor:poi
 .vote[aria-pressed="true"]{border-width:3px;padding:10.5px 12.5px;border-color:var(--fg)}
 .vote .tally{display:flex;align-items:center;gap:6px;font-weight:700}
 @media (min-width:720px){.votes{grid-template-columns:repeat(3,minmax(0,1fr))}}
-.brokenbtn{gap:6px;display:flex}
+.brokenbtn{gap:6px}
 .badge-pic{width:240px;max-width:100%;height:auto;display:block}
 textarea{font:400 .875rem/1.4 ui-monospace,Menlo,Consolas,monospace;width:100%;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);resize:vertical}
 .caution{color:var(--pink-text);font-weight:700;display:flex;gap:6px;align-items:flex-start;margin-top:2px}
@@ -337,7 +354,7 @@ var PATHS = {
   home:"M3 11l9-7 9 7v9h-6v-6H9v6H3z", explore:"M12 3a9 9 0 100 18 9 9 0 000-18zm3.5 5.5l-2 5-5 2 2-5z",
   heart:"M12 20s-7-4.6-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.4-7 10-7 10z", build:"M4 4h16v16H4zM12 8v8M8 12h8",
   you:"M12 12a4 4 0 100-8 4 4 0 000 8zm-8 9a8 8 0 0116 0", lock:"M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 017 0v3",
-  search:"M11 4a7 7 0 100 14 7 7 0 000-14zm5 12l4.5 4.5", expand:"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5", share:"M12 15V3M8 7l4-4 4 4M5 12v8h14v-8", x:"M6 6l12 12M18 6L6 18", check:"M5 12.5l4.5 4.5L19 7.5",
+  search:"M11 4a7 7 0 100 14 7 7 0 000-14zm5 12l4.5 4.5", expand:"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5", chev:"M6 9l6 6 6-6", share:"M12 15V3M8 7l4-4 4 4M5 12v8h14v-8", x:"M6 6l12 12M18 6L6 18", check:"M5 12.5l4.5 4.5L19 7.5",
   warn:"M12 3l10 18H2zM12 10v5M12 17.5v.5", ext:"M14 4h6v6M20 4l-9 9M10 6H5v13h13v-5", down:"M12 4v11M7 11l5 5 5-5M5 20h14",
   clock:"M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2", flame:"M12 3c1 4 5 5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z",
   send:"M4 12l16-8-6 16-3-6z", back:"M15 5l-7 7 7 7", star:"M12 3l2.7 5.8 6.3.8-4.6 4.3 1.2 6.2L12 17l-5.6 3.1 1.2-6.2L3 9.6l6.3-.8z",
@@ -850,10 +867,10 @@ function goLive(){
   render(false);
 }
 function say(key){ return LINES[key][S.mood]; }
-// `more` is a second thing she has to say: the caution that used to sit in a yellow box of its own.
+// Hex says one thing at a time. When she has a second thing to say (`more`, the playpack's caution),
+// tapping her swaps to it, and a small mark on her picture shows there is more.
 function hex(line, more){
-  return '<div class="hex"><button type="button" class="face" data-action="quip" aria-label="Hex. Tap her for a quip">' + hexFace() + '</button><div class="say"><p class="who">Hex says</p><p class="line">' + esc(line) + "</p>" +
-    (more ? '<p class="line more">' + esc(more) + "</p>" : "") + "</div></div>";
+  return '<div class="hex' + (more ? " hex-more" : "") + '"' + (more ? ' data-alt="' + esc(more) + '"' : "") + '><button type="button" class="face" data-action="quip" aria-label="' + (more ? "Hex. Tap her to hear the other thing she has to say" : "Hex. Tap her for a quip") + '">' + hexFace() + '</button><div class="say" aria-live="polite"><p class="who">Hex says</p><p class="line">' + esc(line) + "</p></div></div>";
 }
 function flames(n){ var f = ""; for (var i = 0; i < n; i++) f += ic("flame"); return f; }
 function dareChip(p){ return '<span class="chip">' + flames(p.dare) + '<span><span class="sr">Dare level: </span>' + DARE[p.dare] + "</span></span>"; }
@@ -934,17 +951,23 @@ function vHome(){
     "</div>";
 }
 
+// One mod, as a compact row: logo, name and the one thing worth knowing. Tap it for the rest.
+// Flags that matter (a new arrival, an older mod) show on the closed row, in words.
 function modRow(m, p){
-  var saved = S.savedMods.indexOf(m.id) > -1, why = p && p.why && p.why[m.id], warn = p && p.warn && p.warn[m.id];
-  return '<div class="mod">' + tile(m) + "<div><h4>" + esc(m.name) + (m.live ? "" : '<span class="tag-sample">Sample</span>') + "</h4>" +
-    '<p class="small muted">By ' + (m.live ? esc(m.by || "an unnamed author") : "sample author") + "</p><p>" + esc(m.blurb) + "</p>" +
-    (why ? '<p class="small why"><strong>Picked for:</strong> ' + esc(why) + "</p>" : "") +
-    (p && p.fresh && p.fresh[m.id] ? '<p class="small newmod">' + ic("star") + "<span><strong>New arrival.</strong> Published in the last two months.</span></p>" : "") +
-    (warn ? '<p class="small caution">' + ic("warn") + "<span>" + esc(warn) + "</span></p>" : "") +
-    '<div class="meta small"><span class="chips">' + m.tags.map(function(t){ return '<span class="chip">' + esc(t) + "</span>"; }).join("") + "</span>" +
-    "<span>" + ic("down") + '<span class="sr">Downloads: </span>' + m.dl + "</span><span>" + ic("clock") + '<span class="sr">Updated: </span>' + m.upd + "</span>" + (m.version ? '<span><span class="sr">Game version: </span>Hytale ' + esc(m.version) + "</span>" : "") + "</div>" +
-    '<a class="linkbtn" href="' + esc(m.url || "https://www.curseforge.com/hytale") + '" target="_blank" rel="noopener">View on CurseForge' + ic("ext") + '<span class="sr"> (opens in a new tab)</span></a>' + brokenBtn(m, p) + "</div>" +
-    (S.tier === "member" ? '<button type="button" class="iconbtn" data-action="savemod" data-id="' + m.id + '" data-fk="sm-' + m.id + '" aria-pressed="' + saved + '" aria-label="' + (saved ? "Saved. Remove " : "Save ") + esc(m.name) + '">' + ic("heart") + "</button>" : "<span></span>") +
+  var saved = S.savedMods.indexOf(m.id) > -1, why = p && p.why && p.why[m.id], warn = p && p.warn && p.warn[m.id], fresh = !!(p && p.fresh && p.fresh[m.id]);
+  var did = "md-" + (p ? p.id : "saved") + "-" + m.id, author = m.live ? (m.by || "an unnamed author") : "sample author";
+  var flags = (fresh ? '<span class="mflag">' + ic("star") + "New</span>" : "") + (warn ? '<span class="mflag mflag-old">' + ic("warn") + "Older</span>" : "") + (m.live ? "" : '<span class="tag-sample">Sample</span>') +
+    (S.brokenMine.indexOf(m.id) > -1 ? '<span class="mflag">' + ic("flag") + "Reported</span>" : "");
+  return '<div class="mod"><details class="mod-d" id="' + esc(did) + '"' + (S.open[did] ? " open" : "") + "><summary>" + tile(m) +
+      '<span class="mod-top"><h4>' + esc(m.name) + '</h4><span class="mod-sub small">' + flags + '<span class="muted">' + (why ? '<span class="sr">Picked for: </span>' : "") + esc(why || "By " + author) + "</span></span></span>" + ic("chev") + "</summary>" +
+    '<div class="mod-more"><p>' + esc(m.blurb) + "</p>" +
+      (why ? '<p class="small muted">By ' + esc(author) + "</p>" : "") +
+      (fresh ? '<p class="small newmod">' + ic("star") + "<span><strong>New arrival.</strong> Published in the last two months.</span></p>" : "") +
+      (warn ? '<p class="small caution">' + ic("warn") + "<span>" + esc(warn) + "</span></p>" : "") +
+      '<div class="meta small">' + m.tags.slice(0, 1).map(function(t){ return '<span class="chip">' + esc(t) + "</span>"; }).join("") +
+      "<span>" + ic("down") + '<span class="sr">Downloads: </span>' + m.dl + "</span><span>" + ic("clock") + '<span class="sr">Updated: </span>' + m.upd + "</span>" + (m.version ? '<span><span class="sr">Game version: </span>Hytale ' + esc(m.version) + "</span>" : "") + "</div>" +
+      '<div class="mod-links"><a class="linkbtn" href="' + esc(m.url || "https://www.curseforge.com/hytale") + '" target="_blank" rel="noopener">View on CurseForge' + ic("ext") + '<span class="sr"> (opens in a new tab)</span></a>' + brokenBtn(m, p) + "</div></div></details>" +
+    (S.tier === "member" ? '<button type="button" class="iconbtn" data-action="savemod" data-id="' + m.id + '" data-fk="sm-' + m.id + '" aria-pressed="' + saved + '" aria-label="' + (saved ? "Saved. Remove " : "Save ") + esc(m.name) + '">' + ic("heart") + "</button>" : "") +
     "</div>";
 }
 function vPack(id){
@@ -1409,6 +1432,7 @@ document.addEventListener("click", function(e){
   else if (a === "playmode") openPlay(id, b.getAttribute("data-mode"));
   else if (a === "install") runInstall(id);
   else if (a === "instnext"){ p = findPack(id); markInstalled(p, b.getAttribute("data-mod"), true); setTimeout(function(){ if (sheet.open){ openSheet("Play " + esc(p.name), playBody(p, "here")); var nx = $("#inst-next") || $("#sheet-title"); nx.focus(); } }, 60); }
+  else if (a === "quip" && b.parentNode.getAttribute("data-alt")){ var hx = b.parentNode, ln = hx.querySelector(".line"), was = ln.textContent; ln.textContent = hx.getAttribute("data-alt"); hx.setAttribute("data-alt", was); }
   else if (a === "quip"){ var ql = QUIPS[S.mood]; quipAt = (quipAt + 1) % ql.length; toast("Hex: " + ql[quipAt]); }
   else if (a === "code") openCode();
   else if (a === "unqueue"){ S.upnext = S.upnext.filter(function(x){ return x !== id; }); store.set("upnext", S.upnext); remember("upnext", id, false); render(false); toast("Removed from waiting"); }
@@ -1522,7 +1546,7 @@ document.addEventListener("change", function(e){
     S.dirty = true; $("#b-status").innerHTML = buildStatus();
   }
 });
-document.addEventListener("toggle", function(e){ var d = e.target; if (d.classList && d.classList.contains("fold") && d.id) S.open[d.id] = d.open; }, true);
+document.addEventListener("toggle", function(e){ var d = e.target; if (d.classList && (d.classList.contains("fold") || d.classList.contains("mod-d")) && d.id) S.open[d.id] = d.open; }, true);
 document.addEventListener("submit", function(e){
   var f = e.target; e.preventDefault();
   if (f.id === "codeform"){

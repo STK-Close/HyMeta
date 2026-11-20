@@ -92,7 +92,7 @@ function makeAudit(p, bad) {
     try {
       await p.goto(url); await p.waitForSelector("#h-main"); await p.evaluate(async () => { const imgs = [...document.images]; imgs.forEach((i) => { i.loading = "eager"; }); await Promise.all(imgs.map((i) => i.decode().catch(() => {}))); });
       await audit("front door"); if (out) await p.screenshot({ path: `${out}/${tag}.png`, fullPage: true });
-      if (await count(".warn") || /Hex's warning/.test(await p.textContent("main")) || !/Plant a turnip/.test(await p.textContent(".free .hexbox .say")) || !/name every chicken/.test(await p.textContent(".free .hexbox .say"))) bad("the front door still has a warning box, or Hex does not say both things herself");
+      if (await count(".warn") || /Hex's warning/.test(await p.textContent("main")) || !/Plant a turnip/.test(await p.textContent(".free .hexbox .say")) || /name every chicken/.test(await p.textContent(".free .hexbox .say")) || await count(".free .hexbox .say p") !== 2) bad("the front door still has a warning box, or Hex says more than one thing at a time");
       { const face = await p.evaluate(() => { const r = document.querySelector(".free .hexbox img").getBoundingClientRect(); return Math.round(r.width) + "x" + Math.round(r.height); });
         if (face !== "56x56") bad("the front door shows Hex's face at the wrong size beside her words: " + face); }
       if (await count("#view, .mod")) bad("the front door shows parts of the app before the password");
@@ -146,8 +146,8 @@ function makeAudit(p, bad) {
       q.on("pageerror", (e) => bad("page error: " + e.message)); q.setDefaultTimeout(6000);
       await q.goto(url + "p/cozy-farmer"); await q.waitForSelector("#pack-name");
       if ((await q.textContent("#pack-name")) !== "The cozy farmer" || !/^Plant a turnip/.test(await q.textContent("#hex-line"))) bad("the shared page does not show the playpack and Hex's line");
-      // the yellow warning box is gone: Hex says it herself, in her speech bubble, beside her face
-      if (await q.locator(".warn").count() || /Hex's warning/.test(await q.textContent("main")) || !/name every chicken/.test(await q.textContent(".hexbox .say")) || !(await q.evaluate(() => { const i = document.querySelector(".hexbox img"), r = i.getBoundingClientRect(); return i.complete && i.naturalWidth > 0 && Math.round(r.width) === 56 && Math.round(r.height) === 56; }))) bad("the shared page still has a warning box, or Hex does not say the caution herself");
+      // the yellow warning box is gone, and Hex says one thing, in her speech bubble, beside her face
+      if (await q.locator(".warn").count() || /Hex's warning/.test(await q.textContent("main")) || /name every chicken/.test(await q.textContent(".hexbox .say")) || await q.locator(".hexbox .say p").count() !== 2 || !(await q.evaluate(() => { const i = document.querySelector(".hexbox img"), r = i.getBoundingClientRect(); return i.complete && i.naturalWidth > 0 && Math.round(r.width) === 56 && Math.round(r.height) === 56; }))) bad("the shared page still has a warning box, or Hex says more than one thing at a time");
       if (await q.evaluate(async () => { const i = document.querySelector("img.pic"); if (!i.complete) await new Promise((r) => { i.onload = i.onerror = r; }); return !i.naturalWidth; })) bad("the shared page picture did not load");
       await auditQ("shared playpack page"); if (out) await q.screenshot({ path: `${out}/${tag}-shared.png`, fullPage: true });
       await q.click("#theme-switch"); await auditQ("shared playpack page, other theme"); await q.click("#theme-switch");
@@ -185,7 +185,13 @@ function makeAudit(p, bad) {
     if (await count(".top .hex, .top .face")) bad("home: troll is in the top bar");
     if (!(await count('.hex .face img[src$="hex-face.jpg"]')) || await count(".hex .face svg")) bad("home: Hex is not shown with her portrait face");
     if (await p.evaluate(() => { const i = document.querySelector(".hex .face img"); return !i || !i.naturalWidth; })) bad("home: Hex's face did not load");
-    await p.click(".hex .face"); if (!/^Hex: /.test(await p.textContent("#toast"))) bad("home: tapping Hex's face does nothing");
+    // Hex says one thing at a time: her line first, and tapping her swaps to the playpack's caution and back
+    { const said = () => p.locator(".hero .hex .line").allTextContents(), one = await said();
+      if (one.length !== 1 || !/Plant a turnip/.test(one[0]) || /chicken/.test(one[0])) bad("home: Hex should say one thing, her line about the playpack. She says: " + one.join(" / "));
+      await p.click(".hero .hex .face"); const two = await said();
+      if (two.length !== 1 || !/name every chicken/.test(two[0]) || /turnip/.test(two[0])) bad("home: tapping Hex does not swap to the other thing she has to say: " + two.join(" / "));
+      await p.click(".hero .hex .face"); if (!/Plant a turnip/.test((await said())[0])) bad("home: tapping Hex again does not bring her first line back");
+      const tall = await p.locator(".hero .hex").evaluate((e) => Math.round(e.getBoundingClientRect().height)); if (name === "phone" && tall > 150) bad("home: Hex's speech bubble is " + tall + "px tall on a phone"); }
     if (await count("#view > .page > .hex")) bad("home: troll greeting is back at the top of the page");
     if (name === "phone") { const hgt = await p.locator(".pk").first().evaluate((e) => e.getBoundingClientRect().height); if (hgt > 190) bad(`home: playpack card is ${Math.round(hgt)}px tall on a phone`); }
 
@@ -203,7 +209,6 @@ function makeAudit(p, bad) {
     if (await count("#coming, #poll")) bad("home: a next playpack is promised, or voted on, after the weekly list has run out");
     if (await count("#home-save")) bad("home: saving, a member feature, is offered in the free view");
     if (await count(".warn") || /Hex's warning/.test(await p.textContent("#view"))) bad("home: the yellow warning box is still there");
-    if (!/name every chicken/.test(await p.textContent(".hero .hex .say")) || await count(".hero .hex .say .line") !== 2) bad("home: Hex does not say the caution herself, in her own speech bubble");
     await p.click('[data-family="magic"]'); await p.waitForTimeout(220);
     const magic = await p.locator("#results .pk .pk-name").allTextContents();
     if (await p.inputValue("#fam") !== "magic" || magic.slice().sort().join(" | ") !== Object.values(CARD).filter((c) => c.family === "magic").map((c) => c.name).sort().join(" | ")) bad("playstyle tile did not filter to the magic packs, showed: " + magic.join(" | "));
@@ -230,7 +235,8 @@ function makeAudit(p, bad) {
 
     // locked pack in the free view
     await go("pack-too-many-legs"); await audit("locked pack"); await shot("locked");
-    if (await count(".warn") || !/Check your boots/.test(await p.textContent(".hex .say"))) bad("pack: the caution is not in Hex's speech bubble, or the warning box is still there");
+    await p.click(".hex .face");
+    if (await count(".warn") || await count(".hex .line") !== 1 || !/Check your boots/.test(await p.textContent(".hex .line"))) bad("pack: tapping Hex does not bring up the playpack's caution, or the warning box is still there");
     if ((await p.textContent("#view h1")) !== "Creepy crawlies" || !/slimes, frogs/.test(await p.textContent(".lede"))) bad("Too many legs has not become Creepy crawlies");
     await p.click(".art-zoom"); await p.waitForSelector("#art-big");
     if (!(await p.evaluate(async () => { const i = document.querySelector("#art-big"); if (!i.complete) await new Promise((r) => { i.onload = i.onerror = r; }); return i.naturalWidth >= 1200 && /pack-crawlies\.jpg$/.test(i.src); }))) bad("the full size picture did not open");
@@ -457,11 +463,22 @@ function makeAudit(p, bad) {
       if (/Pretend Helper Lib/.test(await p.textContent("#g-core"))) bad("a helper mod was listed as a main pick");
       if (!/By pretend_author/.test(text)) bad("mod author is missing");
       if (!/Picked for:\s*Crops and gardens/.test(text)) bad("mods do not say which job they were picked for");
+      // mods are compact rows: the closed row shows the name and the job, and a tap opens the rest
+      { const rows = await p.evaluate(() => [...document.querySelectorAll("#g-core .mod")].map((e) => Math.round(e.getBoundingClientRect().height)));
+        if (rows.some((x) => x > 72)) bad("closed mod rows are too tall: " + rows.join(", ") + "px");
+        if (await p.locator("#g-core .mod .mod-more").first().isVisible() || await p.locator("#g-core .mod a.linkbtn").first().isVisible()) bad("a mod row starts open");
+        if (!(await p.locator("#g-core .mod h4").first().isVisible()) || !(await p.locator("#g-core .mod .mod-sub").first().isVisible())) bad("a closed mod row does not show its name and job");
+        await p.click("#g-core .mod summary >> nth=0");
+        for (const sel of [".mod-more p", ".meta", "a.linkbtn"]) if (!(await p.locator("#g-core .mod " + sel).first().isVisible())) bad("opening a mod row does not show " + sel);
+        await audit("live pack, one mod open"); if (out) await p.screenshot({ path: `${out}/${tag}-mod-open.png`, fullPage: true });
+        await p.keyboard.press("Tab"); await p.focus("#g-core .mod summary >> nth=1"); await p.keyboard.press("Enter");
+        if (!(await p.locator("#g-core .mod .mod-more").nth(1).isVisible())) bad("a mod row cannot be opened from the keyboard");
+        await p.click("#g-core .mod summary >> nth=1"); await p.click("#g-core .mod summary >> nth=0"); }
       if (!/Chosen for Hytale 0\.7/.test(text) || !/Hytale 0\.7/.test(await p.textContent(".mod .meta"))) bad("game version is not shown");
       const href = await p.getAttribute(".mod a.linkbtn", "href"); if (!/^https:\/\/www\.curseforge\.com\/hytale\/mods\//.test(href)) bad("mod link does not go to its CurseForge page: " + href);
       // a mod that may not work with the current game says so on its card
       await p.click("#tier-member"); await go("pack-wizard-dropout"); await p.waitForSelector(".mod");
-      if (!(await count(".mod .caution"))) bad("an out-of-date mod carries no warning");
+      if (!(await count(".mod .caution")) || !(await p.locator(".mod:has(.caution) summary .mflag-old").first().isVisible()) || !/Older/.test(await p.locator(".mod:has(.caution) summary").first().textContent())) bad("an out-of-date mod carries no warning, or the closed row does not say so in words");
       await audit("live pack with a warning"); await p.click("#tier-free");
       // locked playpacks never fetch their mods in the free view
       const before = server.calls.length; await go("pack-dungeon-gremlin"); await p.waitForTimeout(300);
@@ -498,25 +515,26 @@ function makeAudit(p, bad) {
       if (!/Test Player/.test(await p.textContent("#acct-who"))) bad("signed-in name is not shown");
       await audit("signed in");
       // "It did not work": on every mod of the playpack, with a reason, and it can be taken back
-      await go("pack-cozy-farmer"); await p.waitForSelector(".mod .brokenbtn");
+      await go("pack-cozy-farmer"); await p.waitForSelector(".mod summary");
       if (await count(".mod .brokenbtn") !== await count(".mod")) bad("not every mod in the playpack can be reported as not working");
       const firstMod = (await p.locator(".mod h4").first().textContent()).trim();
-      await p.click(".mod .brokenbtn >> nth=0"); await p.waitForSelector(".whys");
+      await p.click(".mod summary >> nth=0"); await p.click(".mod .brokenbtn >> nth=0"); await p.waitForSelector(".whys");
       if (await count(".whys .btn") !== 4 || !(await p.textContent("#sheet")).includes(firstMod)) bad("the report sheet does not name the mod or offer four reasons");
       await audit("what went wrong"); if (out) await p.screenshot({ path: `${out}/${tag}-broken.png` });
       await p.click('.whys [data-why="1"]'); await p.waitForFunction(() => /Thank you/.test(document.querySelector("#toast").textContent));
       await p.waitForSelector('.mod .brokenbtn[aria-pressed="true"]');
       if (await count('.brokenbtn[aria-pressed="true"]') !== 1 || !/You said this did not work/.test(await p.textContent('.brokenbtn[aria-pressed="true"]'))) bad("a reported mod is not marked, in words, as reported");
       await audit("pack with a reported mod"); if (out) await p.screenshot({ path: `${out}/${tag}-pack-reported.png`, fullPage: true });
-      await p.reload(); await p.waitForSelector('.mod .brokenbtn[aria-pressed="true"]'); // remembered on the account
+      await p.reload(); await p.waitForSelector(".mod .mflag:has-text('Reported')"); // remembered on the account, and marked on the closed row
+      if (await p.locator(".mod-more").first().isVisible()) bad("mod rows do not start closed after reloading");
       // the owner sees the report: which mod, how many, in which playpack and why, and can clear it
       { await boss.goto(url + "#you"); await boss.reload(); await boss.waitForSelector("#h-broken"); await boss.waitForFunction((n) => document.querySelector(".brow").textContent.includes(n), firstMod);
         const row = await boss.textContent(".brow"), auditBoss = makeAudit(boss, bad);
         if (!/1 of 3 reports/.test(row) || !/The cozy farmer/.test(row) || !/crashed/.test(row) || /Benched/.test(row) || /Test Player/.test(row)) bad("the owner's list of reported mods is wrong: " + row.slice(0, 160));
         await auditBoss("owner: reported mods"); if (out) await boss.locator("#f-queue").screenshot({ path: `${out}/${tag}-owner-broken.png` });
         await boss.click('[data-action="brokenclear"]'); await boss.waitForFunction(() => !document.querySelector(".brow"));
-        await p.reload(); await p.waitForSelector(".mod .brokenbtn"); if (await count('.brokenbtn[aria-pressed="true"]')) bad("the owner cleared the reports but the player still sees theirs");
-        await p.click(".mod .brokenbtn >> nth=0"); await p.click('.whys [data-why="0"]'); await p.waitForSelector('.mod .brokenbtn[aria-pressed="true"]'); }
+        await p.reload(); await p.waitForSelector(".mod summary"); if (await count('.brokenbtn[aria-pressed="true"]')) bad("the owner cleared the reports but the player still sees theirs");
+        await p.click(".mod summary >> nth=0"); await p.click(".mod .brokenbtn >> nth=0"); await p.click('.whys [data-why="0"]'); await p.waitForSelector('.mod .brokenbtn[aria-pressed="true"]'); }
       await p.click('.mod .brokenbtn[aria-pressed="true"]'); await p.waitForFunction(() => /taken back/.test(document.querySelector("#toast").textContent));
       if (await count('.brokenbtn[aria-pressed="true"]')) bad("a report could not be taken back");
       // the badge for mod makers: a picture, a code to paste, and a link to this playpack
@@ -685,6 +703,7 @@ function makeAudit(p, bad) {
       if ((await ctx.request.get(url + "api/pack?id=" + ROTA[2])).status() !== 404) bad("the server hands out next week's playpack");
       // this week's playpack: a mod published in the last two months is marked as a new arrival, in words
       await p.goto(url + "#pack-" + ROTA[1]); await p.waitForSelector(".mod");
+      if (ROTA[1] === "scenic-route" && !(await p.locator(".mod:has(.newmod) summary .mflag:has-text('New')").isVisible())) bad("a new arrival is not marked on its closed row");
       if (ROTA[1] === "scenic-route" && (await count(".mod .newmod") !== 1 || !/New arrival/.test(await p.textContent(".mod:has(.newmod)")) || !/Waterfall Newcomer/.test(await p.textContent(".mod:has(.newmod)")))) bad("the new mod in this week's playpack is not marked as a new arrival");
       await audit("this week's playpack, with a new arrival"); if (out) await p.screenshot({ path: `${out}/${tag}-pack.png`, fullPage: true });
       await p.goto(url + "#pack-" + ROTA[0]); await p.waitForSelector('.actions [data-action="join"]'); await audit("a past week's playpack"); // members only now
