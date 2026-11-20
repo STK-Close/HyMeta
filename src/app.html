@@ -120,8 +120,7 @@ input[type="text"],input[type="search"],input[type="password"],select{font:400 1
 .hex .say{background:var(--bg2);border:1.5px solid var(--line);border-radius:4px 14px 14px 14px;padding:8px 12px}
 .hex .who{font-size:.8125rem;font-weight:700;color:var(--muted)}
 .hex .line{font:500 1.0625rem/1.4 var(--display)}
-.warn{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;background:var(--hazard);color:var(--hazard-ink);padding:10px 12px;border-radius:6px;border-left:8px solid var(--hazard-ink);max-width:62ch}
-.warn strong{font-family:var(--display)}
+.hex .say .more{margin-top:6px}
 
 /* key art banner */
 .hero{overflow:hidden}
@@ -851,8 +850,10 @@ function goLive(){
   render(false);
 }
 function say(key){ return LINES[key][S.mood]; }
-function hex(line){
-  return '<div class="hex"><button type="button" class="face" data-action="quip" aria-label="Hex. Tap her for a quip">' + hexFace() + '</button><div class="say"><p class="who">Hex says</p><p class="line">' + esc(line) + "</p></div></div>";
+// `more` is a second thing she has to say: the caution that used to sit in a yellow box of its own.
+function hex(line, more){
+  return '<div class="hex"><button type="button" class="face" data-action="quip" aria-label="Hex. Tap her for a quip">' + hexFace() + '</button><div class="say"><p class="who">Hex says</p><p class="line">' + esc(line) + "</p>" +
+    (more ? '<p class="line more">' + esc(more) + "</p>" : "") + "</div></div>";
 }
 function flames(n){ var f = ""; for (var i = 0; i < n; i++) f += ic("flame"); return f; }
 function dareChip(p){ return '<span class="chip">' + flames(p.dare) + '<span><span class="sr">Dare level: </span>' + DARE[p.dare] + "</span></span>"; }
@@ -871,7 +872,6 @@ function savedShelf(list){
     return '<div class="pk-wrap">' + pk(p) + '<button type="button" class="iconbtn pk-heart" data-action="save" data-id="' + p.id + '" data-fk="sp-' + p.id + '" aria-pressed="true" aria-label="Saved. Remove ' + esc(p.name) + '">' + ic("heart") + "</button></div>";
   }).join("") + "</div>";
 }
-function warnBox(p){ return '<div class="warn">' + ic("warn") + "<p><strong>Hex's warning.</strong> " + esc(p.warning) + "</p></div>"; }
 function nextDrop(){
   var days = Math.ceil((WEEK.nextAt - Date.now()) / 864e5);
   return days <= 1 ? "Next drop tomorrow" : "Next drop in " + days + " days";
@@ -909,7 +909,7 @@ function vHome(){
       '<div class="hero-art">' + art(p.art, true) +
         '<div class="hero-top"><span class="badge">' + ic("star") + (WEEK.fresh ? "New and free this week" : "Free this week") + '</span><span class="badge badge-dark">' + ic("clock") + nextDrop() + "</span></div>" +
         '<div class="hero-title"><h1 id="h-week" tabindex="-1"><span class="sr">This week\'s free playpack: </span>' + esc(p.name) + "</h1></div></div>" +
-      '<div class="hero-body"><div class="sec"><p class="lede">' + esc(p.blurb) + "</p>" + hex(p.pitch[S.mood]) + warnBox(p) + "</div>" +
+      '<div class="hero-body"><div class="sec"><p class="lede">' + esc(p.blurb) + "</p>" + hex(p.pitch[S.mood], p.warning) + "</div>" +
         '<div class="hero-side"><div class="chips">' + dareChip(p) + (nMods(p) ? '<span class="chip">' + nMods(p) + "</span>" : "") + "</div>" +
         '<button type="button" class="btn btn-primary btn-big btn-full" data-action="play" data-id="' + p.id + '">' + ic("play") + "Play this pack</button>" +
         '<a class="btn btn-ghost btn-full" href="#pack-' + p.id + '">' + (ready(p) ? "See the " + n + " mods" : "See the mods") + "</a>" + (S.tier === "member" ? '<button type="button" class="btn btn-ghost btn-full" id="home-save" data-action="save" data-id="' + p.id + '" data-fk="home-save" aria-pressed="' + (S.saved.indexOf(p.id) > -1) + '">' + ic("heart") + (S.saved.indexOf(p.id) > -1 ? "Saved" : "Save") + "</button>" : "") +
@@ -989,7 +989,7 @@ function vPack(id){
       '<div class="hero-top">' + (p.kind === "Experimental" ? '<span class="badge badge-exp">' + ic("warn") + "Experimental</span>" : "") + (locked ? '<span class="badge badge-dark">' + ic("lock") + "Members</span>" : "") + "</div>" +
       '<button type="button" class="iconbtn art-zoom" data-action="art" data-id="' + p.id + '" aria-label="See the picture for ' + esc(p.name) + ' full size">' + ic("expand") + "</button>" +
       '<div class="hero-title"><h1 tabindex="-1">' + esc(p.name) + "</h1></div></div>" +
-    '<div class="hero-body"><div class="sec"><p class="lede">' + esc(p.blurb) + "</p>" + (p.by ? '<p class="small muted">Shared by ' + esc(p.by) + "</p>" : "") + hex(line) + warnBox(p) + "</div>" +
+    '<div class="hero-body"><div class="sec"><p class="lede">' + esc(p.blurb) + "</p>" + (p.by ? '<p class="small muted">Shared by ' + esc(p.by) + "</p>" : "") + hex(line, p.warning) + "</div>" +
     '<div class="hero-side"><div class="chips">' + dareChip(p) + (nMods(p) ? '<span class="chip">' + nMods(p) + "</span>" : "") + '<span class="chip">' + esc(FAMILY[p.family] || p.kind) + "</span>" + (p.status === "pending" ? '<span class="chip">' + ic("clock") + "In review</span>" : "") + '</div><div class="actions">' + acts + "</div></div></div></section></div>" +
     body + care + "</div>";
 }

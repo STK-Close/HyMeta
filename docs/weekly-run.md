@@ -36,7 +36,7 @@ Copy `docs/weekly-example.json` to a scratch file outside the repository and rew
   job (`kw`, matched at the start of a word, so "cat" also matches "catalog": use `avoid` for those) and
   words to search for (`q`). At least one job is `"fresh": true`, so a mod published in the last two
   months gets a place. Put `"skin pack"` on the avoid list.
-- **Words.** Name, one-line description, Hex's warning, three lines from Hex (gentle, cheeky, unhinged)
+- **Words.** Name, one-line description, three lines from Hex (gentle, cheeky, unhinged), a caution (`warning`: the second thing she says in her speech bubble)
   and a hint that does not give the name away. Read five existing ones in `src/app.html` first and match
   them: dry, fond, a little unhinged, never cruel. Sentence case, plain words, no long dashes.
   **Children use HyMeta**: no swearing, no horror, no gore, no alcohol, nothing romantic, nothing about

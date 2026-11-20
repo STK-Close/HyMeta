@@ -92,6 +92,9 @@ function makeAudit(p, bad) {
     try {
       await p.goto(url); await p.waitForSelector("#h-main"); await p.evaluate(async () => { const imgs = [...document.images]; imgs.forEach((i) => { i.loading = "eager"; }); await Promise.all(imgs.map((i) => i.decode().catch(() => {}))); });
       await audit("front door"); if (out) await p.screenshot({ path: `${out}/${tag}.png`, fullPage: true });
+      if (await count(".warn") || /Hex's warning/.test(await p.textContent("main")) || !/Plant a turnip/.test(await p.textContent(".free .hexbox .say")) || !/name every chicken/.test(await p.textContent(".free .hexbox .say"))) bad("the front door still has a warning box, or Hex does not say both things herself");
+      { const face = await p.evaluate(() => { const r = document.querySelector(".free .hexbox img").getBoundingClientRect(); return Math.round(r.width) + "x" + Math.round(r.height); });
+        if (face !== "56x56") bad("the front door shows Hex's face at the wrong size beside her words: " + face); }
       if (await count("#view, .mod")) bad("the front door shows parts of the app before the password");
       // the terms and the privacy policy can be read from here, before any password
       for (const [file, title, words] of [["terms", "Terms of use", "State of Florida"], ["privacy", "Privacy policy", "do not sell"], ["rules", "Community rules", "Be kind"], ["help", "Help and contact", "real person"]]) {
@@ -142,7 +145,9 @@ function makeAudit(p, bad) {
       const fresh = await b.newContext({ viewport: { width: w, height: h }, colorScheme: scheme, deviceScaleFactor: 1, hasTouch: w < 500 }), q = await fresh.newPage(), auditQ = makeAudit(q, bad);
       q.on("pageerror", (e) => bad("page error: " + e.message)); q.setDefaultTimeout(6000);
       await q.goto(url + "p/cozy-farmer"); await q.waitForSelector("#pack-name");
-      if ((await q.textContent("#pack-name")) !== "The cozy farmer" || !/Hex says: Plant a turnip/.test(await q.textContent("#hex-line"))) bad("the shared page does not show the playpack and Hex's line");
+      if ((await q.textContent("#pack-name")) !== "The cozy farmer" || !/^Plant a turnip/.test(await q.textContent("#hex-line"))) bad("the shared page does not show the playpack and Hex's line");
+      // the yellow warning box is gone: Hex says it herself, in her speech bubble, beside her face
+      if (await q.locator(".warn").count() || /Hex's warning/.test(await q.textContent("main")) || !/name every chicken/.test(await q.textContent(".hexbox .say")) || !(await q.evaluate(() => { const i = document.querySelector(".hexbox img"), r = i.getBoundingClientRect(); return i.complete && i.naturalWidth > 0 && Math.round(r.width) === 56 && Math.round(r.height) === 56; }))) bad("the shared page still has a warning box, or Hex does not say the caution herself");
       if (await q.evaluate(async () => { const i = document.querySelector("img.pic"); if (!i.complete) await new Promise((r) => { i.onload = i.onerror = r; }); return !i.naturalWidth; })) bad("the shared page picture did not load");
       await auditQ("shared playpack page"); if (out) await q.screenshot({ path: `${out}/${tag}-shared.png`, fullPage: true });
       await q.click("#theme-switch"); await auditQ("shared playpack page, other theme"); await q.click("#theme-switch");
@@ -197,6 +202,8 @@ function makeAudit(p, bad) {
     if (!(await count("#h-spot"))) bad("home: mod spotlight is missing");
     if (await count("#coming, #poll")) bad("home: a next playpack is promised, or voted on, after the weekly list has run out");
     if (await count("#home-save")) bad("home: saving, a member feature, is offered in the free view");
+    if (await count(".warn") || /Hex's warning/.test(await p.textContent("#view"))) bad("home: the yellow warning box is still there");
+    if (!/name every chicken/.test(await p.textContent(".hero .hex .say")) || await count(".hero .hex .say .line") !== 2) bad("home: Hex does not say the caution herself, in her own speech bubble");
     await p.click('[data-family="magic"]'); await p.waitForTimeout(220);
     const magic = await p.locator("#results .pk .pk-name").allTextContents();
     if (await p.inputValue("#fam") !== "magic" || magic.slice().sort().join(" | ") !== Object.values(CARD).filter((c) => c.family === "magic").map((c) => c.name).sort().join(" | ")) bad("playstyle tile did not filter to the magic packs, showed: " + magic.join(" | "));
@@ -223,6 +230,7 @@ function makeAudit(p, bad) {
 
     // locked pack in the free view
     await go("pack-too-many-legs"); await audit("locked pack"); await shot("locked");
+    if (await count(".warn") || !/Check your boots/.test(await p.textContent(".hex .say"))) bad("pack: the caution is not in Hex's speech bubble, or the warning box is still there");
     if ((await p.textContent("#view h1")) !== "Creepy crawlies" || !/slimes, frogs/.test(await p.textContent(".lede"))) bad("Too many legs has not become Creepy crawlies");
     await p.click(".art-zoom"); await p.waitForSelector("#art-big");
     if (!(await p.evaluate(async () => { const i = document.querySelector("#art-big"); if (!i.complete) await new Promise((r) => { i.onload = i.onerror = r; }); return i.naturalWidth >= 1200 && /pack-crawlies\.jpg$/.test(i.src); }))) bad("the full size picture did not open");
