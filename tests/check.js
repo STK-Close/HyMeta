@@ -666,24 +666,26 @@ function makeAudit(p, bad) {
       if (teasers.length !== 3 || teasers.includes(now.name)) bad("home: Also this week should show three other playpacks, showed: " + teasers.join(" | "));
       const missing = await loaded(); if (missing.length) bad("home: pictures did not load: " + missing.join(", "));
       await audit("home, new week"); if (out) await p.screenshot({ path: `${out}/${tag}-home.png`, fullPage: true });
-      // the vote: it needs an account, counts one vote each, and can be changed
+      // the vote: it needs an account, and counts one vote each
       if (catalog.poll && catalog.poll.week > 1) {
         const ideas = catalog.poll.ideas, email = tag + "-voter@example.test";
         if ((await p.textContent("#h-poll")) !== (voting ? "Vote for next week's playpack" : "Vote for the playpack after next")) bad("home: the vote is headed wrongly: " + await p.textContent("#h-poll"));
         if (await count("#poll .vote") !== 3 || !(await p.textContent("#poll")).includes(ideas[0].name) || !(await p.textContent("#poll")).includes(ideas[2].line)) bad("home: the vote does not show its three ideas");
-        if (await count("#poll .tally")) bad("home: the vote shows its totals before the player has voted");
         await p.click(`.vote[data-id="${ideas[0].id}"]`); await p.waitForSelector("#acct"); // signed out: asked to make an account first
         if ((await ctx.request.post(url + "api/account", { data: { op: "vote", idea: ideas[0].id } })).status() !== 401) bad("a vote was counted without an account");
         await p.fill("#a-name", "Keen Voter"); await p.fill("#a-email", email); await p.fill("#a-pass", "correct-horse-9"); await p.check("#a-age"); await p.click('#acct button[type="submit"]'); await p.waitForSelector("#poll");
-        await p.click(`.vote[data-id="${ideas[0].id}"]`); await p.waitForSelector(`.vote[data-id="${ideas[0].id}"][aria-pressed="true"]`);
-        const mine = () => p.locator(`.vote[aria-pressed="true"] .tally`).textContent();
-        if (!/Your vote\. \d+ votes?$/.test((await mine()).trim())) bad("home: the player's own vote is not marked in words: " + await mine());
-        const total = async () => (await p.locator("#poll .tally").allTextContents()).map((t) => +t.match(/(\d+) votes?/)[1]).reduce((a, n) => a + n, 0);
-        const had = await total();
+        const before = (await (await b.newContext()).request.get(url + "api/mail?poll=1").then((r) => r.json())).ideas.reduce((a, i) => a + i.votes, 0), had = before + 1;
+        // voting: Hex says thank you, once, and the vote goes away until the next one opens
+        await p.click(`.vote[data-id="${ideas[0].id}"]`); await p.waitForSelector("#poll-thanks");
+        if (await count("#poll, .vote")) bad("home: the vote is still on screen after voting");
+        const thanks = await p.textContent("#poll-thanks");
+        if (!/thank you/i.test(await p.textContent("#poll-thanks .hex .line")) || !thanks.includes(ideas[0].name) || !/Thursday/.test(thanks)) bad("home: Hex does not say thank you, or does not say what was voted for: " + thanks.slice(0, 120));
         await audit("vote, after voting"); if (out) await p.screenshot({ path: `${out}/${tag}-vote.png` });
-        await p.click(`.vote[data-id="${ideas[1].id}"]`); await p.waitForSelector(`.vote[data-id="${ideas[1].id}"][aria-pressed="true"]`);
-        if (await count('.vote[aria-pressed="true"]') !== 1 || (await total()) !== had) bad("home: changing a vote counted the player twice (" + had + " votes became " + await total() + ")");
-        await p.reload(); await p.waitForSelector(`.vote[data-id="${ideas[1].id}"][aria-pressed="true"]`);
+        await p.goto(url + "#explore"); await p.waitForSelector("#results .pk"); await p.goto(url + "#home"); await p.waitForSelector("#h-week");
+        if (await count("#poll, #poll-thanks, .vote")) bad("home: the vote or the thank-you came back after looking at another page");
+        await p.reload(); await p.waitForSelector("#h-week"); await p.waitForTimeout(500);
+        if (await count("#poll, #poll-thanks, .vote")) bad("home: the vote came back after reloading, for a player who has already voted");
+        if ((await (await ctx.request.get(url + "api/account")).json()).poll.mine !== ideas[0].id) bad("the vote was not kept on the account");
         const open = await (await b.newContext()).request.get(url + "api/mail?poll=1"), tally = await open.json();
         if (open.status() !== 200 || tally.poll !== catalog.poll.id || tally.ideas.reduce((a, i) => a + i.votes, 0) !== had || /voter|example\.test/i.test(JSON.stringify(tally))) bad("the weekly run cannot read the vote totals, or they say who voted: " + JSON.stringify(tally).slice(0, 160));
       } else if (await count("#poll")) bad("home: a vote is shown that has already been decided");

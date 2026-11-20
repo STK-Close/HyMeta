@@ -232,8 +232,6 @@ details.plain>summary{min-height:44px;display:flex;align-items:center;cursor:poi
 .votes{display:grid;gap:10px}
 .vote{min-height:64px;text-align:left;display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg3);color:var(--fg);font:400 1rem/1.4 var(--body);cursor:pointer}
 .vote strong{font:700 1.125rem var(--display)}
-.vote[aria-pressed="true"]{border-width:3px;padding:10.5px 12.5px;border-color:var(--fg)}
-.vote .tally{display:flex;align-items:center;gap:6px;font-weight:700}
 @media (min-width:720px){.votes{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .brokenbtn{gap:6px}
 .badge-pic{width:240px;max-width:100%;height:auto;display:block}
@@ -772,7 +770,7 @@ function liveSearch(){
       .then(function(){ S.bbusy = false; var l = $("#b-list"); if (l) l.innerHTML = pickList(); });
   }, 350);
 }
-(function(){ var v = store.get("vote", null); if (POLL && v && v.poll === POLL.id && POLL.ideas.some(function(i){ return i.id === v.idea; })){ S.pollMine = v.idea; S.pollCounts = {}; S.pollCounts[v.idea] = 1; } })();
+(function(){ var v = store.get("vote", null); if (POLL && v && v.poll === POLL.id && POLL.ideas.some(function(i){ return i.id === v.idea; }))S.pollMine = v.idea; })();
 /* ---------- accounts (only when the server has a database) ---------- */
 var KEPT = ["saved", "savedMods", "upnext"];
 function post(body, route){
@@ -785,7 +783,7 @@ function loadAccount(merge){
     S.accounts = !!d.enabled; S.user = d.user || null;
     // once payments are switched on, membership is real: it comes from the account, not the preview switch
     S.billing = !!d.billing; if (S.billing) S.tier = d.user ? d.user.tier : "free";
-    if (POLL && d.poll && d.poll.id === POLL.id){ S.pollCounts = d.poll.counts || {}; S.pollMine = d.poll.mine || null; }
+    if (POLL && d.poll && d.poll.id === POLL.id) S.pollMine = d.poll.mine || null;
     S.mail = !!d.mail; S.news = !!d.news; // password reset and the weekly email, once an email service is connected
     if (d.user) KEPT.forEach(function(k){
       var server = d[k] || [];
@@ -902,16 +900,23 @@ function head(id, title, href, label){
 }
 
 /* ---------- views ---------- */
-// The vote card on the home screen.
+// The vote card on the home screen. Once a player has voted, Hex says thank you and the whole
+// thing goes away until the next vote opens.
+var THANKS = { gentle:"Thank you. Your vote is in, and it is a good one.", cheeky:"Thank you. Counted. I only peeked at the others a little.", unhinged:"THANK YOU. It is in the jar. I shook the jar. The jar is fine." };
 function pollCard(){
   if (!pollOpen()) return "";
-  var mine = S.pollMine, counts = S.pollCounts || {}, needAccount = LIVE && S.accounts && !S.user;
+  if (S.pollMine){
+    if (!S.pollThanks) return "";
+    var pick = POLL.ideas.filter(function(i){ return i.id === S.pollMine; })[0];
+    return '<section class="card pad sec" id="poll-thanks" role="status">' + hex(THANKS[S.mood]) +
+      '<p class="small muted">You voted for ' + esc(pick ? pick.name : "one of them") + ". Hex builds the winner on Thursday, and it arrives the Monday after.</p></section>";
+  }
+  var needAccount = LIVE && S.accounts && !S.user;
   return '<section class="card pad sec" id="poll" aria-labelledby="h-poll"><h2 id="h-poll">' + (POLL.week === WEEK.index + 1 ? "Vote for next week's playpack" : "Vote for the playpack after next") + "</h2>" +
     '<p class="muted">Hex has three ideas and cannot choose. The one with the most votes gets built on Thursday.</p><div class="votes">' +
-    POLL.ideas.map(function(i){ var n = counts[i.id] || 0;
-      return '<button type="button" class="vote" data-action="vote" data-id="' + esc(i.id) + '" data-fk="vote-' + esc(i.id) + '" aria-pressed="' + (mine === i.id) + '"><strong>' + esc(i.name) + "</strong><span>" + esc(i.line) + "</span>" +
-        (mine ? '<span class="small tally">' + (mine === i.id ? ic("check") + "Your vote. " : "") + n + (n === 1 ? " vote" : " votes") + "</span>" : "") + "</button>"; }).join("") + "</div>" +
-    '<p class="small muted" id="poll-note">' + (mine ? "Changed your mind? Tap another one any time before Thursday." : needAccount ? "Voting needs a free account, so every player gets one vote." : "One vote each. You can change it until Thursday.") + "</p></section>";
+    POLL.ideas.map(function(i){
+      return '<button type="button" class="vote" data-action="vote" data-id="' + esc(i.id) + '" data-fk="vote-' + esc(i.id) + '"><strong>' + esc(i.name) + "</strong><span>" + esc(i.line) + "</span></button>"; }).join("") + "</div>" +
+    '<p class="small muted" id="poll-note">' + (needAccount ? "Voting needs a free account, so every player gets one vote." : "One vote each.") + "</p></section>";
 }
 function vHome(){
   var p = findPack(FEATURED), n = modCount(p), comm = communityPacks().slice(0, 3), spot = LIVE ? MOD[S.spot] : MOD[SPOTLIGHT], waiting = S.upnext.map(findPack).filter(function(w){ return w && shown(w); });
@@ -1465,8 +1470,8 @@ document.addEventListener("click", function(e){
   else if (a === "badgecopy"){ var bt = b.getAttribute("data-copy") === "link" ? $("#badge-link").textContent : $("#badge-code").value; (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(bt) : Promise.reject()).then(function(){ toast(b.getAttribute("data-copy") === "link" ? "Link copied" : "Badge code copied"); }, function(){ $("#badge-code").focus(); $("#badge-code").select(); toast("Could not copy. Select the code and copy it by hand."); }); }
   else if (a === "vote"){
     if (LIVE && S.accounts && !S.user){ openAccount("signup"); toast("Make a free account to vote."); }
-    else if (LIVE && S.accounts) post({ op:"vote", idea:id }).then(function(d){ S.pollMine = id; S.pollCounts = d.counts || {}; render(false); toast("Vote counted"); }, function(e){ toast(e.message); });
-    else { S.pollMine = id; S.pollCounts = {}; S.pollCounts[id] = 1; store.set("vote", { poll:POLL.id, idea:id }); render(false); toast("Vote counted"); }
+    else if (LIVE && S.accounts) post({ op:"vote", idea:id }).then(function(){ S.pollMine = id; S.pollThanks = true; render(false); }, function(e){ toast(e.message); });
+    else { S.pollMine = id; S.pollThanks = true; store.set("vote", { poll:POLL.id, idea:id }); render(false); }
   }
   else if (a === "share") openShare(id);
   else if (a === "sharecopy"){ var sl = shareNow && shareNow.link; (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(sl) : Promise.reject()).then(function(){ toast("Link copied"); }, function(){ toast("Could not copy. The link is shown below the buttons."); }); }
@@ -1613,7 +1618,7 @@ document.addEventListener("submit", function(e){
   }
 });
 window.addEventListener("beforeunload", function(e){ if (S.dirty){ e.preventDefault(); e.returnValue = ""; } });
-window.addEventListener("hashchange", onRoute);
+window.addEventListener("hashchange", function(){ S.pollThanks = false; onRoute(); }); // her thank-you is said once, then she is gone until the next vote
 
 $("#mark").innerHTML = px(PACKMARK, { "#":"#1d1503", "o":"#7a5200" });
 applyTheme();
