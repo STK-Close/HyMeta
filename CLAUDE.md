@@ -42,7 +42,8 @@ outside screenshot tool. The look and the general adverts' wording live in `scri
 - Site screenshots come from the sample mode and are cropped above the list of mods.
 - "Hytale" only describes what the site is for. Every advert carries "An unofficial fan site".
 - Hex's large poses are in `promo/hex/`, made by `scripts/make-hex.py` (about 2 cents a pose, an estimate).
-  Show Ligia any new pose before it is used.
+  Ligia approved all six (present, wave, peek, point, smug, parcels) on November 21, 2026. Show her any new pose
+  before it is used.
 - Nothing is posted by Claude. Ligia posts. A playpack's advert goes out in its own week, not before.
 - When the site's address changes, change `site` in `scripts/promo/brand.js` and run the command again.
 
