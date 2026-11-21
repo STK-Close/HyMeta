@@ -146,9 +146,24 @@ ${group("general", "General adverts", "About HyMeta as a whole. Good for a launc
 <script>document.querySelectorAll(".copyme").forEach(function(s){var b=document.createElement("button");b.type="button";b.textContent="Copy these words";b.onclick=function(){var t=s.innerText;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){b.textContent="Copied";document.getElementById("said").textContent="Copied";setTimeout(function(){b.textContent="Copy these words";},1600);},function(){var r=document.createRange();r.selectNodeContents(s);var g=getSelection();g.removeAllRanges();g.addRange(r);b.textContent="Selected. Now press copy";});};s.parentNode.appendChild(b);});</script>
 <footer>© ${new Date().getUTCFullYear()} Lumina Art House, LLC. HyMeta is an unofficial fan site. It is not affiliated with Hytale, Hypixel Studios, CurseForge or Overwolf.</footer></html>\n`;
   fs.writeFileSync(path.join(ROOT, "promo", "index.html"), html);
+  fs.writeFileSync(path.join(ROOT, "promo", "kit-page.html"), linkPage(html));
+}
+
+// The same page in the form Ligia's private link needs (docs/weekly-run.md says how it is refreshed):
+// no page wrapper, colors that follow the viewer's theme switch, HyMeta's two fonts, and no save-on-tap
+// links, which do nothing on that kind of page.
+function linkPage(html) {
+  const dark = "--bg:#0e1223;--card:#1a2143;--fg:#eef1fb;--muted:#b9c1de;--line:#6672b8;--focus:#4fe3d4;color-scheme:dark";
+  let css = html.slice(html.indexOf("<style>") + 7, html.indexOf("</style>"));
+  css = css.slice(css.indexOf("body{")).replace(/^body\{[^}]*\}/, 'body{margin:0 auto;padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bg);color:var(--fg);font:16px/1.5 "' + brand.fonts.body + '",system-ui,sans-serif;max-width:1200px}h1,h2,summary b{font-family:"' + brand.fonts.display + '","Trebuchet MS",system-ui,sans-serif}');
+  const body = html.slice(html.indexOf("<h1>")).replace("</html>", "").replace(/<a href="[^"]*" download>(<img[^>]*>)<\/a>/g, "$1").replace(/Tap the picture to save it\./g, "Press and hold the picture to save it (right-click on a computer).");
+  return `<title>HyMeta advert kit</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n<link rel="stylesheet" href="${brand.fonts.css}">\n<style>\n/* Layout: one column of short rows that open on a tap, in HyMeta's navy, with its own two typefaces. */\n:root{--bg:#d9e3ef;--card:#ffffff;--fg:#121930;--muted:#3a4461;--line:#74869f;--focus:#0b5cad}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${dark}}}\n:root[data-theme="dark"]{${dark}}\n${css}</style>\n${body}`;
 }
 
 async function main(args) {
+  if (args[0] === "--files") { // the pictures the kit page shows, in the form the Artifact tool's `files` takes (with root: promo)
+    console.log(JSON.stringify(specs().filter((s) => fs.existsSync(s.out)).map((s) => ({ path: path.relative(path.join(ROOT, "promo"), s.out).split(path.sep).join("/") })))); return;
+  }
   const si = args.indexOf("--shapes"), shapes = si > -1 ? args.splice(si, 2)[1].split(",") : Object.keys(brand.shapes);
   const bad = shapes.filter((s) => !brand.shapes[s]); if (bad.length) throw new Error("no shape called " + bad.join(", ") + ". Choose from " + Object.keys(brand.shapes).join(", "));
   const known = order().concat(brand.general.map((g) => g.id)), lost = args.filter((a) => !known.includes(a));

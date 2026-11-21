@@ -47,6 +47,9 @@ const problems = [], bad = (m) => problems.push(m);
     promo.leftovers().forEach((f) => bad("a leftover advert picture should be deleted (node scripts/make-promo.js does it): " + path.basename(f)));
     const page = path.join(__dirname, "..", "promo", "index.html"), html = fs.existsSync(page) ? fs.readFileSync(page, "utf8") : "";
     ids.forEach((id) => { if (!html.includes("out/wide/" + id + ".jpg")) bad("the kit page promo/index.html does not show " + id + ". Run: node scripts/make-promo.js"); });
+    const kit = path.join(__dirname, "..", "promo", "kit-page.html"), link = fs.existsSync(kit) ? fs.readFileSync(kit, "utf8") : "";
+    ids.forEach((id) => { if (!link.includes("out/wide/" + id + ".jpg")) bad("the page behind Ligia's link (promo/kit-page.html) does not show " + id + ". Run: node scripts/make-promo.js"); });
+    if (/<!doctype|<html| download>/i.test(link) || !/^<title>HyMeta advert kit<\/title>/.test(link) || !/data-theme="dark"/.test(link) || !/Lumina Art House, LLC/.test(link)) bad("promo/kit-page.html is not in the form the private link needs");
     if (!/Lumina Art House, LLC/.test(html) || !/noindex/.test(html)) bad("the kit page is missing its copyright line or its keep-out-of-search mark");
 
     // ---- proof that the checks can fail: each broken advert below must be caught ----

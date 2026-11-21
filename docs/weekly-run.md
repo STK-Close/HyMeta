@@ -99,13 +99,24 @@ updates itself within a minute or two. Then confirm on the live site:
 - `curl -s -o /dev/null -w '%{http_code}' https://hymeta.vercel.app/p/<id>` gives **404** (it is not Monday yet),
 - `curl -s https://hymeta.vercel.app/api/mail?poll=1` shows the three new ideas with no votes.
 
+Then refresh Ligia's private advert kit page, which is how she looks at and saves the adverts
+(https://claude.ai/artifact/TXy75CVURP7sjkmjEHS96J, private to her). Only if a tool named `Artifact` is in
+your tool list:
+1. Call it with action `read` and that `url`. Go on only if the result says you can edit it ("writer").
+2. Publish with that same `url`, `file_path` set to `promo/kit-page.html`, `root` set to the `promo` folder, and
+   `files` set to exactly what `node scripts/make-promo.js --files` prints. Leave out `icon` and `title`.
+3. Never publish without the `url` (that would make a second page with a different address), never delete
+   the page, and never change who can see it.
+If there is no `Artifact` tool, or it refuses, change nothing and say in the report: "The advert kit link was
+not refreshed. Ask Claude to refresh the kit link." The site and the adverts in the project are fine either way.
+
 Nothing else changes for players until Monday 09:00 UTC, when the playpack becomes free and the weekly
 email goes out by itself.
 
 ## 8. Report
 End with a short plain-language note for Ligia: the vote result, the playpack's name and one line,
 how many of its mods are new arrivals, the three ideas now up for the vote, the picture, its wide advert
-(`promo/out/wide/<id>.jpg`, to post on Monday, not before), what was spent
+(`promo/out/wide/<id>.jpg`, to post on Monday, not before), whether her advert kit link was refreshed, what was spent
 on pictures, and anything that did not go to plan. If she replies "skip it" before Monday,
 `node scripts/add-weekly.js --remove <id>`, `node scripts/make-promo.js` (it deletes that playpack's adverts), test, commit and push.
 
