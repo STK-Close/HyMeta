@@ -36,18 +36,21 @@ A playpack whose week is settled (`lib/ledger.json`) is never moved or edited.
 ## The advert kit (Ligia, November 2026: "I bet you could build something better")
 `node scripts/make-promo.js` draws every advert into `promo/out/` (wide for Discord, Reddit and X; square and tall
 for Instagram and Pinterest) and `promo/index.html` shows them all with words to post. It replaced a trial of an
-outside screenshot tool. The look and the general adverts' wording live in `scripts/promo/brand.js`.
-- Adverts say only what HyMeta wrote: the playpack's name, blurb and Hex's line, and `brand.js`. Never a mod's
+outside screenshot tool. The look and the general adverts' wording live in `promo/promo.config.js`.
+The drawing and checking is done by the shared promo maker, which Ligia's other apps use too. HyMeta holds a copy
+in `promo/tool/`: never edit it here. Change github.com/STK-Close/promo-maker, then run its `install.js` on this
+project, redraw, and run `npm test`.
+- Adverts say only what HyMeta wrote: the playpack's name, blurb and Hex's line, and `promo.config.js`. Never a mod's
   name, logo or numbers (still waiting for CurseForge's written answer). `tests/promo.test.js` enforces this.
 - Site screenshots come from the sample mode and are cropped above the list of mods.
 - "Hytale" only describes what the site is for. Every advert carries "An unofficial fan site".
-- Hex's large poses are in `promo/hex/`, made by `scripts/make-hex.py` (about 2 cents a pose, an estimate).
+- Hex's large poses are in `promo/hex/`, made by `python3 promo/tool/make-mascot.py <pose>` from `promo/poses.json` (about 2 cents a pose, an estimate).
   Ligia approved all six (present, wave, peek, point, smug, parcels) on November 21, 2026. Show her any new pose
   before it is used.
 - Ligia looks at the kit through a private page: https://claude.ai/artifact/TXy75CVURP7sjkmjEHS96J. It shows
   `promo/kit-page.html`. Refresh it the way `docs/weekly-run.md` step 7 says, always to that same address.
 - Nothing is posted by Claude. Ligia posts. A playpack's advert goes out in its own week, not before.
-- When the site's address changes, change `site` in `scripts/promo/brand.js` and run the command again.
+- When the site's address changes, change `site` in `promo/promo.config.js` and run the command again.
 
 ## Always
 - Add one extra, unasked-for improvement to each build and tell Ligia what it was.

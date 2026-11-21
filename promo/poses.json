@@ -1,0 +1,14 @@
+{
+  "portrait": "web/images/hex.jpg",
+  "out": "promo/hex",
+  "prefix": "hex-",
+  "same": "Keep exactly the same character and the same chunky pixel-art cartoon style: a small cheerful green troll with big pointed ears, two little lower tusks, wild bright pink hair, big amber eyes, a patched brown long coat with a gold-buckled belt and a gold backpack. Full body, head to toes, centred, on a plain flat solid pale grey background with nothing else in the picture: no scenery, no floor objects, no shadows on a wall. Friendly and child safe. No text, no letters, no logos, no watermark.",
+  "poses": {
+    "present": "She stands turned a little to the side and sweeps one open hand out wide to her left, as if proudly showing something off, grinning.",
+    "wave": "She waves hello with one hand high in the air, the other hand holding her glowing lantern low, with a big happy grin.",
+    "smug": "She stands with her arms crossed and one eyebrow raised, with a sly, pleased-with-herself smirk.",
+    "parcels": "She carries a tall wobbly stack of three wooden crates tied with gold ribbon in both arms, peeking round the side of it with a grin.",
+    "peek": "She leans forward on tiptoe holding her glowing lantern up high in one hand, peering ahead with wide curious eyes and a little smile.",
+    "point": "She points straight up with one finger as if she has just had a brilliant idea, eyes wide, mouth open in an excited grin."
+  }
+}
