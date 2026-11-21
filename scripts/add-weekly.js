@@ -121,4 +121,4 @@ fs.writeFileSync(LEDGER, JSON.stringify(list.slice(0, target + 1).map((p) => p.i
 build();
 console.log("\nAdded " + spec.name + " for the week of Monday " + monday(target) + " (week " + target + "). The reserve playpacks after it each move back a week.");
 console.log("The next vote (" + nextPoll.id + ") decides the week of " + monday(target + 1) + ": " + nextPoll.ideas.map((i) => i.name).join(", "));
-console.log("Still to do: make the picture (scripts/make-art.py " + spec.art + "), check the recipe (scripts/try-pack.js " + spec.id + "), run npm test, and look at phone and desktop screenshots.");
+console.log("Still to do: make the picture (scripts/make-art.py " + spec.art + "), make its adverts (scripts/make-promo.js), check the recipe (scripts/try-pack.js " + spec.id + "), run npm test, and look at phone and desktop screenshots.");

@@ -74,6 +74,17 @@ Then **look at** `web/images/pack-<art>.jpg`. It must be built from chunky block
 picture, show the playpack's idea, have no writing in it and nothing frightening. If not, change the
 `artPrompt` line in `scripts/make-art.py` and make it again. Three tries at most (each costs about a cent).
 
+Then make its adverts (free, about 20 seconds, nothing is sent anywhere):
+```
+node scripts/make-promo.js
+```
+This draws the new playpack's wide, square and tall adverts into `promo/out/` and redraws the general
+ones, so the vote advert shows the three new ideas. **Look at** `promo/out/wide/<id>.jpg` and
+`promo/out/tall/<id>.jpg`: the name on one line, Hex's line whole, nothing covering the heart of the
+picture. The words come from the recipe (name, blurb, Hex's line). If a line does not fit, the command
+says so: shorten the line in the recipe, do not touch the advert code. `npm test` fails until the
+adverts exist.
+
 ## 6. Check it the way CLAUDE.md says
 - `npm test` must pass. The tests read the playpack list, so a new playpack needs no test changes.
   If a test fails, the site is wrong, not the test: do not edit tests during a weekly run.
@@ -93,9 +104,10 @@ email goes out by itself.
 
 ## 8. Report
 End with a short plain-language note for Ligia: the vote result, the playpack's name and one line,
-how many of its mods are new arrivals, the three ideas now up for the vote, the picture, what was spent
+how many of its mods are new arrivals, the three ideas now up for the vote, the picture, its wide advert
+(`promo/out/wide/<id>.jpg`, to post on Monday, not before), what was spent
 on pictures, and anything that did not go to plan. If she replies "skip it" before Monday,
-`node scripts/add-weekly.js --remove <id>`, test, commit and push.
+`node scripts/add-weekly.js --remove <id>`, `node scripts/make-promo.js` (it deletes that playpack's adverts), test, commit and push.
 
 ## Never
 - Never change a playpack whose week has begun or is settled (`lib/ledger.json` is the record, and the tests guard it).

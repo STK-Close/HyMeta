@@ -33,6 +33,19 @@ is new on CurseForge, writes the recipe and Hex's words, makes the picture, test
 `docs/weekly-run.md` is the whole procedure. `scripts/add-weekly.js --status` says where things stand.
 A playpack whose week is settled (`lib/ledger.json`) is never moved or edited.
 
+## The advert kit (Ligia, November 2026: "I bet you could build something better")
+`node scripts/make-promo.js` draws every advert into `promo/out/` (wide for Discord, Reddit and X; square and tall
+for Instagram and Pinterest) and `promo/index.html` shows them all with words to post. It replaced a trial of an
+outside screenshot tool. The look and the general adverts' wording live in `scripts/promo/brand.js`.
+- Adverts say only what HyMeta wrote: the playpack's name, blurb and Hex's line, and `brand.js`. Never a mod's
+  name, logo or numbers (still waiting for CurseForge's written answer). `tests/promo.test.js` enforces this.
+- Site screenshots come from the sample mode and are cropped above the list of mods.
+- "Hytale" only describes what the site is for. Every advert carries "An unofficial fan site".
+- Hex's large poses are in `promo/hex/`, made by `scripts/make-hex.py` (about 2 cents a pose, an estimate).
+  Show Ligia any new pose before it is used.
+- Nothing is posted by Claude. Ligia posts. A playpack's advert goes out in its own week, not before.
+- When the site's address changes, change `site` in `scripts/promo/brand.js` and run the command again.
+
 ## Always
 - Add one extra, unasked-for improvement to each build and tell Ligia what it was.
 - Verify the live site (https://hymeta.vercel.app) after pushing, before telling her it is live.

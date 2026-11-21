@@ -1,0 +1,152 @@
+<!doctype html><meta charset="utf-8"><title>HyMeta advert</title>
+<style>
+/* One advert, drawn at an exact pixel size. Every length is in --u (one hundredth of the width),
+   so the three shapes share one set of rules. Colors and fonts come from scripts/promo/brand.js. */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:var(--w);height:var(--h);overflow:hidden}
+body{--u:calc(var(--w)/100);background:var(--navy);color:var(--ink);font-family:var(--body),sans-serif;position:relative}
+.bg,.veil{position:absolute;inset:0}
+.bg{background:var(--navy) center/cover no-repeat}
+.mosaic{position:absolute;inset:-6%;display:grid;gap:calc(var(--u)*1);transform:rotate(-6deg) scale(1.12);opacity:.5}
+.mosaic i{background:center/cover;border-radius:calc(var(--u)*1.4)}
+.wide .mosaic{grid-template-columns:repeat(4,1fr)} .tall .mosaic,.square .mosaic{grid-template-columns:repeat(3,1fr)}
+.brand{position:absolute;left:calc(var(--u)*4.5);top:calc(var(--u)*3.6);display:flex;align-items:center;gap:.4em;font:900 calc(var(--u)*2.5)/1 var(--display);color:var(--ink);z-index:5}
+.brand img{width:1.5em;height:1.5em;border-radius:.34em}
+.copy{position:absolute;z-index:4;display:flex;flex-direction:column;gap:calc(var(--u)*1.3)}
+.eyebrow{font:700 calc(var(--u)*1.55)/1.2 var(--body);color:var(--teal);letter-spacing:.02em}
+h1{font:900 calc(var(--u)*5.6)/1.04 var(--display);text-wrap:balance;overflow:hidden}
+h1 em{font-style:normal;color:var(--gold)}
+.sub{font:400 calc(var(--u)*1.9)/1.35 var(--body);color:var(--ink);text-wrap:pretty;overflow:hidden}
+.hex{position:absolute;z-index:6;filter:drop-shadow(0 calc(var(--u)*.6) calc(var(--u)*1.2) rgba(0,0,0,.55))}
+.hex.flip{transform:scaleX(-1)}
+.say{position:absolute;z-index:7;background:var(--navy2);border:calc(var(--u)*.24) solid var(--line);border-radius:calc(var(--u)*1.7);padding:calc(var(--u)*1.3) calc(var(--u)*1.7);font:500 calc(var(--u)*2)/1.28 var(--display);box-shadow:0 calc(var(--u)*.5) 0 var(--edge)}
+.say b{display:block;font:700 calc(var(--u)*1.25)/1 var(--body);color:var(--muted);margin-bottom:.5em}
+.say span{display:block;overflow:hidden}
+.say::after{content:"";position:absolute;width:calc(var(--u)*2);height:calc(var(--u)*2);background:var(--navy2);border:solid var(--line);border-width:0 0 calc(var(--u)*.24) calc(var(--u)*.24);left:calc(var(--u)*-1.12);bottom:calc(var(--u)*2.4);transform:rotate(45deg)}
+.say.tail-down::after{left:calc(var(--u)*5);bottom:calc(var(--u)*-1.12);transform:rotate(-45deg)}
+.say.tail-right::after{left:auto;right:calc(var(--u)*-1.12);transform:rotate(-135deg)}
+.foot{position:absolute;z-index:8;display:flex;align-items:center;gap:calc(var(--u)*1.1);font:400 calc(var(--u)*1.35)/1 var(--body);color:var(--muted)}
+.foot .pill{background:var(--gold);color:var(--gold-ink);font:700 calc(var(--u)*1.45)/1 var(--body);padding:.6em 1em;border-radius:9em;white-space:nowrap}
+.foot span{white-space:nowrap}
+.stage{position:absolute;z-index:3}
+
+/* a browser window and a phone, drawn here so no borrowed artwork is needed */
+.browser{position:relative;background:var(--navy3);border:calc(var(--u)*.24) solid var(--line);border-radius:calc(var(--u)*1.3);overflow:hidden;box-shadow:0 calc(var(--u)*1.4) calc(var(--u)*3) rgba(0,0,0,.6);display:flex;flex-direction:column}
+.browser .bar{display:flex;align-items:center;gap:calc(var(--u)*.6);padding:calc(var(--u)*.8) calc(var(--u)*1.1);flex:none}
+.browser .bar i{width:calc(var(--u)*.9);height:calc(var(--u)*.9);border-radius:50%;background:var(--pink)} .browser .bar i+i{background:var(--gold)} .browser .bar i+i+i{background:var(--teal)}
+.browser .bar u{flex:1;margin-left:calc(var(--u)*.8);background:var(--navy);border-radius:9em;height:calc(var(--u)*1.9);text-decoration:none}
+.browser img{display:block;width:100%;flex:1;min-height:0;object-fit:cover;object-position:50% 0}
+.phone img{display:block;height:100%;width:auto}
+.phone{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);background:var(--edge);border:calc(var(--u)*.3) solid var(--line);border-radius:calc(var(--u)*4);padding:calc(var(--u)*1);box-shadow:0 calc(var(--u)*1.4) calc(var(--u)*3) rgba(0,0,0,.6);overflow:hidden}
+.phone img{border-radius:calc(var(--u)*3)}
+.card{position:absolute;border-radius:calc(var(--u)*1.6);overflow:hidden;border:calc(var(--u)*.24) solid var(--line);background:var(--navy2);box-shadow:0 calc(var(--u)*1) calc(var(--u)*2.4) rgba(0,0,0,.55)}
+.card i{display:block;background:center/cover;aspect-ratio:3/2}
+.card p{font:700 calc(var(--u)*1.7)/1.15 var(--display);padding:.65em .8em .75em}
+.wall{display:grid;gap:calc(var(--u)*.9);align-content:center}
+.wall .card{position:static;box-shadow:none;border-radius:calc(var(--u)*1.1)}
+.wall .card p{font-size:calc(var(--u)*1.3);padding:.5em .6em .6em}
+.ideas{display:flex;flex-direction:column;gap:calc(var(--u)*1.2);justify-content:center}
+.idea{background:var(--navy2);border:calc(var(--u)*.24) solid var(--line);border-radius:calc(var(--u)*1.5);padding:calc(var(--u)*1.3) calc(var(--u)*1.7);display:flex;gap:calc(var(--u)*1.3);align-items:center;box-shadow:0 calc(var(--u)*.5) 0 var(--edge)}
+.idea .box{flex:none;width:calc(var(--u)*2.6);height:calc(var(--u)*2.6);border:calc(var(--u)*.3) solid var(--gold);border-radius:calc(var(--u)*.6)}
+.idea:first-child .box{background:var(--gold) no-repeat center/70% url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5.4l2.3 2.3 4.7-5' fill='none' stroke='%231d1503' stroke-width='1.7'/%3E%3C/svg%3E")}
+.idea h3{font:700 calc(var(--u)*2.1)/1.15 var(--display)} .idea p{font:400 calc(var(--u)*1.45)/1.3 var(--body);color:var(--muted);margin-top:.25em}
+
+/* ---------- wide: words on the left, the picture on the right ---------- */
+.wide .veil{background:linear-gradient(90deg,rgba(14,18,35,.97) 0%,rgba(14,18,35,.94) 38%,rgba(14,18,35,.5) 56%,rgba(14,18,35,0) 74%)}
+.wide.general .veil{background:linear-gradient(90deg,rgba(14,18,35,.98) 0%,rgba(14,18,35,.95) 44%,rgba(14,18,35,.7) 100%)}
+.wide .copy{left:calc(var(--u)*4.5);top:calc(var(--u)*10.5);width:calc(var(--u)*47)}
+.wide h1{max-height:calc(var(--u)*12.2)} .wide .sub{max-height:calc(var(--u)*5.4)}
+.wide .hex{left:calc(var(--u)*3.2);bottom:calc(var(--u)*5.6);height:calc(var(--u)*25)}
+.wide .say{left:calc(var(--u)*24.5);bottom:calc(var(--u)*9.5);width:calc(var(--u)*27)} .wide .say span{max-height:calc(var(--u)*10.4)}
+.wide .foot{left:calc(var(--u)*4.5);bottom:calc(var(--u)*2.2)}
+.wide .stage{left:calc(var(--u)*55);right:calc(var(--u)*4);top:calc(var(--u)*5);bottom:calc(var(--u)*5)}
+/* the hello advert: Hex herself is the picture */
+.wide.kind-mosaic .hex{left:auto;right:calc(var(--u)*9);bottom:calc(var(--u)*3);height:calc(var(--u)*49)}
+.wide.kind-mosaic .say{left:calc(var(--u)*4.5);bottom:calc(var(--u)*11);width:calc(var(--u)*40);font-size:calc(var(--u)*2.5)} .wide.kind-mosaic .say span{max-height:calc(var(--u)*13)}
+.wide.kind-mosaic .copy{top:calc(var(--u)*11.5)}
+.wide.kind-browser .stage{left:calc(var(--u)*53.5);right:calc(var(--u)*3);top:calc(var(--u)*12);bottom:calc(var(--u)*12)}
+/* ---------- tall and square: the picture on top, words underneath ---------- */
+.tall,.square{--u:calc(var(--w)/62)}
+.tall .bg,.square .bg{bottom:auto;height:58%}
+.tall .veil{background:linear-gradient(180deg,rgba(14,18,35,.55) 0%,rgba(14,18,35,0) 14%,rgba(14,18,35,0) 30%,rgba(14,18,35,1) 50%)}
+.square .veil{background:linear-gradient(180deg,rgba(14,18,35,.55) 0%,rgba(14,18,35,0) 16%,rgba(14,18,35,0) 24%,rgba(14,18,35,1) 46%)}
+.tall.general .veil,.square.general .veil{background:linear-gradient(180deg,rgba(14,18,35,.7) 0%,rgba(14,18,35,.55) 30%,rgba(14,18,35,1) 54%)}
+.tall .copy{left:calc(var(--u)*4.5);right:calc(var(--u)*4.5);top:calc(var(--u)*32)}
+.square .copy{left:calc(var(--u)*4.5);right:calc(var(--u)*4.5);top:calc(var(--u)*22.5)}
+.tall h1,.square h1{max-height:calc(var(--u)*12.2)} .tall .sub,.square .sub{max-height:calc(var(--u)*5.4)}
+.square .sub{display:none}
+.tall .hex{left:calc(var(--u)*3);bottom:calc(var(--u)*6);height:calc(var(--u)*23)}
+.square .hex{left:calc(var(--u)*3);bottom:calc(var(--u)*5.6);height:calc(var(--u)*19.5)}
+.tall .say{left:calc(var(--u)*23);right:calc(var(--u)*4.5);bottom:calc(var(--u)*10.5)} .tall .say span{max-height:calc(var(--u)*10.4)}
+.square .say{left:calc(var(--u)*20.5);right:calc(var(--u)*4.5);bottom:calc(var(--u)*8.6)} .square .say span{max-height:calc(var(--u)*7.8)}
+.tall .foot,.square .foot{left:calc(var(--u)*4.5);bottom:calc(var(--u)*2.2)}
+.tall .stage{left:calc(var(--u)*4.5);right:calc(var(--u)*4.5);top:calc(var(--u)*9);height:calc(var(--u)*21.5)}
+.square .stage{left:calc(var(--u)*4.5);right:calc(var(--u)*4.5);top:calc(var(--u)*7.6);height:calc(var(--u)*12.4)}
+/* a playpack's name stays on one line in tall and square, so its blurb never reaches Hex */
+.pack h1{max-height:calc(var(--u)*6.2) !important}
+.square .copy{top:calc(var(--u)*20.6)} .square .sub{display:block;max-height:calc(var(--u)*5.2)}
+.tall .wall,.square .wall{grid-auto-rows:1fr;align-content:stretch}
+.tall .wall .card p,.square .wall .card p,.square.kind-fan .card p{display:none}
+.tall .wall .card i,.square .wall .card i{aspect-ratio:auto;height:100%}
+.tall .browser::after,.square .browser::after{content:"";position:absolute;left:0;right:0;bottom:0;height:10%;background:linear-gradient(180deg,rgba(26,33,67,0),var(--navy2))}
+/* square has the least room: general adverts use a smaller headline and a smaller Hex so the picture on show can be seen */
+.square.general .stage{height:calc(var(--u)*17)} .square.general .copy{top:calc(var(--u)*25.4)} .square.general h1{font-size:calc(var(--u)*4.8);max-height:calc(var(--u)*10.2)}
+.square.general .hex{height:calc(var(--u)*17.5)} .square.general .say{left:calc(var(--u)*19)}
+.tall .browser img{object-position:50% 18%} .square .browser img{object-position:50% 40%}
+/* the phone advert in tall and square: words on the left, the phone down the right side */
+.tall.kind-phone .stage{left:auto;width:calc(var(--u)*23);top:calc(var(--u)*9);height:calc(var(--u)*44.5)}
+.tall.kind-phone .copy{right:calc(var(--u)*29.5);top:calc(var(--u)*13)} .tall.kind-phone h1{max-height:calc(var(--u)*24)}
+.square.kind-phone .stage{left:auto;width:calc(var(--u)*18);top:calc(var(--u)*5);height:calc(var(--u)*35)}
+.square.kind-phone .copy{right:calc(var(--u)*24.5);top:calc(var(--u)*11)} .square.kind-phone h1{max-height:calc(var(--u)*19);font-size:calc(var(--u)*4.6)}
+/* the hello advert in tall and square: words on top, a big Hex underneath */
+.tall.kind-mosaic .copy{top:calc(var(--u)*11)} .square.kind-mosaic .copy{top:calc(var(--u)*9)}
+.tall.kind-mosaic .hex{left:calc(var(--u)*1);height:calc(var(--u)*42)} .tall.kind-mosaic .say{left:calc(var(--u)*30);bottom:calc(var(--u)*24)} .tall.kind-mosaic .say span{max-height:calc(var(--u)*16)}
+.square.kind-mosaic .hex{left:calc(var(--u)*2);height:calc(var(--u)*31)} .square.kind-mosaic .say{left:calc(var(--u)*25.5);bottom:calc(var(--u)*15)} .square.kind-mosaic .say span{max-height:calc(var(--u)*13)}
+.tall.kind-mosaic .veil,.square.kind-mosaic .veil{background:rgba(14,18,35,.8)}
+</style>
+<body><script>
+(function(){
+  var S = window.SPEC, B = S.brand, r = document.documentElement.style, c = B.colors;
+  r.setProperty("--w", S.w + "px"); r.setProperty("--h", S.h + "px");
+  r.setProperty("--display", '"' + B.fonts.display + '"'); r.setProperty("--body", '"' + B.fonts.body + '"');
+  Object.keys(c).forEach(function(k){ r.setProperty("--" + k.replace(/[A-Z]/g, function(m){ return "-" + m.toLowerCase(); }), c[k]); });
+  var link = document.createElement("link"); link.rel = "stylesheet"; link.href = B.fonts.css;
+  document.body.className = S.shape + " " + (S.kind === "pack" ? "pack" : "general") + " kind-" + S.kind;
+  function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function bgi(e, src){ e.style.backgroundImage = 'url("' + src + '")'; return e; }
+  function add(e){ document.body.appendChild(e); return e; }
+  // backdrop
+  if (S.art) bgi(add(el("div", "bg")), S.art);
+  else { var m = add(el("div", "mosaic")); S.tiles.slice(0, 12).forEach(function(t){ bgi(m.appendChild(el("i")), t.thumb); }); m.style.gridAutoRows = "1fr"; }
+  add(el("div", "veil"));
+  var brand = add(el("div", "brand")); var ico = el("img"); ico.src = S.icon; ico.alt = ""; brand.appendChild(ico); brand.appendChild(el("span", "", B.name));
+  // words
+  var copy = add(el("div", "copy")); copy.appendChild(el("div", "eyebrow", S.eyebrow));
+  var h1 = copy.appendChild(el("h1", "fit", S.title)); if (S.gold) { h1.appendChild(document.createTextNode(" ")); h1.appendChild(el("em", "", S.gold)); }
+  if (S.sub) copy.appendChild(el("p", "sub fit", S.sub));
+  // the thing on show
+  var stage = add(el("div", "stage")), W = S.shape === "wide";
+  function card(t, css){ var k = el("div", "card"); bgi(k.appendChild(el("i")), t.art); k.appendChild(el("p", "", t.name)); k.style.cssText = css || ""; return k; }
+  if (S.kind === "browser") { var b = stage.appendChild(el("div", "browser")); b.style.cssText = "position:absolute;inset:0;"; var bar = b.appendChild(el("div", "bar")); bar.innerHTML = "<i></i><i></i><i></i><u></u>"; var im = b.appendChild(el("img")); im.src = S.shot; im.alt = ""; }
+  if (S.kind === "phone") { var ph = stage.appendChild(el("div", "phone")); var pi = ph.appendChild(el("img")); pi.src = S.shot; pi.alt = ""; }
+  if (S.kind === "fan") { var f = S.tiles.slice(0, 3), spots = W ? ["left:0;top:2%;width:54%;transform:rotate(-6deg)", "right:0;top:13%;width:54%;transform:rotate(5deg)", "left:21%;top:55%;width:56%;transform:rotate(-2deg)"] : S.shape === "tall" ? ["left:0;top:8%;width:35%;transform:rotate(-5deg)", "left:32.5%;top:2%;width:35%;transform:rotate(2deg)", "right:0;top:9%;width:35%;transform:rotate(6deg)"] : ["left:2%;top:9%;width:34%;transform:rotate(-5deg)", "left:33%;top:3%;width:34%;transform:rotate(2deg)", "right:2%;top:10%;width:34%;transform:rotate(6deg)"]; f.forEach(function(t, i){ stage.appendChild(card(t, spots[i])); }); }
+  if (S.kind === "wall") { var cols = W ? 3 : 4, n = W ? 9 : 8, wl = stage.appendChild(el("div", "wall")); wl.style.cssText = "position:absolute;inset:0;grid-template-columns:repeat(" + cols + ",1fr)"; S.tiles.slice(0, n).forEach(function(t){ var k = card(t); bgi(k.firstChild, t.thumb); if (t.name.length > 16) k.className += " long"; wl.appendChild(k); }); }
+  if (S.kind === "vote") { var box = stage.appendChild(el("div", "ideas")); box.style.cssText = "position:absolute;inset:0"; S.ideas.slice(0, S.shape === "square" ? 2 : 3).forEach(function(d){ var row = box.appendChild(el("div", "idea")); row.appendChild(el("div", "box")); var t = row.appendChild(el("div")); t.appendChild(el("h3", "", d.name)); if (W) t.appendChild(el("p", "", d.line)); }); }
+  // Hex and what she says
+  var hx = add(el("img", "hex")); hx.src = S.hex; hx.alt = "";
+  var say = add(el("div", "say" + (W && S.kind === "mosaic" ? " tail-right" : ""))); say.appendChild(el("b", "", "Hex says")); say.appendChild(el("span", "fit", S.say));
+  var foot = add(el("div", "foot")); foot.appendChild(el("span", "pill", "Picked by Hex")); foot.appendChild(el("span", "", B.site)); foot.appendChild(el("span", "", "·")); foot.appendChild(el("span", "", B.fine));
+  // shrink any text that is too long for its box, a little at a time, and never below a readable size
+  document.head.appendChild(link);
+  var faces = ['900 40px "' + B.fonts.display + '"', '700 40px "' + B.fonts.display + '"', '500 40px "' + B.fonts.display + '"', '700 20px "' + B.fonts.body + '"', '400 20px "' + B.fonts.body + '"'];
+  window.READY = new Promise(function(ok){ link.onload = link.onerror = ok; }).then(function(){ return Promise.all(faces.map(function(f){ return document.fonts.load(f); })); }).then(function(){ return document.fonts.ready; }).then(function(){
+    return Promise.all([].map.call(document.images, function(i){ return i.complete ? 0 : new Promise(function(ok){ i.onload = i.onerror = ok; }); }));
+  }).then(function(){
+    if (S.noFit) return;
+    [].forEach.call(document.querySelectorAll(".fit"), function(e){
+      var size = parseFloat(getComputedStyle(e).fontSize), min = size * 0.55;
+      while ((e.scrollHeight > e.clientHeight + 1 || e.scrollWidth > e.clientWidth + 1) && size > min) { size -= 1; e.style.fontSize = size + "px"; }
+    });
+  });
+})();
+</script>
