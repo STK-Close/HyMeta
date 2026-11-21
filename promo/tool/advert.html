@@ -4,25 +4,25 @@
    so the three shapes share one set of rules. Colors, fonts and words come from the app's promo.config.js. */
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:var(--w);height:var(--h);overflow:hidden}
-body{--u:calc(var(--w)/100);background:var(--navy);color:var(--ink);font-family:var(--body),sans-serif;position:relative}
+body{--u:calc(var(--w)/100);--rad:1;--bw:1;--dw900:900;--dw700:700;--dw500:500;background:var(--navy);color:var(--ink);font-family:var(--body),sans-serif;position:relative}
 .bg,.veil{position:absolute;inset:0}
 .bg{background:var(--navy) center/cover no-repeat}
 .mosaic{position:absolute;inset:-6%;display:grid;gap:calc(var(--u)*1);transform:rotate(-6deg) scale(1.12);opacity:.5}
-.mosaic i{background:center/cover;border-radius:calc(var(--u)*1.4)}
+.mosaic i{background:center/cover;border-radius:calc(var(--u)*1.4*var(--rad))}
 .wide .mosaic{grid-template-columns:repeat(4,1fr)} .tall .mosaic,.square .mosaic{grid-template-columns:repeat(3,1fr)}
-.brand{position:absolute;left:calc(var(--u)*4.5);top:calc(var(--u)*3.6);display:flex;align-items:center;gap:.4em;font:900 calc(var(--u)*2.5)/1 var(--display);color:var(--ink);z-index:5}
+.brand{position:absolute;left:calc(var(--u)*4.5);top:calc(var(--u)*3.6);display:flex;align-items:center;gap:.4em;font:var(--dw900) calc(var(--u)*2.5)/1 var(--display);color:var(--ink);z-index:5}
 .brand img{width:1.5em;height:1.5em;border-radius:.34em}
 .copy{position:absolute;z-index:4;display:flex;flex-direction:column;gap:calc(var(--u)*1.3)}
 .eyebrow{font:700 calc(var(--u)*1.55)/1.2 var(--body);color:var(--teal);letter-spacing:.02em}
-h1{font:900 calc(var(--u)*5.6)/1.04 var(--display);text-wrap:balance}
+h1{font:var(--dw900) calc(var(--u)*5.6)/1.04 var(--display);text-wrap:balance}
 h1 em{font-style:normal;color:var(--gold)}
 .sub{font:400 calc(var(--u)*1.9)/1.35 var(--body);color:var(--ink);text-wrap:pretty}
 .hex{position:absolute;z-index:6;filter:drop-shadow(0 calc(var(--u)*.6) calc(var(--u)*1.2) rgba(0,0,0,.55))}
 .hex.flip{transform:scaleX(-1)}
-.say{position:absolute;z-index:7;background:var(--navy2);border:calc(var(--u)*.24) solid var(--line);border-radius:calc(var(--u)*1.7);padding:calc(var(--u)*1.3) calc(var(--u)*1.7);font:500 calc(var(--u)*2)/1.28 var(--display);box-shadow:0 calc(var(--u)*.5) 0 var(--edge)}
+.say{position:absolute;z-index:7;background:var(--navy2);border:calc(var(--u)*.24*var(--bw)) solid var(--line);border-radius:calc(var(--u)*1.7*var(--rad));padding:calc(var(--u)*1.3) calc(var(--u)*1.7);font:var(--dw500) calc(var(--u)*2)/1.28 var(--display);box-shadow:0 calc(var(--u)*.5) 0 var(--edge)}
 .say b{display:block;font:700 calc(var(--u)*1.25)/1 var(--body);color:var(--muted);margin-bottom:.5em}
 .say span{display:block}
-.say::after{content:"";position:absolute;width:calc(var(--u)*2);height:calc(var(--u)*2);background:var(--navy2);border:solid var(--line);border-width:0 0 calc(var(--u)*.24) calc(var(--u)*.24);left:calc(var(--u)*-1.12);bottom:calc(var(--u)*2.4);transform:rotate(45deg)}
+.say::after{content:"";position:absolute;width:calc(var(--u)*2);height:calc(var(--u)*2);background:var(--navy2);border:solid var(--line);border-width:0 0 calc(var(--u)*.24*var(--bw)) calc(var(--u)*.24*var(--bw));left:calc(var(--u)*-1.12);bottom:calc(var(--u)*2.4);transform:rotate(45deg)}
 .say.tail-down::after{left:calc(var(--u)*5);bottom:calc(var(--u)*-1.12);transform:rotate(-45deg)}
 .say.tail-right::after{left:auto;right:calc(var(--u)*-1.12);transform:rotate(-135deg)}
 .foot{position:absolute;z-index:8;display:flex;align-items:center;gap:calc(var(--u)*1.1);font:400 calc(var(--u)*1.35)/1 var(--body);color:var(--muted)}
@@ -31,25 +31,25 @@ h1 em{font-style:normal;color:var(--gold)}
 .stage{position:absolute;z-index:3}
 
 /* a browser window and a phone, drawn here so no borrowed artwork is needed */
-.browser{position:relative;background:var(--navy3);border:calc(var(--u)*.24) solid var(--line);border-radius:calc(var(--u)*1.3);overflow:hidden;box-shadow:0 calc(var(--u)*1.4) calc(var(--u)*3) rgba(0,0,0,.6);display:flex;flex-direction:column}
+.browser{position:relative;background:var(--navy3);border:calc(var(--u)*.24*var(--bw)) solid var(--line);border-radius:calc(var(--u)*1.3*var(--rad));overflow:hidden;box-shadow:0 calc(var(--u)*1.4) calc(var(--u)*3) rgba(0,0,0,.6);display:flex;flex-direction:column}
 .browser .bar{display:flex;align-items:center;gap:calc(var(--u)*.6);padding:calc(var(--u)*.8) calc(var(--u)*1.1);flex:none}
 .browser .bar i{width:calc(var(--u)*.9);height:calc(var(--u)*.9);border-radius:50%;background:var(--pink)} .browser .bar i+i{background:var(--gold)} .browser .bar i+i+i{background:var(--teal)}
 .browser .bar u{flex:1;margin-left:calc(var(--u)*.8);background:var(--navy);border-radius:9em;height:calc(var(--u)*1.9);text-decoration:none}
 .browser img{display:block;width:100%;flex:1;min-height:0;object-fit:cover;object-position:50% 0}
 .phone img{display:block;height:100%;width:auto}
-.phone{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);background:var(--edge);border:calc(var(--u)*.3) solid var(--line);border-radius:calc(var(--u)*4);padding:calc(var(--u)*1);box-shadow:0 calc(var(--u)*1.4) calc(var(--u)*3) rgba(0,0,0,.6);overflow:hidden}
-.phone img{border-radius:calc(var(--u)*3)}
-.card{position:absolute;border-radius:calc(var(--u)*1.6);overflow:hidden;border:calc(var(--u)*.24) solid var(--line);background:var(--navy2);box-shadow:0 calc(var(--u)*1) calc(var(--u)*2.4) rgba(0,0,0,.55)}
+.phone{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);background:var(--edge);border:calc(var(--u)*.3) solid var(--line);border-radius:calc(var(--u)*4*var(--rad));padding:calc(var(--u)*1);box-shadow:0 calc(var(--u)*1.4) calc(var(--u)*3) rgba(0,0,0,.6);overflow:hidden}
+.phone img{border-radius:calc(var(--u)*3*var(--rad))}
+.card{position:absolute;border-radius:calc(var(--u)*1.6*var(--rad));overflow:hidden;border:calc(var(--u)*.24*var(--bw)) solid var(--line);background:var(--navy2);box-shadow:0 calc(var(--u)*1) calc(var(--u)*2.4) rgba(0,0,0,.55)}
 .card i{display:block;background:center/cover;aspect-ratio:3/2}
-.card p{font:700 calc(var(--u)*1.7)/1.15 var(--display);padding:.65em .8em .75em}
+.card p{font:var(--dw700) calc(var(--u)*1.7)/1.15 var(--display);padding:.65em .8em .75em}
 .wall{display:grid;gap:calc(var(--u)*.9);align-content:center}
-.wall .card{position:static;box-shadow:none;border-radius:calc(var(--u)*1.1)}
+.wall .card{position:static;box-shadow:none;border-radius:calc(var(--u)*1.1*var(--rad))}
 .wall .card p{font-size:calc(var(--u)*1.3);padding:.5em .6em .6em}
 .ideas{display:flex;flex-direction:column;gap:calc(var(--u)*1.2);justify-content:center}
-.idea{background:var(--navy2);border:calc(var(--u)*.24) solid var(--line);border-radius:calc(var(--u)*1.5);padding:calc(var(--u)*1.3) calc(var(--u)*1.7);display:flex;gap:calc(var(--u)*1.3);align-items:center;box-shadow:0 calc(var(--u)*.5) 0 var(--edge)}
-.idea .box{flex:none;width:calc(var(--u)*2.6);height:calc(var(--u)*2.6);border:calc(var(--u)*.3) solid var(--gold);border-radius:calc(var(--u)*.6)}
+.idea{background:var(--navy2);border:calc(var(--u)*.24*var(--bw)) solid var(--line);border-radius:calc(var(--u)*1.5*var(--rad));padding:calc(var(--u)*1.3) calc(var(--u)*1.7);display:flex;gap:calc(var(--u)*1.3);align-items:center;box-shadow:0 calc(var(--u)*.5) 0 var(--edge)}
+.idea .box{flex:none;width:calc(var(--u)*2.6);height:calc(var(--u)*2.6);border:calc(var(--u)*.3) solid var(--gold);border-radius:calc(var(--u)*.6*var(--rad))}
 .idea:first-child .box{background:var(--gold) no-repeat center/70% url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5.4l2.3 2.3 4.7-5' fill='none' stroke='%231d1503' stroke-width='1.7'/%3E%3C/svg%3E")}
-.idea h3{font:700 calc(var(--u)*2.1)/1.15 var(--display)} .idea p{font:400 calc(var(--u)*1.45)/1.3 var(--body);color:var(--muted);margin-top:.25em}
+.idea h3{font:var(--dw700) calc(var(--u)*2.1)/1.15 var(--display)} .idea p{font:400 calc(var(--u)*1.45)/1.3 var(--body);color:var(--muted);margin-top:.25em}
 
 /* ---------- wide: words on the left, the picture on the right ---------- */
 .wide .veil{background:linear-gradient(90deg,rgba(var(--navy-rgb),.97) 0%,rgba(var(--navy-rgb),.94) 38%,rgba(var(--navy-rgb),.5) 56%,rgba(var(--navy-rgb),0) 74%)}
@@ -114,6 +114,29 @@ h1 em{font-style:normal;color:var(--gold)}
 .square.plain.feature .veil{background:linear-gradient(180deg,rgba(var(--navy-rgb),.55) 0%,rgba(var(--navy-rgb),0) 16%,rgba(var(--navy-rgb),0) 30%,rgba(var(--navy-rgb),1) 52%)}
 .tall.plain.kind-mosaic .copy{top:calc(var(--u)*24)} .square.plain.kind-mosaic .copy{top:calc(var(--u)*18)}
 .tall.plain.kind-phone .copy{top:calc(var(--u)*16)} .square.plain.kind-phone .copy{top:calc(var(--u)*13)}
+/* pictures with their own shape (aspect in the settings): a wall fills its space, and names stay whole */
+.fillwall .wall{grid-auto-rows:1fr;align-content:stretch} .fillwall .wall .card{display:flex;flex-direction:column} .fillwall .wall .card i{flex:1;aspect-ratio:auto !important;min-height:0;background-position:50% 20%}
+/* an advert built on one picture whose headline is allowed more than one line (lines: 2 or 3 in the settings) */
+.wide.feature.multi h1,.tall.feature.multi h1,.square.feature.multi h1{max-height:calc(var(--u)*18)} .square.feature.multi h1{font-size:calc(var(--u)*4.8);max-height:calc(var(--u)*15.5)}
+.wide.plain.feature.multi h1{max-height:calc(var(--u)*19.5)}
+/* ---------- style options from the settings file (brand.style) ---------- */
+.upper h1,.upper .card p,.upper .idea h3,.upper .eyebrow{text-transform:uppercase} .upper h1{letter-spacing:.012em} .upper .eyebrow{letter-spacing:.14em}
+.italic h1,.italic h1 em{font-style:italic}
+.textbody .say,.textbody .quote,.textbody .card p,.textbody .idea h3{font-family:var(--body),sans-serif;font-weight:700}
+.brand.logo img{height:calc(var(--u)*7.4);width:auto;border-radius:0;filter:drop-shadow(0 calc(var(--u)*.3) calc(var(--u)*.5) rgba(0,0,0,.35))}
+.brand.logo{top:calc(var(--u)*2.2)} .tall .brand.logo img{height:calc(var(--u)*6)} .square .brand.logo img{height:calc(var(--u)*5)}
+.gloss .foot .pill{background:linear-gradient(var(--gold),var(--gold2,var(--gold)));border:.16em solid var(--ink);box-shadow:0 .26em 0 var(--edge)}
+.gloss .card,.gloss .say,.gloss .quote,.gloss .idea,.gloss .poster{box-shadow:0 calc(var(--u)*.7) 0 var(--edge)}
+/* a spoken line with nobody drawn beside it: a quote card in the column of words */
+.quote{background:var(--navy2);border:calc(var(--u)*.24*var(--bw)) solid var(--line);border-radius:calc(var(--u)*1.7*var(--rad));padding:calc(var(--u)*1.2) calc(var(--u)*1.6);font:var(--dw500) calc(var(--u)*2.1)/1.3 var(--display);align-self:flex-start;max-width:100%}
+.quote b{display:block;font:700 calc(var(--u)*1.25)/1 var(--body);color:var(--muted);margin-bottom:.5em} .quote span{display:block;max-height:calc(var(--u)*8.4)}
+/* kind "poster": one framed picture, for a person or a product */
+.poster{position:absolute;aspect-ratio:1;height:86%;top:7%;left:50%;transform:translateX(-50%) rotate(3deg);object-fit:cover;border:calc(var(--u)*.42*var(--bw)) solid var(--line);border-radius:calc(var(--u)*2.4*var(--rad));box-shadow:0 calc(var(--u)*1.2) calc(var(--u)*2.6) rgba(0,0,0,.45)}
+.tall .poster,.square .poster{height:100%;top:0;left:0;transform:rotate(-2deg)}
+.tall.kind-poster .stage{height:calc(var(--u)*22);top:calc(var(--u)*10)} .tall.plain.kind-poster .copy{top:calc(var(--u)*35)}
+.square.kind-poster .stage{height:calc(var(--u)*15);top:calc(var(--u)*8.4)} .square.plain.kind-poster .copy{top:calc(var(--u)*25)} .square.plain.kind-poster h1{font-size:calc(var(--u)*4.8);max-height:calc(var(--u)*10.2)} .square.plain.kind-poster .sub{font-size:calc(var(--u)*2);max-height:calc(var(--u)*5.5)} .square.kind-poster .quote span{max-height:calc(var(--u)*5.6)}
+.contain .card i{background-size:contain;background-repeat:no-repeat}
+.allticked .idea .box{background:var(--gold) no-repeat center/70% url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5.4l2.3 2.3 4.7-5' fill='none' stroke='%231d1503' stroke-width='1.7'/%3E%3C/svg%3E")}
 </style>
 <body><script>
 (function(){
@@ -121,28 +144,34 @@ h1 em{font-style:normal;color:var(--gold)}
   r.setProperty("--w", S.w + "px"); r.setProperty("--h", S.h + "px");
   r.setProperty("--display", '"' + B.fonts.display + '"'); r.setProperty("--body", '"' + B.fonts.body + '"');
   Object.keys(c).forEach(function(k){ r.setProperty("--" + k.replace(/[A-Z]/g, function(m){ return "-" + m.toLowerCase(); }), c[k]); });
-  var link = document.createElement("link"); link.rel = "stylesheet"; link.href = B.fonts.css;
-  document.body.className = S.shape + " " + (S.kind === "feature" ? "feature" : "general") + " kind-" + S.kind + (S.hex ? "" : " plain");
+  var st = B.style || {}, link = null;
+  if (B.fonts.css) { link = document.createElement("link"); link.rel = "stylesheet"; link.href = B.fonts.css; }
+  if (st.radius != null) r.setProperty("--rad", st.radius); if (st.border != null) r.setProperty("--bw", st.border);
+  if (B.fonts.displayWeight) ["900", "700", "500"].forEach(function(w){ r.setProperty("--dw" + w, B.fonts.displayWeight); });
+  document.body.className = S.shape + " " + (S.kind === "feature" ? "feature" : "general") + " kind-" + S.kind + (S.hex ? "" : " plain") + (st.upper ? " upper" : "") + (st.italic ? " italic" : "") + (st.text === "body" ? " textbody" : "") + (st.gloss ? " gloss" : "") + (S.fit === "contain" ? " contain" : "") + (S.lines > 1 ? " multi" : "") + (S.aspect ? " fillwall" : "") + (S.ticked ? " allticked" : "");
+  if (st.ground) document.body.style.backgroundImage = st.ground;
   var n = parseInt(c.navy.replace("#", ""), 16); r.setProperty("--navy-rgb", (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255));
   function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function bgi(e, src){ e.style.backgroundImage = 'url("' + src + '")'; return e; }
   function add(e){ document.body.appendChild(e); return e; }
   // backdrop
-  if (S.art) bgi(add(el("div", "bg")), S.art);
+  if (S.art) { var bgEl = bgi(add(el("div", "bg")), S.art), af = S.artFit && S.artFit[S.shape]; if (af) { bgEl.style.backgroundSize = af[0]; bgEl.style.backgroundPosition = af[1]; } }
   else if (S.tiles.length) { var m = add(el("div", "mosaic")); for (var ti = 0; ti < 12; ti++) bgi(m.appendChild(el("i")), S.tiles[ti % S.tiles.length].thumb); m.style.gridAutoRows = "1fr"; }
   add(el("div", "veil"));
-  var brand = add(el("div", "brand")); var ico = el("img"); ico.src = S.icon; ico.alt = ""; brand.appendChild(ico); brand.appendChild(el("span", "", B.name));
+  var brand = add(el("div", "brand" + (S.logo ? " logo" : ""))); var ico = el("img"); ico.src = S.logo || S.icon; ico.alt = ""; brand.appendChild(ico); if (!S.logo) brand.appendChild(el("span", "", B.name));
   // words
   var copy = add(el("div", "copy")); copy.appendChild(el("div", "eyebrow", S.eyebrow));
   var h1 = copy.appendChild(el("h1", "fit", S.title)); if (S.gold) { h1.appendChild(document.createTextNode(" ")); h1.appendChild(el("em", "", S.gold)); }
   var sub = S.sub || (S.hex ? "" : S.say); // with no mascot to speak it, the spoken line is shown as plain words
   if (sub) copy.appendChild(el("p", "sub fit", sub));
+  if (!S.hex && S.sub && S.say) { var q = copy.appendChild(el("div", "quote")); if (S.label) q.appendChild(el("b", "", S.label)); q.appendChild(el("span", "fit", S.say)); } // or, beside a sentence of its own, as a quote card
   // the thing on show
   var stage = add(el("div", "stage")), W = S.shape === "wide";
-  function card(t, css){ var k = el("div", "card"); bgi(k.appendChild(el("i")), t.art); k.appendChild(el("p", "", t.name)); k.style.cssText = css || ""; return k; }
+  function card(t, css){ var k = el("div", "card"), pic = bgi(k.appendChild(el("i")), t.art); if (S.aspect) pic.style.aspectRatio = S.aspect; k.appendChild(el("p", "", t.name)); k.style.cssText = css || ""; return k; }
+  if (S.kind === "poster") { var po = stage.appendChild(el("img", "poster")); po.src = S.picture; po.alt = ""; }
   if (S.kind === "browser") { var b = stage.appendChild(el("div", "browser")); b.style.cssText = "position:absolute;inset:0;"; var bar = b.appendChild(el("div", "bar")); bar.innerHTML = "<i></i><i></i><i></i><u></u>"; var im = b.appendChild(el("img")); im.src = S.shot; im.alt = ""; }
   if (S.kind === "phone") { var ph = stage.appendChild(el("div", "phone")); var pi = ph.appendChild(el("img")); pi.src = S.shot; pi.alt = ""; }
-  if (S.kind === "fan") { var f = S.tiles.slice(0, 3), spots = W ? ["left:0;top:2%;width:54%;transform:rotate(-6deg)", "right:0;top:13%;width:54%;transform:rotate(5deg)", "left:21%;top:55%;width:56%;transform:rotate(-2deg)"] : S.shape === "tall" ? ["left:0;top:8%;width:35%;transform:rotate(-5deg)", "left:32.5%;top:2%;width:35%;transform:rotate(2deg)", "right:0;top:9%;width:35%;transform:rotate(6deg)"] : ["left:2%;top:9%;width:34%;transform:rotate(-5deg)", "left:33%;top:3%;width:34%;transform:rotate(2deg)", "right:2%;top:10%;width:34%;transform:rotate(6deg)"]; f.forEach(function(t, i){ stage.appendChild(card(t, spots[i])); }); }
+  if (S.kind === "fan") { var f = S.tiles.slice(0, 3), spots = S.aspect === "1/1" ? (W ? ["left:2%;top:0;width:40%;transform:rotate(-6deg)", "right:2%;top:9%;width:40%;transform:rotate(5deg)", "left:29%;top:55%;width:41%;transform:rotate(-2deg)"] : S.shape === "tall" ? ["left:4%;top:6%;width:27%;transform:rotate(-5deg)", "left:36.5%;top:1%;width:27%;transform:rotate(2deg)", "right:4%;top:7%;width:27%;transform:rotate(6deg)"] : ["left:10%;top:6%;width:23%;transform:rotate(-5deg)", "left:38.5%;top:1%;width:23%;transform:rotate(2deg)", "right:10%;top:7%;width:23%;transform:rotate(6deg)"]) : W ? ["left:0;top:2%;width:54%;transform:rotate(-6deg)", "right:0;top:13%;width:54%;transform:rotate(5deg)", "left:21%;top:55%;width:56%;transform:rotate(-2deg)"] : S.shape === "tall" ? ["left:0;top:8%;width:35%;transform:rotate(-5deg)", "left:32.5%;top:2%;width:35%;transform:rotate(2deg)", "right:0;top:9%;width:35%;transform:rotate(6deg)"] : ["left:2%;top:9%;width:34%;transform:rotate(-5deg)", "left:33%;top:3%;width:34%;transform:rotate(2deg)", "right:2%;top:10%;width:34%;transform:rotate(6deg)"]; f.forEach(function(t, i){ stage.appendChild(card(t, spots[i])); }); }
   if (S.kind === "wall") { var cols = W ? 3 : 4, n = W ? 9 : 8, wl = stage.appendChild(el("div", "wall")); wl.style.cssText = "position:absolute;inset:0;grid-template-columns:repeat(" + cols + ",1fr)"; S.tiles.slice(0, n).forEach(function(t){ var k = card(t); bgi(k.firstChild, t.thumb); if (t.name.length > 16) k.className += " long"; wl.appendChild(k); }); }
   if (S.kind === "vote") { var box = stage.appendChild(el("div", "ideas")); box.style.cssText = "position:absolute;inset:0"; S.ideas.slice(0, S.shape === "square" ? 2 : 3).forEach(function(d){ var row = box.appendChild(el("div", "idea")); row.appendChild(el("div", "box")); var t = row.appendChild(el("div")); t.appendChild(el("h3", "", d.name)); if (W) t.appendChild(el("p", "", d.line)); }); }
   // Hex and what she says
@@ -150,11 +179,14 @@ h1 em{font-style:normal;color:var(--gold)}
     var hx = add(el("img", "hex")); hx.src = S.hex; hx.alt = "";
     var say = add(el("div", "say" + (W && S.kind === "mosaic" ? " tail-right" : ""))); say.appendChild(el("b", "", S.label)); say.appendChild(el("span", "fit", S.say));
   }
-  var foot = add(el("div", "foot")); if (B.pill) foot.appendChild(el("span", "pill", B.pill)); foot.appendChild(el("span", "", B.site)); if (B.fine) { foot.appendChild(el("span", "", "\u00b7")); foot.appendChild(el("span", "", B.fine)); }
+  var foot = add(el("div", "foot")); if (B.pill) foot.appendChild(el("span", "pill", B.pill)); if (B.site) foot.appendChild(el("span", "", B.site)); if (B.fine) { if (B.site) foot.appendChild(el("span", "", "\u00b7")); foot.appendChild(el("span", "", B.fine)); }
   // shrink any text that is too long for its box, a little at a time, and never below a readable size
-  document.head.appendChild(link);
-  var faces = ['900 40px "' + B.fonts.display + '"', '700 40px "' + B.fonts.display + '"', '500 40px "' + B.fonts.display + '"', '700 20px "' + B.fonts.body + '"', '400 20px "' + B.fonts.body + '"'];
-  window.READY = new Promise(function(ok){ link.onload = link.onerror = ok; }).then(function(){ return Promise.all(faces.map(function(f){ return document.fonts.load(f); })); }).then(function(){ return document.fonts.ready; }).then(function(){
+  if (link) document.head.appendChild(link);
+  // font files that come with the app are used straight from its folder, so nothing is fetched from anywhere
+  (B.fonts.faces || []).forEach(function(f){ try { document.fonts.add(new FontFace(f.family, 'url("' + f.url + '")', { weight: String(f.weight || "400"), style: f.style || "normal" })); } catch (e) {} });
+  var dw = B.fonts.displayWeight ? [String(B.fonts.displayWeight)] : ["900", "700", "500"];
+  var faces = dw.map(function(w){ return w + ' 40px "' + B.fonts.display + '"'; }).concat(['700 20px "' + B.fonts.body + '"', '400 20px "' + B.fonts.body + '"']);
+  window.READY = new Promise(function(ok){ if (!link) return ok(); link.onload = link.onerror = ok; }).then(function(){ return Promise.all(faces.map(function(f){ return document.fonts.load(f).catch(function(){}); })); }).then(function(){ return document.fonts.ready; }).then(function(){
     return Promise.all([].map.call(document.images, function(i){ return i.complete ? 0 : new Promise(function(ok){ i.onload = i.onerror = ok; }); }));
   }).then(function(){
     if (S.noFit) return;

@@ -19,6 +19,7 @@ function load(configPath) {
   const PROMO = path.dirname(path.resolve(configPath)), config = require(path.resolve(configPath));
   const ROOT = path.resolve(PROMO, config.root || ".."), brand = config.brand, OUT = path.join(PROMO, "out"), SHOTS = path.join(OUT, ".shots");
   brand.shapes = brand.shapes || DEFAULT_SHAPES;
+  if (brand.fonts.faces) brand.fonts.faces = brand.fonts.faces.map((f) => ({ ...f, url: f.url || url.pathToFileURL(path.resolve(ROOT, f.src)).href }));
   const mascot = brand.mascot || null, kitInfo = brand.kit || {};
   const fileUrl = (p) => (p ? url.pathToFileURL(path.resolve(ROOT, p)).href : undefined);
   const tileUrl = (t) => ({ name: t.name, art: fileUrl(t.art), thumb: fileUrl(t.thumb || t.art) });
@@ -30,10 +31,10 @@ function load(configPath) {
       const [w, h] = brand.shapes[shape];
       for (const a of adverts) {
         if (ids.length && !ids.includes(a.id)) continue;
-        list.push({ shape, w, h, brand, icon: fileUrl(brand.icon), id: a.id, kind: a.kind || (a.art ? "feature" : "mosaic"), group: a.group || "general", note: a.note || "",
-          eyebrow: a.eyebrow || "", title: a.title, gold: a.gold || "", sub: a.sub || "", say: a.say || "", art: fileUrl(a.art), tiles: (a.tiles || []).map(tileUrl), ideas: a.ideas || [],
+        list.push({ shape, w, h, brand, icon: fileUrl(brand.icon), logo: fileUrl(brand.logo), picture: fileUrl(a.picture), aspect: a.aspect || "", fit: a.fit || "", ticked: !!a.ticked, lines: a.lines || 1, artFit: a.artFit || null, id: a.id, kind: a.kind || (a.art ? "feature" : "mosaic"), group: a.group || "general", note: a.note || "",
+          eyebrow: a.eyebrow || "", title: a.title, gold: a.gold || "", sub: a.sub || "", say: a.say || "", art: a.artShot ? url.pathToFileURL(path.join(SHOTS, a.artShot + ".png")).href : fileUrl(a.art), needsShots: !!(a.shot || a.artShot), tiles: (a.tiles || []).map(tileUrl), ideas: a.ideas || [],
           shot: a.shot ? url.pathToFileURL(path.join(SHOTS, a.shot + ".png")).href : undefined,
-          hex: mascot && a.pose ? fileUrl(path.join(mascot.dir, (mascot.prefix || "") + a.pose + ".png")) : undefined, label: mascot ? mascot.label || mascot.name + " says" : "",
+          hex: mascot && a.pose ? fileUrl(path.join(mascot.dir, (mascot.prefix || "") + a.pose + ".png")) : undefined, label: a.label || (mascot && a.pose ? mascot.label || mascot.name + " says" : ""), speaker: a.speaker || (mascot && a.pose ? mascot.name : ""),
           out: path.join(OUT, shape, a.id + ".jpg") });
       }
     }
@@ -52,14 +53,15 @@ function load(configPath) {
       for (const pg of S.pages) {
         const ctx = await browser.newContext({ viewport: { width: pg.w, height: pg.h }, colorScheme: S.scheme || "dark", deviceScaleFactor: pg.scale || 2, hasTouch: pg.w < 500 });
         const p = await ctx.newPage();
-        if (S.enter) await S.enter(p, server.url); else await p.goto(server.url);
+        if (S.enter) await S.enter(p, server.url, pg); else await p.goto(server.url);
         if (leak && S.leak) await S.leak(p); else if (pg.go) await pg.go(p);
-        await p.addStyleTag({ content: (S.hide ? S.hide + "{display:none!important} " : "") + "*{scroll-behavior:auto!important}" });
+        const hide = [S.hide, !leak && pg.hide].filter(Boolean).join(",");
+        await p.addStyleTag({ content: (hide ? hide + "{display:none!important} " : "") + "*{scroll-behavior:auto!important}" });
         await p.evaluate(() => { if (document.activeElement) document.activeElement.blur(); window.scrollTo(0, 0); return document.fonts.ready; }); await p.waitForTimeout(500);
         const count = (sel, limit) => (sel ? p.evaluate(([s, l]) => [...document.querySelectorAll(s)].filter((m) => { const r = m.getBoundingClientRect(); return r.height && r.top < l; }).length, [sel, limit]) : 0);
         const first = S.never ? await p.evaluate((s) => { const m = [...document.querySelectorAll(s)].filter((x) => x.getBoundingClientRect().height)[0]; return m ? m.getBoundingClientRect().top : 1e9; }, S.never) : 1e9;
         const hh = crop ? Math.max(40, Math.min(pg.h, Math.floor(first - 8))) : pg.h;
-        result.never += await count(S.never, hh); result.hidden += await count(S.hide, hh);
+        result.never += await count(S.never, hh); result.hidden += await count(hide, hh);
         const file = path.join(dir, pg.name + ".png");
         await p.screenshot({ path: file, clip: { x: 0, y: 0, width: pg.w, height: hh } }); result.files.push(file);
         await ctx.close();
@@ -100,7 +102,7 @@ function load(configPath) {
         if (parseFloat(cs.fontSize) < minPx) out.problems.push("words too small (" + Math.round(parseFloat(cs.fontSize)) + "px): " + label);
       }
       // the headline, the speech bubble, the footer, the thing on show and the mascot must not sit on top of each other
-      const boxes = [".copy", ".say", ".foot"].filter((s) => document.querySelector(s)).map((s) => [s, document.querySelector(s).getBoundingClientRect()]);
+      const boxes = [".copy", ".say", ".foot", ".brand"].filter((s) => document.querySelector(s)).map((s) => [s, document.querySelector(s).getBoundingClientRect()]);
       for (const k of document.querySelectorAll(".stage > *, .stage .card, .stage .idea")) { const r = k.getBoundingClientRect(); if (r.left < -1 || r.top < -1 || r.right > W + 1 || r.bottom > H + 1) out.problems.push("the picture on show runs off the edge"); boxes.push(["the picture on show", r]); }
       if (hex) boxes.push([who, { left: hex.left + hex.width * 0.2, right: hex.right - hex.width * 0.2, top: hex.top + hex.height * 0.12, bottom: hex.bottom }]);
       for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) { const a = boxes[i][1], b = boxes[j][1]; if (boxes[i][0] !== boxes[j][0] && a.left < b.right - 2 && b.left < a.right - 2 && a.top < b.bottom - 2 && b.top < a.bottom - 2 && !out.problems.includes(boxes[i][0] + " overlaps " + boxes[j][0])) out.problems.push(boxes[i][0] + " overlaps " + boxes[j][0]); }
@@ -116,9 +118,9 @@ function load(configPath) {
   // Words to post beside an advert, and words that describe the picture for people who cannot see it.
   function words(s) {
     const head = s.gold ? s.title + " " + s.gold + (s.sub ? " " + s.sub : "") : s.title + (s.sub ? ". " + s.sub : "");
-    const said = s.say && mascot ? "\n\n" + mascot.name + " says: “" + s.say + "”" : s.say ? "\n\n" + s.say : "";
-    const seen = s.say && mascot ? " " + (mascot.describe || mascot.name) + ", says: " + s.say : s.say ? " " + s.say : "";
-    return { post: head + said + "\n\n" + brand.site, alt: brand.name + " advert. " + head + seen };
+    const who = s.speaker, said = s.say && who ? "\n\n" + who + " says: \u201c" + s.say + "\u201d" : s.say ? "\n\n" + s.say : "";
+    const seen = s.say && who ? " " + (s.hex && mascot && mascot.describe ? mascot.describe + "," : who) + " says: " + s.say : s.say ? " " + s.say : "";
+    return { post: head + said + (brand.site ? "\n\n" + brand.site : ""), alt: brand.name + " advert. " + head + seen };
   }
   // Pictures left behind by an advert that no longer exists.
   function leftovers() {
@@ -161,7 +163,7 @@ ${groups.map(group).join("")}
     let css = html.slice(html.indexOf("<style>") + 7, html.indexOf("</style>"));
     css = css.slice(css.indexOf("body{")).replace(/^body\{[^}]*\}/, 'body{margin:0 auto;padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bg);color:var(--fg);font:16px/1.5 "' + brand.fonts.body + '",system-ui,sans-serif;max-width:1200px}h1,h2,summary b{font-family:"' + brand.fonts.display + '","Trebuchet MS",system-ui,sans-serif}');
     const body = html.slice(html.indexOf("<h1>")).replace("</html>", "").replace(/<a href="[^"]*" download>(<img[^>]*>)<\/a>/g, "$1").replace(/Tap the picture to save it\./g, "Press and hold the picture to save it (right-click on a computer).");
-    return `<title>${kitTitle()}</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n<link rel="stylesheet" href="${brand.fonts.css}">\n<style>\n/* Layout: one column of short rows that open on a tap, in the app's own colors and typefaces. */\n:root{${tokens(light)}}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${tokens(dark)};color-scheme:dark}}\n:root[data-theme="dark"]{${tokens(dark)};color-scheme:dark}\n${css}</style>\n${body}`;
+    return `<title>${kitTitle()}</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n${brand.fonts.css ? '<link rel="stylesheet" href="' + brand.fonts.css + '">\n' : ""}<style>\n/* Layout: one column of short rows that open on a tap, in the app's own colors and typefaces. */\n:root{${tokens(light)}}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${tokens(dark)};color-scheme:dark}}\n:root[data-theme="dark"]{${tokens(dark)};color-scheme:dark}\n${css}</style>\n${body}`;
   }
   const files = () => specs().filter((s) => fs.existsSync(s.out)).map((s) => ({ path: path.relative(PROMO, s.out).split(path.sep).join("/") }));
 
@@ -170,6 +172,7 @@ ${groups.map(group).join("")}
   async function check(browser) {
     const problems = [], bad = (m) => problems.push(m), list = specs(), adverts = config.adverts({ now: Date.now() });
     const banned = config.banned || null, fixed = new Set([brand.name, brand.site, brand.fine, brand.pill, mascot && (mascot.label || mascot.name + " says"), "·"].filter(Boolean));
+    if (!brand.site && !brand.fine) bad("the adverts carry neither an address nor any small print");
     if (new Set(adverts.map((a) => a.id)).size !== adverts.length) bad("two adverts share the same id");
     if (list.length !== adverts.length * Object.keys(brand.shapes).length) bad("expected every advert in every shape, found " + list.length);
     for (const a of adverts) {
@@ -177,7 +180,7 @@ ${groups.map(group).join("")}
       for (const t of [a.eyebrow, a.title, a.gold, a.sub, a.say]) { if (!t) continue; if (/—|–/.test(t)) bad("an advert line has a long dash in it: " + t); if (banned && banned.test(t)) bad("an advert line names something it must not: " + t); }
     }
     let proofs = 0;
-    if (config.shots && list.some((s) => s.shot)) {
+    if (config.shots && list.some((s) => s.needsShots)) {
       const shot = await shots(browser);
       if (shot.never) bad("something that must never be in an advert is inside a screenshot of the app");
       if (shot.hidden) bad("a screenshot of the app shows something that was meant to be hidden for the picture");
@@ -185,11 +188,11 @@ ${groups.map(group).join("")}
       if (shot.files.length !== config.shots.pages.length || shot.files.some((f) => !fs.existsSync(f) || fs.statSync(f).size < 20000)) bad("a screenshot of the app is missing or empty");
     }
     for (let i = 0; i < list.length; i += 6) await Promise.all(list.slice(i, i + 6).map(async (s) => {
-      const r = await draw(browser, s, { save: false }), own = new Set([s.eyebrow, s.title, s.gold, s.sub, s.say].concat(s.tiles.map((t) => t.name), ...s.ideas.map((d) => [d.name, d.line])).filter(Boolean));
+      const r = await draw(browser, s, { save: false }), own = new Set([s.eyebrow, s.title, s.gold, s.sub, s.say, s.label].concat(s.tiles.map((t) => t.name), ...s.ideas.map((d) => [d.name, d.line])).filter(Boolean));
       r.problems.forEach((m) => bad(s.shape + "/" + s.id + ": " + m));
       r.texts.forEach((t) => { if (!fixed.has(t) && !own.has(t)) bad(s.shape + "/" + s.id + " says something the settings file did not give it: " + t); });
-      if ((s.say && s.hex && !r.texts.includes(s.say)) || !r.texts.includes(brand.site) || (brand.fine && !r.texts.includes(brand.fine))) bad(s.shape + "/" + s.id + " is missing its spoken line, the site address or the small print");
-      const w = words(s); if (!w.post.includes(brand.site) || /—/.test(w.post + w.alt)) bad(s.shape + "/" + s.id + ": the words to post are wrong");
+      if ((s.say && !r.texts.includes(s.say)) || (brand.site && !r.texts.includes(brand.site)) || (brand.fine && !r.texts.includes(brand.fine))) bad(s.shape + "/" + s.id + " is missing its spoken line, the site address or the small print");
+      const w = words(s); if (!w.post.includes(brand.site || s.title) || /—/.test(w.post + w.alt)) bad(s.shape + "/" + s.id + ": the words to post are wrong");
     }));
     // the saved kit
     const missing = list.filter((s) => !fs.existsSync(s.out) || fs.statSync(s.out).size < 30000);
@@ -239,7 +242,7 @@ ${groups.map(group).join("")}
     const browser = await chromium.launch(), started = Date.now();
     try {
       const list = specs({ ids: args, shapes });
-      if (list.some((s) => s.shot)) { const s = await shots(browser); if (s.never || s.calls) throw new Error("something that must never be in an advert ended up inside a screenshot, or the app called an outside service. Nothing was saved."); }
+      if (list.some((s) => s.needsShots)) { const s = await shots(browser); if (s.never || s.calls) throw new Error("something that must never be in an advert ended up inside a screenshot, or the app called an outside service. Nothing was saved."); }
       let wrong = 0;
       for (let i = 0; i < list.length; i += 6) await Promise.all(list.slice(i, i + 6).map(async (s) => { const r = await draw(browser, s); if (r.problems.length) { wrong++; console.log("PROBLEM " + s.shape + "/" + s.id + ": " + r.problems.join("; ")); } }));
       if (!args.length && shapes.length === Object.keys(brand.shapes).length) leftovers().forEach((f) => { fs.unlinkSync(f); console.log("removed a leftover picture: " + path.relative(ROOT, f)); });
