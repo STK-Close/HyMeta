@@ -111,3 +111,14 @@ Decisions made so far, and who made them. Anything marked "Claude's call" is ope
 - Whether a paid app is allowed under the CurseForge API terms.
 - Whether the artwork made in Perplexity may be used commercially.
 - Whether Lumina Art House owns the hymeta.gg web address.
+
+## The earlier Firebase Studio version (shared by Ligia, November 2026, for reference only)
+Ideas from the first HyMeta build, kept as words only. The screenshots themselves are not stored here: they show
+real mod names and logos (nothing from CurseForge is stored) and Ligia's own browser tabs and bookmarks.
+- Tagline: "Pick your playstyle. Get a tested Hytale mod build in seconds."
+- "Today's builds": three featured builds at the top of the home page (Chill exploration, Cozy builder,
+  Cozy family world), each with a one-line description and its core mods listed by name with small icons.
+- Two badges per build: "Recommended" and a difficulty ("Easy", "Normal", "Hard"), each in its own colour.
+- "Pick a playstyle" cards with an icon tile and a difficulty badge: Adventurer (normal), Builder (easy), Combat (hard).
+- A "Curator tools" link in the top bar for the owner.
+- Look: near-black background, gold headings, rounded dark cards with a thin border.
