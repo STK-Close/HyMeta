@@ -101,6 +101,7 @@ function makeAudit(p, bad) {
         await p.click(`footer a[href="/${file}.html"]`); await p.waitForSelector("#doc-title");
         if ((await p.textContent("#doc-title")) !== title || !(await p.textContent("main")).includes(words)) bad(`the ${file} page does not show the ${title}`);
         if (await count("#view, #pw")) bad(`the ${file} page is not a plain page of its own`);
+        if (file === "help" && (await p.getAttribute('main a[href^="tel:"]', "href").catch(() => null)) !== "tel:+18137032981") bad("the Help page does not give Lumina Art House's phone number as a link that dials it");
         await audit(file + " page");
         if (file === "terms") {
           const before = await p.evaluate(() => getComputedStyle(document.body).backgroundColor); await p.click("#theme-switch");
