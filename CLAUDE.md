@@ -58,4 +58,4 @@ project, redraw, and run `npm test`.
 - Never set `SITE_OPEN`. Never put keys or passwords in chat or in the repository (it is public).
 - Nothing from CurseForge is stored. New art is made with `scripts/make-art.py` in the chunky block style.
 - App text: sentence case, plain words, no em dashes, nothing unsuitable for children.
-- Replies start with a short "Start here" summary, and end with "Your next step" only if she must act.
+- Replies start with "# 🟢 Start here" as a large heading, then a short summary (2 to 4 lines). End with "Your next step" only if she must act. (Ligia, November 2026.)
