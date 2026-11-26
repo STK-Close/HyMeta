@@ -403,7 +403,7 @@ function rng(seed){
   return function(){ s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
 }
 var ART = { combat:"pack-combat", building:"pack-building", survival:"pack-survival", creatures:"pack-creatures", magic:"pack-magic", exploration:"pack-exploration", everything:"pack-everything", hero:"hymeta-hero", crawlies:"pack-crawlies", factory:"pack-factory", hermit:"pack-hermit", farm:"pack-farm",
-  fishing:"pack-fishing", knights:"pack-knights", catcafe:"pack-catcafe", miner:"pack-miner", potions:"pack-potions", roadtrip:"pack-roadtrip", plushies:"pack-plushies", archer:"pack-archer", garden:"pack-garden", quests:"pack-quests", dinos:"pack-dinos", packrat:"pack-packrat", scenic:"pack-scenic" };
+  fishing:"pack-fishing", knights:"pack-knights", catcafe:"pack-catcafe", miner:"pack-miner", potions:"pack-potions", roadtrip:"pack-roadtrip", plushies:"pack-plushies", archer:"pack-archer", garden:"pack-garden", quests:"pack-quests", dinos:"pack-dinos", packrat:"pack-packrat", scenic:"pack-scenic", middle:"pack-middle" };
 function art(key, big){ return '<img class="art" src="images/' + (big ? "" : "thumb-") + (ART[key] || ART.hero) + '.jpg" alt="" decoding="async"' + (big ? "" : ' loading="lazy"') + ">"; }
 
 /* ---------- sample data (placeholders until CurseForge is connected) ---------- */
@@ -537,6 +537,13 @@ var WEEKLY = [
             cheeky:"You walked for an hour and did nothing but look at water. I am calling that a win.",
             unhinged:"LOOK AT THE SKY. LOOK AT IT. It is GREEN now. Nobody did that. It just happened. I LOVE IT HERE." },
     hint:"Bring nothing. Just look up.", core:["atlas","sort","camp","far"], spice:["trail"] },
+  { id:"middle-of-the-world", family:"exploration", art:"middle", name:"The middle of the world", kind:"Standard", dare:2, icon:"compass", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
+    blurb:"Straight down, past the caves, until the map gives up. Bring a rope and a light.",
+    warning:"Going down is the easy part. Nobody ever asks about the way back up.",
+    pitch:{ gentle:"One rope, one lantern and a very long way down. Take your time. The middle is not going anywhere.",
+            cheeky:"You packed a rope, a light and no plan. The map stopped helping an hour ago. So did I.",
+            unhinged:"DOWN. Keep going DOWN. The map is BLANK now. We are OFF THE MAP. I have never been happier." },
+    hint:"Bring a rope. A long one.", core:["atlas","sort","camp","far"], spice:["trail"] },
   { id:"knights-and-dragons", family:"combat", art:"knights", name:"Knights and dragons", kind:"Standard", dare:2, icon:"crown", sky:NIGHT, moon:"#ffe2a0", hills:HILLS,
     blurb:"Shiny armor, a proper castle and something large asleep on the roof.",
     warning:"The dragon is friendly until someone touches its gold. Do not touch its gold.",
@@ -618,7 +625,7 @@ var WEEKLY = [
 // The vote: three ideas for a playpack that has not been built yet. Each Thursday the weekly run
 // builds the one with the most votes for the following Monday, and puts three new ideas here.
 // (One line, rewritten by scripts/add-weekly.js.)
-var POLL = {"id":"w2","week":2,"ideas":[{"id":"mayor-of-somewhere","name":"Mayor of somewhere","line":"Villagers, shops and a whole town that needs running. Badly."},{"id":"mermaid-lagoon","name":"Mermaid lagoon","line":"Tails, tides and a pool that only works at full moon."},{"id":"middle-of-the-world","name":"The middle of the world","line":"Straight down, past the caves, until the map gives up."}]};
+var POLL = {"id":"w3","week":3,"ideas":[{"id":"sunken-treasure","name":"Sunken treasure","line":"Sails, shipwrecks and a map with a big red cross on it."},{"id":"paint-the-town","name":"Paint the town","line":"Every block, door and window in a color nobody asked for."},{"id":"fireworks-night","name":"Fireworks night","line":"Rockets, balloons, music and one goblin holding the matches."}]};
 // ---- the weekly switch ----
 // Week 0 began Monday 16 November 2026 at 09:00 UTC. Each week one playpack is free: a brand-new one
 // while the weekly list lasts, then every playpack takes a turn. The server works out the same thing
