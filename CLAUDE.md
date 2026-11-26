@@ -53,7 +53,8 @@ project, redraw, and run `npm test`.
 - When the site's address changes, change `site` in `promo/promo.config.js` and run the command again.
 
 ## Always
-- Add one extra, unasked-for improvement to each build and tell Ligia what it was.
+- Extra, unasked-for improvements are paused (Ligia, November 26, 2026: "it's in a good spot"). Do not add any
+  until she asks for them to restart. When restarted: add one to each build and tell her what it was.
 - Verify the live site (https://hymeta.vercel.app) after pushing, before telling her it is live.
 - Never set `SITE_OPEN`. Never put keys or passwords in chat or in the repository (it is public).
 - Nothing from CurseForge is stored. New art is made with `scripts/make-art.py` in the chunky block style.
