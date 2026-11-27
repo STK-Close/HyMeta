@@ -420,6 +420,7 @@ function makeAudit(p, bad) {
       if (await count(".tag-sample")) bad("live home still shows sample mods");
       if (!(await count('section[aria-labelledby="h-spot"] img.tile-img'))) bad("spotlight mod has no logo");
       // the free playpack: real-style mods, logos, authors, links and helper mods
+      await p.evaluate(() => localStorage.setItem("hymeta.sendwait", "3500")); await p.reload(); // the real wait is 8 seconds; shortened here
       await p.waitForSelector('.hero-side .chip:has-text("mods")'); // the free playpack has finished loading
       await p.click('[data-action="play"]'); await p.click('[data-mode="here"]'); await p.waitForSelector("#inst-list li");
       const inPack = await count("#inst-list li"); if (inPack < 6) bad("free playpack has too few mods: " + inPack);
@@ -427,9 +428,35 @@ function makeAudit(p, bad) {
       await audit("install sheet"); if (out) await p.screenshot({ path: `${out}/${tag}-install.png` });
       const first = await p.getAttribute("#inst-next", "href"), firstName = await p.textContent("#inst-next");
       if (!/^curseforge:\/\/install\?addonId=\d+$/.test(first)) bad("the install button does not hand the mod to the CurseForge app: " + first);
-      await p.click("#inst-next"); await p.waitForFunction(() => /^1 of /.test(document.querySelector("#inst-count").textContent));
-      if ((await p.textContent("#inst-next")) === firstName) bad("after installing a mod the button did not move on to the next one");
-      if (await count("#inst-list input:checked") !== 1) bad("the installed mod was not ticked off");
+      if (!/Open CurseForge first, and let it finish any update, then click Install\./.test(await p.textContent("#inst-tip"))) bad("the tip about opening CurseForge first is missing");
+      // a tap holds the button for a few seconds, so a second or third tap does nothing (Ligia's bug: taps skipped mods)
+      await p.evaluate(() => { window.__opened = 0; document.addEventListener("click", (e) => { if (e.target.closest("#inst-next, #inst-again") && !e.defaultPrevented) window.__opened++; }); }); // counts taps that really go to CurseForge
+      await p.click("#inst-next");
+      if (!/Opening CurseForge/.test(await p.textContent("#inst-next")) || (await p.getAttribute("#inst-next", "aria-disabled")) !== "true") bad("after a tap the install button does not say it is opening CurseForge");
+      await audit("install, opening CurseForge");
+      // ticking another mod off by hand while CurseForge opens must not bring back an active install button early
+      await p.locator("#inst-list input").nth(3).check(); await p.locator("#inst-list input").nth(3).uncheck();
+      if (!/Opening CurseForge/.test(await p.textContent("#inst-next"))) bad("ticking a mod while CurseForge was opening ended the hold early");
+      await p.click("#inst-next", { force: true }); await p.click("#inst-next", { clickCount: 2, force: true }); // force: a real person can tap it, held or not
+      await p.waitForFunction(() => /^1 of /.test(document.querySelector("#inst-count").textContent), null, { timeout: 7000 });
+      await p.waitForTimeout(400);
+      if ((await p.evaluate(() => window.__opened)) !== 1) bad("extra taps while CurseForge was opening sent the mod again: " + await p.evaluate(() => window.__opened) + " sends");
+      if (await count("#inst-list input:checked") !== 1) bad("extra taps while CurseForge was opening sent more than one mod: " + await count("#inst-list input:checked") + " ticked");
+      if ((await p.textContent("#inst-next")) === firstName) bad("after sending a mod the button did not move on to the next one");
+      // then it says it was sent, with a way to send the same mod again (CurseForge sometimes updates itself and drops it)
+      const sent = await p.textContent("#inst-sent");
+      if (!sent.includes(firstName.replace(/^Install /, "").trim()) || !/to CurseForge/.test(sent)) bad("the sent mod is not confirmed by name: " + sent);
+      if ((await p.getAttribute("#inst-again", "href")) !== first || !/Didn't open\? Try again/.test(await p.textContent("#inst-again"))) bad("there is no Try again link that resends the same mod");
+      await audit("install, sent with try again"); if (out) await p.screenshot({ path: `${out}/${tag}-install-sent.png` });
+      await p.click("#inst-again"); await p.click("#inst-again", { force: true });
+      if (!/Opening CurseForge/.test(await p.textContent("#inst-again"))) bad("Try again does not show that it is opening CurseForge");
+      if ((await p.evaluate(() => window.__opened)) !== 2) bad("a double tap on Try again sent the mod more than once");
+      if (await count("#inst-list input:checked") !== 1) bad("Try again changed which mods count as sent");
+      await p.waitForFunction(() => /Try again/.test(document.querySelector("#inst-again").textContent), null, { timeout: 7000 });
+      // remembered on this device: a reload keeps the sent mod and the Try again link
+      await p.keyboard.press("Escape"); await p.reload(); await p.waitForSelector('.hero-side .chip:has-text("mods")');
+      await p.click('[data-action="play"]'); await p.click('[data-mode="here"]'); await p.waitForSelector("#inst-list li");
+      if (await count("#inst-list input:checked") !== 1 || (await p.getAttribute("#inst-again", "href")) !== first) bad("which mods were sent was forgotten after reloading");
       while (await count("#inst-list input:not(:checked)")) { await p.locator("#inst-list input:not(:checked)").first().click(); await p.waitForTimeout(80); }
       await p.waitForSelector("#inst-done");
       const lastStep = await p.textContent("#inst-done");

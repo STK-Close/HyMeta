@@ -204,6 +204,10 @@ details.plain>summary{min-height:44px;display:flex;align-items:center;cursor:poi
 .inst li{justify-content:space-between;min-height:44px;border-top:1px solid var(--line-soft)}
 .inst .linkbtn{padding:0;font-size:.8125rem}
 .inst .check{font-weight:400;flex:1;min-width:0}
+.sentline{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.sentline svg.ic{width:16px;height:16px;vertical-align:-3px}
+.sentline .linkbtn{min-height:44px;padding:0}
+a.busy{cursor:progress}
 .qrow{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--line-soft)}
 .mod{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;align-items:start;border-top:1px solid var(--line-soft)}
 .mod .iconbtn{margin-top:8px}
@@ -695,7 +699,7 @@ var S = {
   tier: store.get("tier", "free"), mood: store.get("mood", "cheeky"), theme: store.get("theme", "device"),
   saved: store.get("saved", []), savedMods: store.get("savedMods", []), mine: store.get("mine", []), brokenMine: [],
   hidden: store.get("hidden", []), blocked: store.get("blocked", []),
-  user: null, accounts: false, billing: false, plan: "year", queue: null, blockedMembers: [], upnext: store.get("upnext", []), installed: store.get("installed", {}), welcomed: store.get("welcomed", false), sort: (["new", "style", "az", "gentle", "wild"].indexOf(store.get("sort", "new")) > -1 ? store.get("sort", "new") : "new"), q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false, bres: [], bbusy: false, spot: null,
+  user: null, accounts: false, billing: false, plan: "year", queue: null, blockedMembers: [], upnext: store.get("upnext", []), installed: store.get("installed", {}), lastSent: store.get("lastsent", {}), welcomed: store.get("welcomed", false), sort: (["new", "style", "az", "gentle", "wild"].indexOf(store.get("sort", "new")) > -1 ? store.get("sort", "new") : "new"), q: "", filter: "all", fam: "all", savedTab: "packs", bq: "", bcat: "all", bonly: false, bres: [], bbusy: false, spot: null,
   draft: { name:"", blurb:"", mods:[] }, dirty: false, open: {}
 };
 var hostTheme = document.documentElement.getAttribute("data-theme");
@@ -1232,7 +1236,7 @@ function openSheet(title, html){
   if (!was) sheet.showModal();
   $("#sheet-title").focus();
 }
-function closeSheet(){ timers.forEach(clearTimeout); timers = []; if (sheet.open) sheet.close(); }
+function closeSheet(){ timers.forEach(clearTimeout); timers = []; clearTimeout(sendTimer); sendTimer = null; if (sheet.open) sheet.close(); }
 sheet.addEventListener("close", function(){ if (opener && document.contains(opener)) opener.focus(); else { var h = $("#view h1"); if (h) h.focus(); } });
 sheet.addEventListener("click", function(e){ if (e.target === sheet) closeSheet(); });
 
@@ -1245,20 +1249,49 @@ function markInstalled(p, id, on){
   if (installedIn(p).length === allMods(p).length && S.upnext.indexOf(p.id) > -1){ S.upnext = S.upnext.filter(function(x){ return x !== p.id; }); store.set("upnext", S.upnext); remember("upnext", p.id, false); }
 }
 function appLink(id){ return "curseforge://install?addonId=" + encodeURIComponent(String(id).replace(/^cf/, "")); }
+// A link to the CurseForge app cannot tell whether it landed, and the app can take a few seconds to come
+// up (longer if it updates itself first). So a tap is held for a few seconds, then the mod is shown as
+// sent, with an easy way to send it again. Each playpack remembers what was sent on this device.
+var SEND_WAIT = (function(){ var w = +store.get("sendwait", 8000); return w > 0 && w <= 8000 ? w : 8000; })(); // tests shorten it
+function sentLine(p){
+  var last = S.lastSent[p.id], m = last && MOD[last];
+  if (!m || installedIn(p).indexOf(last) < 0) return "";
+  return '<p class="small sentline" id="inst-sent" role="status"><span>' + ic("check") + " Sent <strong>" + esc(m.name) + "</strong> to CurseForge.</span> " +
+    '<a class="linkbtn small" id="inst-again" href="' + appLink(last) + '" data-action="instagain" data-mod="' + esc(last) + '">Didn\'t open? Try again</a></p>';
+}
 function installBody(p){
   var ids = allMods(p), done = installedIn(p), next = ids.filter(function(i){ return done.indexOf(i) < 0; })[0];
   var top = next
-    ? '<a class="btn btn-primary btn-big btn-full" id="inst-next" href="' + appLink(next) + '" data-action="instnext" data-id="' + p.id + '" data-mod="' + next + '">' + ic("down") + "Install " + esc(MOD[next].name) + "</a>" +
-      '<p class="small muted" id="inst-count">' + done.length + " of " + ids.length + " installed. Each tap hands one mod to the CurseForge app.</p>"
-    : '<div id="inst-done" class="sec"><p><strong>All ' + ids.length + " mods are in.</strong> One last step, because Hytale keeps mods switched off until you say so:</p>" +
+    ? '<p class="small muted" id="inst-tip">Open CurseForge first, and let it finish any update, then click Install.</p>' + sentLine(p) +
+      '<a class="btn btn-primary btn-big btn-full" id="inst-next" href="' + appLink(next) + '" data-action="instnext" data-id="' + p.id + '" data-mod="' + next + '">' + ic("down") + "<span>Install " + esc(MOD[next].name) + "</span></a>" +
+      '<p class="small muted" id="inst-count">' + done.length + " of " + ids.length + " sent. Each tap hands one mod to the CurseForge app.</p>"
+    : sentLine(p) + '<div id="inst-done" class="sec"><p><strong>All ' + ids.length + " mods are in.</strong> One last step, because Hytale keeps mods switched off until you say so:</p>" +
       '<ol class="steps"><li>Open Hytale and go to <strong>Worlds</strong>.</li><li><strong>Right-click</strong> your world and choose <strong>Mods</strong>. For a new world, use the settings cog while creating it.</li><li>Tick the mods to switch these mods on, then choose <strong>Save World Settings</strong>.</li></ol>' +
       '<p class="small muted">Hytale has no single list of installed mods. They only show inside each world\'s Mods screen.</p>' + hex(say("installed")) +
       "</div>";
   return top + '<ul class="ticks inst" id="inst-list">' + ids.map(function(i){
       var m = MOD[i], on = done.indexOf(i) > -1;
-      return '<li class="' + (on ? "done" : "") + '"><label class="check"><input type="checkbox" data-inst="' + p.id + '" value="' + i + '"' + (on ? " checked" : "") + '><span><span class="sr">Installed: </span>' + esc(m.name) + "</span></label>" +
+      return '<li class="' + (on ? "done" : "") + '"><label class="check"><input type="checkbox" data-inst="' + p.id + '" value="' + i + '"' + (on ? " checked" : "") + '><span><span class="sr">Sent: </span>' + esc(m.name) + "</span></label>" +
         '<a class="linkbtn small" href="' + esc(m.url || "https://www.curseforge.com/hytale") + '" target="_blank" rel="noopener">Page' + ic("ext") + '<span class="sr"> for ' + esc(m.name) + " (opens in a new tab)</span></a></li>"; }).join("") + "</ul>" +
-    '<details class="plain"><summary>Nothing happens when I tap install</summary><p class="small">The install button needs the free CurseForge app on this computer. Open it once, then try again. You can also tap Page beside any mod and install it from its CurseForge page, then tick it off here.</p><a class="linkbtn" href="https://www.curseforge.com/download/app" target="_blank" rel="noopener">Get the CurseForge app' + ic("ext") + '<span class="sr"> (opens in a new tab)</span></a></details>';
+    '<details class="plain"><summary>Nothing happens when I tap install</summary><p class="small">The install button needs the free CurseForge app on this computer. Open it once, let it finish any update, then try again. You can also tap Page beside any mod and install it from its CurseForge page, then tick it off here.</p><a class="linkbtn" href="https://www.curseforge.com/download/app" target="_blank" rel="noopener">Get the CurseForge app' + ic("ext") + '<span class="sr"> (opens in a new tab)</span></a></details>';
+}
+// One tap, one mod. The tap is remembered at once, so a reload or a closed sheet never loses it,
+// and any further taps during the wait are ignored, so nothing is skipped by a double click.
+function holdLink(b, text){
+  b.setAttribute("aria-disabled", "true"); b.classList.add("busy");
+  var label = b.querySelector("span") || b; label.textContent = text;
+}
+var sendTimer = null; // the one send that is waiting; closing the sheet cancels the redraw (the send itself is already saved)
+function sendMod(p, mod, b){
+  markInstalled(p, mod, true); S.lastSent[p.id] = mod; store.set("lastsent", S.lastSent);
+  holdLink(b, "Opening CurseForge\u2026");
+  clearTimeout(sendTimer);
+  sendTimer = setTimeout(function(){
+    sendTimer = null;
+    if (!sheet.open || !$("#inst-list") || $("#inst-list input").getAttribute("data-inst") !== p.id) return;
+    openSheet("Play " + esc(p.name), playBody(p, "here")); var nx = $("#inst-next") || $("#inst-again") || $("#sheet-title"); nx.focus();
+    toast("Sent " + MOD[mod].name + " to CurseForge"); // read out by screen readers
+  }, SEND_WAIT);
 }
 function sendBody(p){
   return "<p>Hytale runs on computers. Open HyMeta on yours, choose <strong>I have a code</strong> on the home screen and type this in. The code works for one day.</p>" +
@@ -1444,7 +1477,9 @@ document.addEventListener("click", function(e){
   else if (a === "play") openPlay(id);
   else if (a === "playmode") openPlay(id, b.getAttribute("data-mode"));
   else if (a === "install") runInstall(id);
-  else if (a === "instnext"){ p = findPack(id); markInstalled(p, b.getAttribute("data-mod"), true); setTimeout(function(){ if (sheet.open){ openSheet("Play " + esc(p.name), playBody(p, "here")); var nx = $("#inst-next") || $("#sheet-title"); nx.focus(); } }, 60); }
+  else if ((a === "instnext" || a === "instagain") && b.getAttribute("aria-disabled") === "true") e.preventDefault(); // already on its way
+  else if (a === "instnext") sendMod(findPack(id), b.getAttribute("data-mod"), b);
+  else if (a === "instagain"){ holdLink(b, "Opening CurseForge\u2026"); setTimeout(function(){ if (document.contains(b)){ b.removeAttribute("aria-disabled"); b.classList.remove("busy"); b.textContent = "Didn't open? Try again"; } }, SEND_WAIT); }
   else if (a === "quip" && b.parentNode.getAttribute("data-alt")){ var hx = b.parentNode, ln = hx.querySelector(".line"), was = ln.textContent; ln.textContent = hx.getAttribute("data-alt"); hx.setAttribute("data-alt", was); }
   else if (a === "quip"){ var ql = QUIPS[S.mood]; quipAt = (quipAt + 1) % ql.length; toast("Hex: " + ql[quipAt]); }
   else if (a === "code") openCode();
@@ -1547,7 +1582,7 @@ document.addEventListener("change", function(e){
   else if (t.id === "fam"){ S.fam = t.value; $("#results").innerHTML = resultsHtml(); }
   else if (t.id === "bcat"){ S.bcat = t.value; $("#b-list").innerHTML = pickList(); }
   else if (t.id === "bonly"){ S.bonly = t.checked; $("#b-list").innerHTML = pickList(); }
-  else if (t.getAttribute("data-inst")){ var ip = findPack(t.getAttribute("data-inst")); markInstalled(ip, t.value, t.checked); openSheet("Play " + esc(ip.name), playBody(ip, "here")); var back = sheet.querySelector('input[value="' + t.value + '"]'); if (back) back.focus(); }
+  else if (t.getAttribute("data-inst")){ var ip = findPack(t.getAttribute("data-inst")); markInstalled(ip, t.value, t.checked); if (sendTimer) return; /* a send is still opening: the sheet redraws when it is done */ openSheet("Play " + esc(ip.name), playBody(ip, "here")); var back = sheet.querySelector('input[value="' + t.value + '"]'); if (back) back.focus(); }
   else if (t.id === "sort"){ S.sort = t.value; store.set("sort", S.sort); $("#results").innerHTML = resultsHtml(); }
   else if (t.id === "news-on"){ var want = t.checked; post({ op:"news", on:want }).then(function(){ S.user.news = want; toast(want ? "Weekly email is on" : "Weekly email is off"); }, function(){ t.checked = !want; toast("That did not save. Check your connection."); }); }
   else if (t.id === "theme"){ S.theme = t.value; store.set("theme", S.theme); applyTheme(); }
