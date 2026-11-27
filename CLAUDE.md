@@ -49,7 +49,11 @@ project, redraw, and run `npm test`.
   before it is used.
 - Ligia looks at the kit through a private page: https://claude.ai/artifact/TXy75CVURP7sjkmjEHS96J. It shows
   `promo/kit-page.html`. Refresh it the way `docs/weekly-run.md` step 7 says, always to that same address.
-- Nothing is posted by Claude. Ligia posts. A playpack's advert goes out in its own week, not before.
+- Posting (Ligia, November 27, 2026, launch campaign): Claude may post launch content that passed the rules check,
+  and nothing else. The rules check is a separate reviewer agent reading each post against these rules (child safe,
+  "An unofficial fan site", no mod names, logos or numbers) plus a check that its link opens. Posts go out from
+  HyMeta's own launch sheet and HyMeta's own connected accounts only. A playpack's advert goes out in its own week,
+  not before: teasers show the site and what membership gets you, never an upcoming playpack.
 - When the site's address changes, change `site` in `promo/promo.config.js` and run the command again.
 
 ## Always
