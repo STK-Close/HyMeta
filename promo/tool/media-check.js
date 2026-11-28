@@ -102,7 +102,9 @@ function load(configPath) {
       item.pass = !item.problems.length; items.push(item);
     };
     for (const v of M.videos || []) { const f = path.resolve(ROOT, v.file); if (!fs.existsSync(f)) { add("video", v.file, f, v.published, { problems: ["the video is missing"], notes: [] }); continue; } add("video", v.file, f, v.published, checkVideo(v, f), { captions: v.captions || [], story: v.story || "" }); }
-    if (M.pictures !== false) for (const rel of Object.keys(manifest.pictures).sort()) { const f = path.join(PROMO, "out", rel); if (!fs.existsSync(f)) continue; add("picture", "promo/out/" + rel, f, M.picturesPublished ? path.join(M.picturesPublished, rel) : null, checkPicture(rel, f, manifest, shapes)); }
+    // every picture in promo/out is checked, whether or not the manifest knows it (an unknown one fails)
+    const onDisk = Object.keys(shapes).flatMap((sh) => { const d = path.join(PROMO, "out", sh); return fs.existsSync(d) ? fs.readdirSync(d).filter((x) => /\.(jpe?g|png)$/i.test(x)).map((x) => sh + "/" + x) : []; });
+    if (M.pictures !== false) for (const rel of [...new Set(onDisk.concat(Object.keys(manifest.pictures)))].sort()) { const f = path.join(PROMO, "out", rel); if (!fs.existsSync(f)) continue; add("picture", "promo/out/" + rel, f, M.picturesPublished ? path.join(M.picturesPublished, rel) : null, checkPicture(rel, f, manifest, shapes)); }
     const report = { checked: new Date().toISOString(), tool: "promo-maker media check", note: "Each file passed only if problems is empty. The poster compares a file's sha256 with this report before posting it. Contact sheets: one frame a second, left to right, top to bottom.", items };
     fs.writeFileSync(path.join(REPORT, "report.json"), JSON.stringify(report, null, 1) + "\n");
     fs.writeFileSync(path.join(REPORT, "report.md"), "# Media check\n\nChecked " + report.checked + ". " + items.filter((i) => i.pass).length + " of " + items.length + " files passed.\n\n" + items.map((i) => `- ${i.pass ? "PASS" : "FAIL"} ${i.file}: ${i.problems.concat(i.notes).join("; ")}. Contact sheet: ${i.sheet}`).join("\n") + "\n");
@@ -142,8 +144,9 @@ function prove() {
   pic("square/nofine.jpg", f("good.jpg"), /small print/, "missing small print");
   pic("square/changed.jpg", f("good.jpg"), /changed after/, "a picture changed after drawing");
   pic("wide/good.jpg", f("good.jpg"), /not 1600 by 900/, "a picture of the wrong size");
+  pic("square/unknown.jpg", f("good.jpg"), /no record/, "a picture the drawing manifest does not know");
   fs.rmSync(tmp, { recursive: true, force: true });
-  return { problems: out, proofs: 11 };
+  return { problems: out, proofs: 12 };
 }
 
 module.exports = { load, prove, checkVideo, checkPicture };
