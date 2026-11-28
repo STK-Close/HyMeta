@@ -32,9 +32,9 @@ function load(configPath) {
       for (const a of adverts) {
         if (ids.length && !ids.includes(a.id)) continue;
         if (a.shapes && !a.shapes.includes(shape)) continue;   // an advert may be made for some shapes only
-        list.push({ shape, w, h, brand, icon: fileUrl(brand.icon), logo: fileUrl(brand.logo), picture: fileUrl(a.picture), aspect: a.aspect || "", fit: a.fit || "", ticked: !!a.ticked, lines: a.lines || 1, pill: a.pill || "", stack: !!a.stack, corner: !!a.corner, beside: a.beside != null ? !!a.beside : !!(a.kind === "poster" && a.say), tags: a.tags || [], artFit: a.artFit || null, id: a.id, kind: a.kind || (a.art ? "feature" : "mosaic"), group: a.group || "general", note: a.note || "",
+        list.push({ shape, w, h, brand, icon: fileUrl(brand.icon), logo: fileUrl(brand.logo), picture: fileUrl(a.picture), aspect: a.aspect || "", fit: a.fit || "", ticked: !!a.ticked, lines: a.lines || 1, pill: a.pill || "", stack: !!a.stack, corner: !!a.corner, beside: a.beside != null ? !!a.beside : !!(a.kind === "poster" && a.say), tags: a.tags || [], artFit: a.artFit || null, shotAt: a.shotAt || null, id: a.id, kind: a.kind || (a.art ? "feature" : "mosaic"), group: a.group || "general", note: a.note || "",
           eyebrow: a.eyebrow || "", title: a.title, gold: a.gold || "", sub: a.sub || "", say: a.say || "", art: a.artShot ? url.pathToFileURL(path.join(SHOTS, a.artShot + ".png")).href : fileUrl(a.art), needsShots: !!(a.shot || a.artShot), tiles: (a.tiles || []).map(tileUrl), ideas: a.ideas || [],
-          shot: a.shot ? url.pathToFileURL(path.join(SHOTS, a.shot + ".png")).href : undefined,
+          shot: a.shot ? url.pathToFileURL(path.join(SHOTS, ((a.shotFor && a.shotFor[shape]) || a.shot) + ".png")).href : undefined,
           hex: mascot && a.pose ? fileUrl(path.join(mascot.dir, (mascot.prefix || "") + a.pose + ".png")) : undefined, label: a.label || (mascot && a.pose ? mascot.label || mascot.name + " says" : ""), speaker: a.speaker || (mascot && a.pose ? mascot.name : ""),
           out: path.join(OUT, shape, a.id + ".jpg") });
       }
@@ -202,6 +202,8 @@ ${groups.map(group).join("")}
     if (list.length !== adverts.reduce((n, a) => n + (a.shapes ? a.shapes.length : Object.keys(brand.shapes).length), 0)) bad("expected every advert in every shape, found " + list.length);
     for (const a of adverts) {
       if (mascot && a.pose && !fs.existsSync(path.resolve(ROOT, mascot.dir, (mascot.prefix || "") + a.pose + ".png"))) bad("no picture of " + mascot.name + " for the pose " + a.pose);
+      for (const [sh, page] of Object.entries(a.shotFor || {})) if (!brand.shapes[sh] || !(config.shots && config.shots.pages.some((pg) => pg.name === page))) bad(a.id + ": shotFor for " + sh + " must name a shape and one of the screenshot pages");
+      for (const [sh, pos] of Object.entries(a.shotAt || {})) if (!brand.shapes[sh] || !/^\d+(\.\d+)?% \d+(\.\d+)?%$/.test(pos)) bad(a.id + ": shotAt for " + sh + " must name a shape and look like \"50% 15%\"");
       for (const t of [a.eyebrow, a.title, a.gold, a.sub, a.say, a.pill]) { if (!t) continue; if (/—|–/.test(t)) bad("an advert line has a long dash in it: " + t); if (banned && banned.test(t)) bad("an advert line names something it must not: " + t); }
     }
     let proofs = 0;
