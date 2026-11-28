@@ -31,7 +31,8 @@ function load(configPath) {
       const [w, h] = brand.shapes[shape];
       for (const a of adverts) {
         if (ids.length && !ids.includes(a.id)) continue;
-        list.push({ shape, w, h, brand, icon: fileUrl(brand.icon), logo: fileUrl(brand.logo), picture: fileUrl(a.picture), aspect: a.aspect || "", fit: a.fit || "", ticked: !!a.ticked, lines: a.lines || 1, artFit: a.artFit || null, id: a.id, kind: a.kind || (a.art ? "feature" : "mosaic"), group: a.group || "general", note: a.note || "",
+        if (a.shapes && !a.shapes.includes(shape)) continue;   // an advert may be made for some shapes only
+        list.push({ shape, w, h, brand, icon: fileUrl(brand.icon), logo: fileUrl(brand.logo), picture: fileUrl(a.picture), aspect: a.aspect || "", fit: a.fit || "", ticked: !!a.ticked, lines: a.lines || 1, pill: a.pill || "", stack: !!a.stack, corner: !!a.corner, beside: a.beside != null ? !!a.beside : !!(a.kind === "poster" && a.say), tags: a.tags || [], artFit: a.artFit || null, id: a.id, kind: a.kind || (a.art ? "feature" : "mosaic"), group: a.group || "general", note: a.note || "",
           eyebrow: a.eyebrow || "", title: a.title, gold: a.gold || "", sub: a.sub || "", say: a.say || "", art: a.artShot ? url.pathToFileURL(path.join(SHOTS, a.artShot + ".png")).href : fileUrl(a.art), needsShots: !!(a.shot || a.artShot), tiles: (a.tiles || []).map(tileUrl), ideas: a.ideas || [],
           shot: a.shot ? url.pathToFileURL(path.join(SHOTS, a.shot + ".png")).href : undefined,
           hex: mascot && a.pose ? fileUrl(path.join(mascot.dir, (mascot.prefix || "") + a.pose + ".png")) : undefined, label: a.label || (mascot && a.pose ? mascot.label || mascot.name + " says" : ""), speaker: a.speaker || (mascot && a.pose ? mascot.name : ""),
@@ -82,7 +83,7 @@ function load(configPath) {
     await p.evaluate(() => window.READY); await p.waitForTimeout(150);
     const B = spec.brand, who = (B.mascot && B.mascot.name) || "the mascot";
     const report = await p.evaluate(([B, who]) => {
-      const out = { problems: [], texts: [], fonts: [B.fonts.display, B.fonts.body].every((name) => [...document.fonts].some((f) => f.family.replace(/["']/g, "") === name && f.status === "loaded")) };
+      const out = { problems: [], texts: [], fonts: [B.fonts.display, B.fonts.body].concat(B.fonts.accent ? [B.fonts.accent] : [], B.fonts.sub ? [B.fonts.sub] : []).every((name) => [...document.fonts].some((f) => f.family.replace(/["']/g, "") === name && f.status === "loaded")) };
       // the headline must really be drawn in the display font: a fallback font gives the words a different width
       const probe = (family) => { const c = document.createElement("canvas").getContext("2d"); c.font = "900 80px " + family; return c.measureText(B.name + " adverts, measured").width; };
       if (out.fonts && probe('"' + B.fonts.display + '", monospace') === probe("monospace")) out.fonts = false;
@@ -93,19 +94,35 @@ function load(configPath) {
         const own = [...e.childNodes].filter((n) => n.nodeType === 3 && n.textContent.trim()).map((n) => n.textContent.trim()).join(" "); if (!own) continue;
         const cs = getComputedStyle(e), r = e.getBoundingClientRect(), label = own.slice(0, 30);
         if (cs.display === "none" || !r.width) continue;
-        out.texts.push(own);
+        out.texts.push(own.replace(/\u00a0/g, " "));
+        // a name must stay on one line
+        for (const n of e.childNodes) { if (n.nodeType !== 3) continue; const t = n.textContent.replace(/\u00a0/g, " "); for (const name of [B.name].concat(B.together || [])) { if (!name || !/ /.test(name)) continue; for (let at = t.indexOf(name); at >= 0; at = t.indexOf(name, at + 1)) { const g = document.createRange(); g.setStart(n, at); g.setEnd(n, at + name.length); const rs = [...g.getClientRects()].filter((q) => q.width > 1); if (rs.some((q) => Math.abs(q.top - rs[0].top) > q.height / 2) && !out.problems.includes("the name " + name + " is split over two lines")) out.problems.push("the name " + name + " is split over two lines"); } } }
         if (r.left < -1 || r.top < -1 || r.right > W + 1 || r.bottom > H + 1) out.problems.push("words run off the picture: " + label);
         // measured by the height the lines need, not by the ink of the letters, so a typeface with tall letters is not mistaken for overflow
         const fit = e.closest(".fit"), box = e.closest(".card, .idea");
-        if (fit) { const allowed = parseFloat(getComputedStyle(fit).maxHeight) || 1e9, old = fit.style.maxHeight; fit.style.maxHeight = "none"; const need = fit.getBoundingClientRect().height; fit.style.maxHeight = old; if (need > allowed + 2 || fit.scrollWidth > fit.clientWidth + 2) out.problems.push("words are cut off: " + label); }
+        if (fit) { const allowed = parseFloat(getComputedStyle(fit).maxHeight) || 1e9; fit.style.setProperty("max-height", "none", "important"); const need = fit.getBoundingClientRect().height; fit.style.removeProperty("max-height"); if (need > allowed + 2 || fit.scrollWidth > fit.clientWidth + 2) out.problems.push("words are cut off: " + label); }
         if (box) { const b = box.getBoundingClientRect(), rot = getComputedStyle(box).transform !== "none"; if (!rot && (r.bottom > b.bottom + 2 || r.right > b.right + 2)) out.problems.push("words are cut off: " + label); if (box.scrollHeight > box.clientHeight + 6) out.problems.push("words are cut off: " + label); }
         if (parseFloat(cs.fontSize) < minPx) out.problems.push("words too small (" + Math.round(parseFloat(cs.fontSize)) + "px): " + label);
       }
       // the headline, the speech bubble, the footer, the thing on show and the mascot must not sit on top of each other
       const boxes = [".copy", ".say", ".foot", ".brand"].filter((s) => document.querySelector(s)).map((s) => [s, document.querySelector(s).getBoundingClientRect()]);
+      // with the picture in the corner the words wrap beside it, so each block of words is measured on its own
+      if (document.body.classList.contains("corner") && document.querySelector(".copy")) { boxes.shift(); for (const k of document.querySelector(".copy").children) boxes.push([".copy", k.getBoundingClientRect()]); }
       for (const k of document.querySelectorAll(".stage > *, .stage .card, .stage .idea")) { const r = k.getBoundingClientRect(); if (r.left < -1 || r.top < -1 || r.right > W + 1 || r.bottom > H + 1) out.problems.push("the picture on show runs off the edge"); boxes.push(["the picture on show", r]); }
       if (hex) boxes.push([who, { left: hex.left + hex.width * 0.2, right: hex.right - hex.width * 0.2, top: hex.top + hex.height * 0.12, bottom: hex.bottom }]);
       for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) { const a = boxes[i][1], b = boxes[j][1]; if (boxes[i][0] !== boxes[j][0] && a.left < b.right - 2 && b.left < a.right - 2 && a.top < b.bottom - 2 && b.top < a.bottom - 2 && !out.problems.includes(boxes[i][0] + " overlaps " + boxes[j][0])) out.problems.push(boxes[i][0] + " overlaps " + boxes[j][0]); }
+      // good use of the space: the picture on show is not tiny, and no wide band of the advert is left with nothing in it
+      {
+        const shown = [...document.querySelectorAll(".stage > *, .stage .card, .stage .idea")].map((k) => k.getBoundingClientRect()).filter((q) => q.width);
+        if (document.body.classList.contains("kind-poster") && shown.length) { const big = Math.max(...shown.map((q) => q.width * q.height)); if (big < W * H * 0.1) out.problems.push("the picture is too small for the advert (" + Math.round(big / (W * H) * 100) + "% of it)"); }
+        const bgEl = document.querySelector(".bg"), filled = bgEl && document.body.classList.contains("feature") && getComputedStyle(bgEl).backgroundImage !== "none" && getComputedStyle(bgEl).display !== "none"; // only a full picture counts: a faint backdrop does not fill space
+        const cpEl = document.querySelector(".copy"), seen = (k) => k && getComputedStyle(k).visibility !== "hidden" && getComputedStyle(k).display !== "none";
+        const parts = shown.concat(seen(cpEl) ? [...cpEl.children].map((k) => k.getBoundingClientRect()) : [], [".say", ".foot", ".brand", ".hex"].concat(document.body.classList.contains("kind-mosaic") ? [".mosaic"] : []).concat(filled ? [".bg"] : []).map((q) => document.querySelector(q)).filter(seen).map((k) => k.getBoundingClientRect())).filter((q) => q.width && q.height).sort((p, q) => p.top - q.top);
+        if (parts.length && !document.body.classList.contains("nopics")) { let reach = parts[0].bottom, gap = 0; for (const q of parts) { gap = Math.max(gap, q.top - reach); reach = Math.max(reach, q.bottom); } if (gap > H * 0.2) out.problems.push("a wide band of the advert is empty (" + Math.round(gap / H * 100) + "% of its height)"); }
+      }
+      // room to breathe: the words keep a clear gap from the logo above them and the footer below them
+      const air = W * 0.016, cp = document.querySelector(".copy"), sideways = (p, q) => p.left < q.right && q.left < p.right;
+      if (cp && !document.body.classList.contains("kind-spotlight")) { const kids = [...cp.children].map((k) => k.getBoundingClientRect()).filter((q) => q.width); for (const sel of [".foot", ".brand"]) { const o = document.querySelector(sel); if (!o) continue; const q = o.getBoundingClientRect(); for (const k of kids) { const gap = Math.max(q.top - k.bottom, k.top - q.bottom); if (sideways(k, q) && gap >= -2 && gap < air && !out.problems.includes("the words are crowded against " + sel)) out.problems.push("the words are crowded against " + sel); } } }
       return out;
     }, [B, who]);
     if (!report.fonts) report.problems.push("the " + B.fonts.display + " and " + B.fonts.body + " fonts did not load");
@@ -117,7 +134,7 @@ function load(configPath) {
 
   // Words to post beside an advert, and words that describe the picture for people who cannot see it.
   function words(s) {
-    const head = s.gold ? s.title + " " + s.gold + (s.sub ? " " + s.sub : "") : s.title + (s.sub ? ". " + s.sub : "");
+    const head = s.gold ? (s.title ? s.title + " " : "") + s.gold + (s.sub ? " " + s.sub : "") : s.title + (s.sub ? ". " + s.sub : "");
     const who = s.speaker, said = s.say && who ? "\n\n" + who + " says: \u201c" + s.say + "\u201d" : s.say ? "\n\n" + s.say : "";
     const seen = s.say && who ? " " + (s.hex && mascot && mascot.describe ? mascot.describe + "," : who) + " says: " + s.say : s.say ? " " + s.say : "";
     return { post: head + said + (brand.site ? "\n\n" + brand.site : ""), alt: brand.name + " advert. " + head + seen };
@@ -137,7 +154,7 @@ function load(configPath) {
     const groups = kitInfo.groups || [...new Set(list.map((s) => s.group))].map((id) => ({ id, title: id === "general" ? "General adverts" : id, note: "" }));
     const first = (ids.filter((id) => list.find((s) => s.id === id).group === groups[0].id)[0]) || ids[0];
     const tokens = (t) => Object.keys(t).map((k) => "--" + k + ":" + t[k]).join(";"), light = { ...KIT_LIGHT, ...(kitInfo.light || {}) }, dark = { ...KIT_DARK, ...(kitInfo.dark || {}) };
-    const block = (id) => { const mine = list.filter((s) => s.id === id), s = mine[0], name = s.title + (s.gold ? " " + s.gold : ""), t = words(s);
+    const block = (id) => { const mine = list.filter((s) => s.id === id), s = mine[0], name = (s.title ? s.title + " " : "") + (s.gold || ""), t = words(s);
       return `<details${id === first ? " open" : ""}><summary><b>${esc(name)}</b> <span>${esc(s.note)}</span></summary><div class="row">` +
         mine.map((m) => `<figure><a href="${rel(m.out)}" download><img loading="lazy" src="${rel(m.out)}" width="${m.w}" height="${m.h}" alt="${esc(m.shape + " advert. " + t.alt)}"></a><figcaption>${m.shape}, ${m.w} by ${m.h}. Tap the picture to save it.</figcaption></figure>`).join("") + "</div>" +
         `<details class="w"><summary>Words to post with it</summary><div class="say"><p><b>Words to post with it</b><br><span class="copyme">${esc(t.post).replace(/\n/g, "<br>")}</span></p><p><b>Picture description (alt text)</b><br><span class="copyme">${esc(t.alt)}</span></p></div></details></details>`; };
@@ -165,6 +182,14 @@ ${groups.map(group).join("")}
     const body = html.slice(html.indexOf("<h1>")).replace("</html>", "").replace(/<a href="[^"]*" download>(<img[^>]*>)<\/a>/g, "$1").replace(/Tap the picture to save it\./g, "Press and hold the picture to save it (right-click on a computer).");
     return `<title>${kitTitle()}</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n${brand.fonts.css ? '<link rel="stylesheet" href="' + brand.fonts.css + '">\n' : ""}<style>\n/* Layout: one column of short rows that open on a tap, in the app's own colors and typefaces. */\n:root{${tokens(light)}}\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${tokens(dark)};color-scheme:dark}}\n:root[data-theme="dark"]{${tokens(dark)};color-scheme:dark}\n${css}</style>\n${body}`;
   }
+  // promo/out/manifest.json: what each saved picture was drawn with (its size, the words on it and a fingerprint of the
+  // file), so the media check can prove later that a picture still carries its small print and was not changed since.
+  function writeManifest(drawn) {
+    const file = path.join(OUT, "manifest.json"); let old = {}; try { old = JSON.parse(fs.readFileSync(file, "utf8")).pictures || {}; } catch (e) {}
+    const sha = (f) => require("crypto").createHash("sha256").update(fs.readFileSync(f)).digest("hex"), pictures = {};
+    for (const [rel, d] of Object.entries({ ...old, ...drawn })) { const f = path.join(OUT, rel); if (fs.existsSync(f)) pictures[rel] = { ...d, sha256: drawn[rel] ? sha(f) : d.sha256 }; }
+    fs.writeFileSync(file, JSON.stringify({ note: "Written by promo.js when it draws. The media check reads it.", fine: brand.fine || "", site: brand.site || "", pictures }, null, 1) + "\n");
+  }
   const files = () => specs().filter((s) => fs.existsSync(s.out)).map((s) => ({ path: path.relative(PROMO, s.out).split(path.sep).join("/") }));
 
   // Draws and measures every advert without saving, checks the saved kit is complete, and proves the
@@ -174,10 +199,10 @@ ${groups.map(group).join("")}
     const banned = config.banned || null, fixed = new Set([brand.name, brand.site, brand.fine, brand.pill, mascot && (mascot.label || mascot.name + " says"), "·"].filter(Boolean));
     if (!brand.site && !brand.fine) bad("the adverts carry neither an address nor any small print");
     if (new Set(adverts.map((a) => a.id)).size !== adverts.length) bad("two adverts share the same id");
-    if (list.length !== adverts.length * Object.keys(brand.shapes).length) bad("expected every advert in every shape, found " + list.length);
+    if (list.length !== adverts.reduce((n, a) => n + (a.shapes ? a.shapes.length : Object.keys(brand.shapes).length), 0)) bad("expected every advert in every shape, found " + list.length);
     for (const a of adverts) {
       if (mascot && a.pose && !fs.existsSync(path.resolve(ROOT, mascot.dir, (mascot.prefix || "") + a.pose + ".png"))) bad("no picture of " + mascot.name + " for the pose " + a.pose);
-      for (const t of [a.eyebrow, a.title, a.gold, a.sub, a.say]) { if (!t) continue; if (/—|–/.test(t)) bad("an advert line has a long dash in it: " + t); if (banned && banned.test(t)) bad("an advert line names something it must not: " + t); }
+      for (const t of [a.eyebrow, a.title, a.gold, a.sub, a.say, a.pill]) { if (!t) continue; if (/—|–/.test(t)) bad("an advert line has a long dash in it: " + t); if (banned && banned.test(t)) bad("an advert line names something it must not: " + t); }
     }
     let proofs = 0;
     if (config.shots && list.some((s) => s.needsShots)) {
@@ -188,7 +213,7 @@ ${groups.map(group).join("")}
       if (shot.files.length !== config.shots.pages.length || shot.files.some((f) => !fs.existsSync(f) || fs.statSync(f).size < 20000)) bad("a screenshot of the app is missing or empty");
     }
     for (let i = 0; i < list.length; i += 6) await Promise.all(list.slice(i, i + 6).map(async (s) => {
-      const r = await draw(browser, s, { save: false }), own = new Set([s.eyebrow, s.title, s.gold, s.sub, s.say, s.label].concat(s.tiles.map((t) => t.name), ...s.ideas.map((d) => [d.name, d.line])).filter(Boolean));
+      const r = await draw(browser, s, { save: false }), own = new Set([s.eyebrow, s.title, s.gold, s.sub, s.say, s.label, s.pill].concat(s.tags).concat(s.tiles.map((t) => t.name), ...s.ideas.map((d) => [d.name, d.line])).filter(Boolean));
       r.problems.forEach((m) => bad(s.shape + "/" + s.id + ": " + m));
       r.texts.forEach((t) => { if (!fixed.has(t) && !own.has(t)) bad(s.shape + "/" + s.id + " says something the settings file did not give it: " + t); });
       if ((s.say && !r.texts.includes(s.say)) || (brand.site && !r.texts.includes(brand.site)) || (brand.fine && !r.texts.includes(brand.fine))) bad(s.shape + "/" + s.id + " is missing its spoken line, the site address or the small print");
@@ -200,7 +225,7 @@ ${groups.map(group).join("")}
     leftovers().forEach((f) => bad("a leftover advert picture should be deleted (drawing the whole kit does it): " + path.basename(f)));
     for (const [file, name] of [["index.html", "the kit page"], ["kit-page.html", "the page behind the private link"]]) {
       const html = fs.existsSync(path.join(PROMO, file)) ? fs.readFileSync(path.join(PROMO, file), "utf8") : "";
-      adverts.forEach((a) => { if (!html.includes("out/" + Object.keys(brand.shapes)[0] + "/" + a.id + ".jpg")) bad(name + " (promo/" + file + ") does not show " + a.id + ". Draw the kit again."); });
+      adverts.forEach((a) => { if (!html.includes("out/" + (a.shapes || Object.keys(brand.shapes))[0] + "/" + a.id + ".jpg")) bad(name + " (promo/" + file + ") does not show " + a.id + ". Draw the kit again."); });
     }
     const link = fs.existsSync(path.join(PROMO, "kit-page.html")) ? fs.readFileSync(path.join(PROMO, "kit-page.html"), "utf8") : "";
     if (/<!doctype|<html| download>/i.test(link) || !link.startsWith("<title>" + kitTitle() + "</title>") || !/data-theme="dark"/.test(link)) bad("promo/kit-page.html is not in the form the private link needs");
@@ -211,6 +236,13 @@ ${groups.map(group).join("")}
     await must("the wrong fonts", { ...base, brand: { ...brand, fonts: { ...brand.fonts, display: "No Such Font", css: "data:text/css," } } }, /fonts did not load/);
     const staged = list.find((s) => s.shape === "square" && ["fan", "wall", "browser", "vote"].includes(s.kind));
     if (staged) await must("words sitting on top of the picture on show", { ...staged, noFit: true, title: long, gold: long }, /overlaps|cut off/);
+    const cornered = list.find((s) => s.shape === "square" && s.corner && s.kind === "poster" && !s.say);
+    if (cornered) await must("words running into the picture in the corner", { ...cornered, noFit: true, sub: Array(12).join("These words go on and on beside the picture. ") }, /\.copy overlaps (the picture on show|\.foot)|cut off/);
+    const sided = list.find((s) => s.shape === "square" && s.beside && s.kind === "poster");
+    if (sided) await must("a name too long to stand beside the picture", { ...sided, noFit: true, title: "Unbreakablynamedpersonwhosenamegoesonandonandon", gold: "" }, /overlaps|cut off|run off/);
+    if (/ /.test(brand.name)) await must("a name split over two lines", { ...base, splitNames: true, noFit: true, sub: Array(40).join(brand.name + " ") }, /split over two lines/);
+    const framed = list.find((s) => s.kind === "poster" && s.shape === "square");
+    if (framed) { await must("a picture far too small for its advert", { ...framed, proofSmall: true }, /too small for the advert/); await must("an advert left half empty", { ...framed, proofEmpty: true }, /band of the advert is empty/); }
     const spoken = list.find((s) => s.hex && s.say);
     if (spoken) {
       await must("a spoken line running past its bubble", { ...spoken, noFit: true, say: Array(14).join("This line goes on and on and on. ") }, /cut off|overlaps|run off/);
@@ -243,9 +275,10 @@ ${groups.map(group).join("")}
     try {
       const list = specs({ ids: args, shapes });
       if (list.some((s) => s.needsShots)) { const s = await shots(browser); if (s.never || s.calls) throw new Error("something that must never be in an advert ended up inside a screenshot, or the app called an outside service. Nothing was saved."); }
-      let wrong = 0;
-      for (let i = 0; i < list.length; i += 6) await Promise.all(list.slice(i, i + 6).map(async (s) => { const r = await draw(browser, s); if (r.problems.length) { wrong++; console.log("PROBLEM " + s.shape + "/" + s.id + ": " + r.problems.join("; ")); } }));
+      let wrong = 0; const drawn = {};
+      for (let i = 0; i < list.length; i += 6) await Promise.all(list.slice(i, i + 6).map(async (s) => { const r = await draw(browser, s); drawn[s.shape + "/" + s.id + ".jpg"] = { w: s.w, h: s.h, texts: r.texts, problems: r.problems.length }; if (r.problems.length) { wrong++; console.log("PROBLEM " + s.shape + "/" + s.id + ": " + r.problems.join("; ")); } }));
       if (!args.length && shapes.length === Object.keys(brand.shapes).length) leftovers().forEach((f) => { fs.unlinkSync(f); console.log("removed a leftover picture: " + path.relative(ROOT, f)); });
+      writeManifest(drawn);
       sheet(specs({ shapes: Object.keys(brand.shapes).filter((sh) => fs.existsSync(path.join(OUT, sh))) }).filter((s) => fs.existsSync(s.out)));
       console.log(`${list.length} adverts drawn in ${Math.round((Date.now() - started) / 1000)} seconds, ${wrong} with problems. See promo/index.html`);
       if (wrong) process.exitCode = 1;

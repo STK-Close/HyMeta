@@ -17,3 +17,12 @@ list, repeat or ask about open questions, reminders or pending decisions:
   Otherwise choose sensibly, say what was chosen, and carry on. She will say if she wants it different.
 - End a reply with "Your next step" only if there truly is something she must do for the adverts.
 The app's rules that protect it still apply in full: confidentiality, privacy, wording rules, and never posting.
+
+## Names stay whole, and everything has room (Ligia, November 21, 2026)
+"Never ever separate any name of a company on 2 lines. Hustle & Flow should always be together."
+"Be careful with crowding! Make sure everything has room to breathe."
+- A company or app name is never split over two lines, in any advert, at any size. The tool keeps the app's own
+  name together by itself; list any other names (the company, a partner) in `brand.together`. The check fails on a split name.
+- Leave clear space around the logo, the headline, the picture and the footer. When words are tight, cut or shrink
+  the words: do not squeeze the gaps. The check fails when words sit too close to the logo or the footer, and
+  passing it is not enough: look at the pictures.

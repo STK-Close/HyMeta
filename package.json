@@ -11,7 +11,7 @@
     "build": "node scripts/build.js",
     "start": "node scripts/dev-server.js",
     "promo": "node scripts/make-promo.js",
-    "test": "node scripts/build.js && node tests/recipes.test.js && node tests/accounts.test.js && node tests/community.test.js && node tests/handoff.test.js && node tests/billing.test.js && node tests/mail.test.js && node tests/weeks.test.js && node tests/share.test.js && node tests/weekly-tool.test.js && node tests/broken.test.js && node tests/promo.test.js && node tests/check.js"
+    "test": "node scripts/build.js && node tests/recipes.test.js && node tests/accounts.test.js && node tests/community.test.js && node tests/handoff.test.js && node tests/billing.test.js && node tests/mail.test.js && node tests/weeks.test.js && node tests/share.test.js && node tests/weekly-tool.test.js && node tests/broken.test.js && node tests/promo.test.js && node promo/tool/media-check.js --prove && node promo/tool/media-check.js && node tests/check.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.1"

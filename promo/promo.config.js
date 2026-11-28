@@ -45,6 +45,9 @@ module.exports = {
       legal: "© " + new Date().getUTCFullYear() + " Lumina Art House, LLC. HyMeta is an unofficial fan site. It is not affiliated with Hytale, Hypixel Studios, CurseForge or Overwolf." },
   },
   banned: /curseforge|overwolf|hypixel|sample|pretend|download/i,
+  // The media check (promo/tool/media-check.js) looks at every advert picture before it can be posted. Clips join
+  // `videos` when they are made (launch plan Task 12), each with its caption area and caption plan.
+  media: { report: "promo/check", videos: [] },
   adverts, GENERAL, POSES,
   // Screenshots of the real site, running on this computer in its sample mode (no CurseForge key), dark theme.
   // Hidden for the picture: the private-preview notice, the welcome card, the Free and Member preview switch

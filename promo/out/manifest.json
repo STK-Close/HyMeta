@@ -1,0 +1,1653 @@
+{
+ "note": "Written by promo.js when it draws. The media check reads it.",
+ "fine": "An unofficial fan site",
+ "site": "hymeta.vercel.app",
+ "pictures": {
+  "wide/phone.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "On every screen",
+    "Browse on your phone.",
+    "Play on your computer.",
+    "Hex says",
+    "Find it on the bus. Play it at home. Do not play it on the bus.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "eb722d3886f2a81b661b60ed38d1651e7c2e0a97b8c27d05c6e5a7ffc871d22e"
+  },
+  "wide/pick.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "How it works",
+    "Pick a playstyle.",
+    "Get the whole pack.",
+    "Hex says",
+    "Farming, dungeons, cats. Pick one. I did the hard part.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "160acbc1a1788f245de0424ca17f23cadda591f18c008ec7063312fd902e5752"
+  },
+  "wide/hello.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "Playpacks for Hytale",
+    "Hytale mods, sorted by",
+    "how you play.",
+    "Hex says",
+    "I tried every mod so you do not have to. You are welcome. Mostly.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "3abd38e4d7faa51d09fbad5803bc19b4b65055104bc04f0563339344d38ddba4"
+  },
+  "wide/everyone.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "Playpacks for Hytale",
+    "A playpack for",
+    "every way you play.",
+    "The scenic route",
+    "Gone fishing",
+    "The whole circus",
+    "Hard mode hermit",
+    "Factory goblin",
+    "Beast friend",
+    "Wizard school dropout",
+    "Creepy crawlies",
+    "The wanderer",
+    "Hex says",
+    "Cozy, spooky, or far too many legs. I do not judge. Much.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "7bb362a7dff84d86ecb555dd87b59bfcc69f3bb5ab098f44fe854ec89345b522"
+  },
+  "wide/vote.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "Players choose",
+    "You vote.",
+    "Hex builds it.",
+    "Sunken treasure",
+    "Sails, shipwrecks and a map with a big red cross on it.",
+    "Paint the town",
+    "Every block, door and window in a color nobody asked for.",
+    "Fireworks night",
+    "Rockets, balloons, music and one goblin holding the matches.",
+    "Hex says",
+    "You pick the idea. I do the work. This seems unfair. Vote anyway.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "c286212acff01d63ededf0b04757c890496bfba40305fc5c59f83e3512150872"
+  },
+  "wide/monday.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "New every week",
+    "A new playpack",
+    "every Monday.",
+    "The scenic route",
+    "Gone fishing",
+    "The whole circus",
+    "Hex says",
+    "Fresh every Monday. I carry them myself. Nobody helps.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "04fda38a6286399713202375ff8b6e18ab3c8d225908823cfc68ddf6f4a792e5"
+  },
+  "wide/master-builder.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Master builder",
+    "More blocks, tiny furniture and roofs that finally look right.",
+    "Hex says",
+    "One more window, you said. That was six hours ago.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "6655ef12ecc3fa9c5c641eb8f9617d1e76e4bf3e2fe1c74108dccea490e172ca"
+  },
+  "wide/cozy-farmer.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The cozy farmer",
+    "Plant things. Pet things. Watch the rain. Nothing bad happens.",
+    "Hex says",
+    "Plant a turnip. Just one. You can stop any time. That is what the last farmer said.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "6bec8d0ebb6fc871c21730d7c7385c1f48bd2e1b77055afa58f471e83b6591a8"
+  },
+  "wide/wizard-dropout.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Wizard school dropout",
+    "Spells that mostly work, a wand with opinions and a familiar who judges you.",
+    "Hex says",
+    "Read the spell twice before you cast it. Or do not. I am not your teacher.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "07ece9cda3b26b1dc96b8c676c70b7d4780e381bfb16ae3e35cfeef4e91399c2"
+  },
+  "wide/the-wanderer.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The wanderer",
+    "Pack light, walk far and never get lost unless you want to.",
+    "Hex says",
+    "It is just over that hill. So is the next thing. I may have fibbed about the distance.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "2e15ab1efeb873a5e597108a8760cc3f354361a07745417d3d6902ba56aaec0d"
+  },
+  "wide/dungeon-gremlin.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Dungeon gremlin",
+    "Go down. Hit things. Carry out more treasure than is sensible.",
+    "Hex says",
+    "The loot is at the bottom. The stairs back up are your problem.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "7e3e434dee496392954311c5b3f6f9e65ee89574912f158fcd829e223ee835c9"
+  },
+  "wide/too-many-legs.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Creepy crawlies",
+    "Spiders, slimes, frogs and things with far too many legs. All of them are underfoot.",
+    "Hex says",
+    "They are more scared of you than you are of them. I made that up.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "6edf28461aed8c6aec787bb4611df1987cf2e99b3a6ed0ff91da509fbf188755"
+  },
+  "wide/factory-goblin.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Factory goblin",
+    "Belts, gears and machines that sort your chests while you sleep.",
+    "Hex says",
+    "You will never carry a potato by hand again. You will also never sleep again.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "967606fd502da768a16b22f1c249cd57c2e9248c4ab4e175be6c3318b9c6627a"
+  },
+  "wide/scenic-route.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The scenic route",
+    "Waterfalls, waves, northern lights and falling leaves. Nothing to fight. Just a lot to look at.",
+    "Hex says",
+    "You walked for an hour and did nothing but look at water. I am calling that a win.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "fedb13d4b2aaa9df81ef3923ff3c6d35fdfc5ef9ed9c3e47a021ac27e1b8a90d"
+  },
+  "wide/hard-mode-hermit.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Hard mode hermit",
+    "Hunger, cold and one single life. For players who think the game is too kind.",
+    "Hex says",
+    "One life. Use it wisely. Or use it in the first four minutes, like everyone else.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "bcf357ea17e269f7546f9b1efcad22282d441d1c1e78ab6b9e9fdff13ca47c92"
+  },
+  "wide/gone-fishing.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Gone fishing",
+    "A rod, a boat and a very patient morning. The fish are in no hurry either.",
+    "Hex says",
+    "Sit in a boat. Stare at water. Call it a hobby. I will be on the dock judging your knots.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "49a0bc2081f544f3d7f369d41115eed72e61c90c0b25feb0ac18360e8422d6a0"
+  },
+  "wide/beast-friend.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Beast friend",
+    "Tame it, saddle it, feed it snacks. Leave with a small parade behind you.",
+    "Hex says",
+    "It followed you home. So did the other nine. You live in a zoo now.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "8c2ec68aaa6b00708fdbdce98126c71639bb5bad3106197ec7d65a186ce4a8e4"
+  },
+  "wide/whole-circus.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The whole circus",
+    "A bit of every playstyle at once. Farm, fight, build and wander, all before lunch.",
+    "Hex says",
+    "Farm in the morning, fight a boss at lunch, redecorate by tea. Bring a planner.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "4fc83777eb2fc83a9126afe0fdc64a56dc0b9901007c1c7409fff996e42905c8"
+  },
+  "wide/knights-and-dragons.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Knights and dragons",
+    "Shiny armor, a proper castle and something large asleep on the roof.",
+    "Hex says",
+    "You wanted a castle. The dragon wanted the same castle. I suggest sharing.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "43202476aa2f62a4a4a25836864e188ed0fcf77f1974c123ce5250e35a9f6267"
+  },
+  "wide/road-trip.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Are we there yet",
+    "Carts, boats, rails and shortcuts. Everything you need to go a very long way.",
+    "Hex says",
+    "A cart, a boat and a train. Three ways to get lost faster.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "d375efa8da794e2044124e473faff2f428b072096744321cb105518e82d6bb00"
+  },
+  "wide/potion-problem.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "A potion problem",
+    "Mix things. Bottle things. Find out what the green one does the hard way.",
+    "Hex says",
+    "Drink the blue one. No, the other blue one. Well. It will wear off by Tuesday.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "17bcaa9b95e6af09761352b7d8c06f16114e29c68db7103f5b4ceb6dfa79f620"
+  },
+  "wide/deep-miner.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The deep miner",
+    "Go down. Keep going down. Come back up with pockets full of shiny rocks.",
+    "Hex says",
+    "It is a hole. You dug it. You live here now. At least the rocks are pretty.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "42f51c758d3456aef164d9fc89d0ebb1f471943a65ea36508aed160e32492da9"
+  },
+  "wide/middle-of-the-world.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The middle of the world",
+    "Straight down, past the caves, until the map gives up. Bring a rope and a light.",
+    "Hex says",
+    "You packed a rope, a light and no plan. The map stopped helping an hour ago. So did I.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "34a1cafd082cf813c16bec34fdc6c5363501b6e235ef82f26e17109bd81cb99c"
+  },
+  "wide/cat-cafe.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The cat cafe",
+    "Cats on every shelf, something warm in the oven, and one dog who wandered in.",
+    "Hex says",
+    "Open a cafe. Fill it with cats. Sell nothing, because the cats sat on the menu.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "c363f5f72a44eb9d961a05dd7420435bd9290313828024a610a3f6e2483539f8"
+  },
+  "wide/plushie-hoarder.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The plushie hoarder",
+    "Soft toys, paintings, statues and music. A room with far too much in it, on purpose.",
+    "Hex says",
+    "You have forty plushies and one bed. The plushies have voted. You sleep on the floor.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "29d4ec9e1df78883dd45d5259a26d748a0f33bb2037edc689ca636129970ac25"
+  },
+  "wide/garden-party.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Garden party",
+    "Flowers, bees, lanterns and a bench. Nothing needs fighting. Possibly a wasp.",
+    "Hex says",
+    "You planted one flower. Now there are four hundred. This is the bees' garden now.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "25577aab07599f8ca7ea7d6bb5319212ecf36b9819751c51de3a5bfcc95f960b"
+  },
+  "wide/dino-rider.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Dino rider",
+    "Dinosaurs. You can ride some of them. The others have not agreed yet.",
+    "Hex says",
+    "It is as tall as a house and you want to put a saddle on it. I respect the confidence.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "ad4e1d8b679c3e03fb10dd22df6369b6ff894eaccfe1ff98d8f0ec0013f55e0f"
+  },
+  "wide/sharpshooter.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Sharpshooter",
+    "Bows, crossbows and a great many arrows. Stand far away and be very good at it.",
+    "Hex says",
+    "Why walk over there and hit it when you can stay here and miss it?",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "d455dd9f9c9ea731f6ed76202ba8e552a1cf94d10cad9989d97c08463d380c0b"
+  },
+  "wide/side-quest.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Side quest champion",
+    "Quests, skills, levels and a whole town of people who need a favor.",
+    "Hex says",
+    "Save the world? Later. First this man needs eleven mushrooms and will not say why.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "040a848ab7abc3e056f720155241375fd08a20e6bad10402e24e1f3c6ddf5749"
+  },
+  "wide/pack-rat.jpg": {
+   "w": 1600,
+   "h": 900,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Pack rat",
+    "More chests, bigger bags and labels on everything. You will never throw anything away again.",
+    "Hex says",
+    "You kept the stick. And the other stick. Hex kept a list of your sticks.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "0a02dc48e1a4b9e7f81b2de88ff97fe806a7140386ee9f78ef541e7702d79216"
+  },
+  "square/hello.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "Playpacks for Hytale",
+    "Hytale mods, sorted by",
+    "how you play.",
+    "Hex says",
+    "I tried every mod so you do not have to. You are welcome. Mostly.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "1211a4f46177850c9aba7ea78a52202ed3ac7ab28b47b4d7371c4f9b80d173a5"
+  },
+  "square/vote.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "Players choose",
+    "You vote.",
+    "Hex builds it.",
+    "Sunken treasure",
+    "Paint the town",
+    "Hex says",
+    "You pick the idea. I do the work. This seems unfair. Vote anyway.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "92e0f92f96e3a9034321ecd28b516ed033f4baa0855bc63fdc2cab0b305d7679"
+  },
+  "square/everyone.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "Playpacks for Hytale",
+    "A playpack for",
+    "every way you play.",
+    "Hex says",
+    "Cozy, spooky, or far too many legs. I do not judge. Much.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "5f247e812bb4d2975fde9e1a8e741e4374f5d3a810eec0e0bba6a30c5c54d0ea"
+  },
+  "square/monday.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "New every week",
+    "A new playpack",
+    "every Monday.",
+    "Hex says",
+    "Fresh every Monday. I carry them myself. Nobody helps.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "65b5cf436a6dd98d485a615f05e68c9bc2c1e862faedd14783c13b1789e0ef8d"
+  },
+  "square/phone.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "On every screen",
+    "Browse on your phone.",
+    "Play on your computer.",
+    "Hex says",
+    "Find it on the bus. Play it at home. Do not play it on the bus.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "1c43e1e550eb7ce5fb992a7148e55179d6f357bd0af8637a929084e9550a4efd"
+  },
+  "square/pick.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "How it works",
+    "Pick a playstyle.",
+    "Get the whole pack.",
+    "Hex says",
+    "Farming, dungeons, cats. Pick one. I did the hard part.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "c1bc8f00904e392189dac155c23a88d17da6d97f5379387194b025e263ee8d35"
+  },
+  "square/the-wanderer.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The wanderer",
+    "Pack light, walk far and never get lost unless you want to.",
+    "Hex says",
+    "It is just over that hill. So is the next thing. I may have fibbed about the distance.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "6e864ea041d1c6fc823b11b12a29faabad4c739354915d33ce6522ae27ce9517"
+  },
+  "square/dungeon-gremlin.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Dungeon gremlin",
+    "Go down. Hit things. Carry out more treasure than is sensible.",
+    "Hex says",
+    "The loot is at the bottom. The stairs back up are your problem.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "a9e7b1575e0dc46ee010c5705bc65b2fb1e432cf0ba629793ae892112b6e5812"
+  },
+  "square/master-builder.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Master builder",
+    "More blocks, tiny furniture and roofs that finally look right.",
+    "Hex says",
+    "One more window, you said. That was six hours ago.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "91b5bb5f92d4ea487dac82ec270e8371cce2c2bc1a7388d180f8381a97fb4b79"
+  },
+  "square/wizard-dropout.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Wizard school dropout",
+    "Spells that mostly work, a wand with opinions and a familiar who judges you.",
+    "Hex says",
+    "Read the spell twice before you cast it. Or do not. I am not your teacher.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "ef846e4a1a24ef62933a1978ee23d75a21e51c6b619f62869da2435d5038fd69"
+  },
+  "square/cozy-farmer.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The cozy farmer",
+    "Plant things. Pet things. Watch the rain. Nothing bad happens.",
+    "Hex says",
+    "Plant a turnip. Just one. You can stop any time. That is what the last farmer said.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "026848afc50f57159b59bcf631a9d3a51476361892a738ee72080e1c09344d17"
+  },
+  "square/too-many-legs.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Creepy crawlies",
+    "Spiders, slimes, frogs and things with far too many legs. All of them are underfoot.",
+    "Hex says",
+    "They are more scared of you than you are of them. I made that up.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "768d9a1d6d458e85a137ff75808bf1e681b6dac1b8000cc9a0b6925db1fe53b2"
+  },
+  "square/factory-goblin.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Factory goblin",
+    "Belts, gears and machines that sort your chests while you sleep.",
+    "Hex says",
+    "You will never carry a potato by hand again. You will also never sleep again.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "153544e6ee6952e99768c60f6a9244a382960d95ab5f3d02637d401911e3f77a"
+  },
+  "square/scenic-route.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The scenic route",
+    "Waterfalls, waves, northern lights and falling leaves. Nothing to fight. Just a lot to look at.",
+    "Hex says",
+    "You walked for an hour and did nothing but look at water. I am calling that a win.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "1f477d5ac3b7b64d060daf85391907200efb7f57a28252508a6dff27bb31b72c"
+  },
+  "square/gone-fishing.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Gone fishing",
+    "A rod, a boat and a very patient morning. The fish are in no hurry either.",
+    "Hex says",
+    "Sit in a boat. Stare at water. Call it a hobby. I will be on the dock judging your knots.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "8fa42d5ad21689a0c394a7af1e68fa43004c090dc6fbf5575eccd6197d06135b"
+  },
+  "square/whole-circus.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The whole circus",
+    "A bit of every playstyle at once. Farm, fight, build and wander, all before lunch.",
+    "Hex says",
+    "Farm in the morning, fight a boss at lunch, redecorate by tea. Bring a planner.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "c2d64aa9d31051fb5376027212dd364eab8ad1a620a2a352c7a7be49e8aab927"
+  },
+  "square/hard-mode-hermit.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Hard mode hermit",
+    "Hunger, cold and one single life. For players who think the game is too kind.",
+    "Hex says",
+    "One life. Use it wisely. Or use it in the first four minutes, like everyone else.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "d87a3faabe88694836d0939ab4ffc9b52e99a857a0ada92e418cb0651c639e90"
+  },
+  "square/beast-friend.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Beast friend",
+    "Tame it, saddle it, feed it snacks. Leave with a small parade behind you.",
+    "Hex says",
+    "It followed you home. So did the other nine. You live in a zoo now.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "aa555f0fe1b789dd8bc9144aef5ee8f750dda96eb1bc2a09713d358cee3cd254"
+  },
+  "square/middle-of-the-world.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The middle of the world",
+    "Straight down, past the caves, until the map gives up. Bring a rope and a light.",
+    "Hex says",
+    "You packed a rope, a light and no plan. The map stopped helping an hour ago. So did I.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "8376714d923e83a04d09a98b27a0bf0d56c1544ae3fb261f63887b5511044778"
+  },
+  "square/knights-and-dragons.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Knights and dragons",
+    "Shiny armor, a proper castle and something large asleep on the roof.",
+    "Hex says",
+    "You wanted a castle. The dragon wanted the same castle. I suggest sharing.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "e74cd6702d5dd68d54cf512731af0f8399574b0d0df9b83cd88194576fa6af3b"
+  },
+  "square/potion-problem.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "A potion problem",
+    "Mix things. Bottle things. Find out what the green one does the hard way.",
+    "Hex says",
+    "Drink the blue one. No, the other blue one. Well. It will wear off by Tuesday.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "f75052ddc3cba7ef2e6cba1a60689819453a71df3113a255cca63b8b88ed5102"
+  },
+  "square/deep-miner.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The deep miner",
+    "Go down. Keep going down. Come back up with pockets full of shiny rocks.",
+    "Hex says",
+    "It is a hole. You dug it. You live here now. At least the rocks are pretty.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "91f6ff20d943dc1f6fc49defe4e35507db0a3b216104ee9dbe30b2122a1c918b"
+  },
+  "square/road-trip.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Are we there yet",
+    "Carts, boats, rails and shortcuts. Everything you need to go a very long way.",
+    "Hex says",
+    "A cart, a boat and a train. Three ways to get lost faster.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "f47e3a6906682bc0d48182d6eb0ec668d7c2563df393cba7432eb63f34264f62"
+  },
+  "square/cat-cafe.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The cat cafe",
+    "Cats on every shelf, something warm in the oven, and one dog who wandered in.",
+    "Hex says",
+    "Open a cafe. Fill it with cats. Sell nothing, because the cats sat on the menu.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "1ffa562cd79d4d77f6660343e1a700a828c2fd49c28faeb0dae3c24bc01a9bfe"
+  },
+  "square/garden-party.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Garden party",
+    "Flowers, bees, lanterns and a bench. Nothing needs fighting. Possibly a wasp.",
+    "Hex says",
+    "You planted one flower. Now there are four hundred. This is the bees' garden now.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "7e158ec4bec54ac0dee68797fb4c796eddce24cd6461dfc6c75e37b824736fd2"
+  },
+  "square/sharpshooter.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Sharpshooter",
+    "Bows, crossbows and a great many arrows. Stand far away and be very good at it.",
+    "Hex says",
+    "Why walk over there and hit it when you can stay here and miss it?",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "dceaac07a815517e3e50326d2a96146349824c7acff306a10c38d4fd1176f8f7"
+  },
+  "square/dino-rider.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Dino rider",
+    "Dinosaurs. You can ride some of them. The others have not agreed yet.",
+    "Hex says",
+    "It is as tall as a house and you want to put a saddle on it. I respect the confidence.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "6345d94d0f6c50d50e8c5799012556819a64bd476a648bcdeb1ae1cbd97c87a9"
+  },
+  "square/side-quest.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Side quest champion",
+    "Quests, skills, levels and a whole town of people who need a favor.",
+    "Hex says",
+    "Save the world? Later. First this man needs eleven mushrooms and will not say why.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "cb0ad3531581084824354a94bb5964f28a8697c9e716016c4122031d41b79f94"
+  },
+  "square/plushie-hoarder.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The plushie hoarder",
+    "Soft toys, paintings, statues and music. A room with far too much in it, on purpose.",
+    "Hex says",
+    "You have forty plushies and one bed. The plushies have voted. You sleep on the floor.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "7e72ebfec48937192657ed3bcca641abe185a9cf4b7156f19e330eccbc2df3af"
+  },
+  "square/pack-rat.jpg": {
+   "w": 1080,
+   "h": 1080,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Pack rat",
+    "More chests, bigger bags and labels on everything. You will never throw anything away again.",
+    "Hex says",
+    "You kept the stick. And the other stick. Hex kept a list of your sticks.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "9883e43773622f2eb1a42e472547071799ba935d1052ac607ec02eb1cb6f3cba"
+  },
+  "tall/hello.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "Playpacks for Hytale",
+    "Hytale mods, sorted by",
+    "how you play.",
+    "Hex says",
+    "I tried every mod so you do not have to. You are welcome. Mostly.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "070789eac00e7b016092ea0f76ff23268457a6bc41a1631e3ce1029d346859ea"
+  },
+  "tall/everyone.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "Playpacks for Hytale",
+    "A playpack for",
+    "every way you play.",
+    "Hex says",
+    "Cozy, spooky, or far too many legs. I do not judge. Much.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "c8113fe434dc98fd762112271562e6b11fff1586d67125d2b2981d73079564b4"
+  },
+  "tall/pick.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "How it works",
+    "Pick a playstyle.",
+    "Get the whole pack.",
+    "Hex says",
+    "Farming, dungeons, cats. Pick one. I did the hard part.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "c2e44e9cc1f60f60d9fce0fe1ba81d03fbe29600b7d42661086a5a5fff364d02"
+  },
+  "tall/monday.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "New every week",
+    "A new playpack",
+    "every Monday.",
+    "The scenic route",
+    "Gone fishing",
+    "The whole circus",
+    "Hex says",
+    "Fresh every Monday. I carry them myself. Nobody helps.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "332a273f00dff40cbbb3f730c864e5aecc6357a0bacc06761a2bd2d4f69337b1"
+  },
+  "tall/phone.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "On every screen",
+    "Browse on your phone.",
+    "Play on your computer.",
+    "Hex says",
+    "Find it on the bus. Play it at home. Do not play it on the bus.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "d4e3ac0fbc8ae00ae4e531ee651c5f356a786b1300de8cbc88732cefadf9169a"
+  },
+  "tall/vote.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "Players choose",
+    "You vote.",
+    "Hex builds it.",
+    "Sunken treasure",
+    "Paint the town",
+    "Fireworks night",
+    "Hex says",
+    "You pick the idea. I do the work. This seems unfair. Vote anyway.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "6214f4f25a5350f8365945bc770ab0b74e9668ad2bb4708e3acfaa09254aee0e"
+  },
+  "tall/master-builder.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Master builder",
+    "More blocks, tiny furniture and roofs that finally look right.",
+    "Hex says",
+    "One more window, you said. That was six hours ago.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "8cde76429cadf5c777ea400d65ac01c0a7cdddd924e11e7b316c4c4d4683a51c"
+  },
+  "tall/dungeon-gremlin.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Dungeon gremlin",
+    "Go down. Hit things. Carry out more treasure than is sensible.",
+    "Hex says",
+    "The loot is at the bottom. The stairs back up are your problem.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "52b2bd1679b49f7db12d61e0940e806fde21e247d6accb8b30a8d208ea7cf75d"
+  },
+  "tall/too-many-legs.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Creepy crawlies",
+    "Spiders, slimes, frogs and things with far too many legs. All of them are underfoot.",
+    "Hex says",
+    "They are more scared of you than you are of them. I made that up.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "6283599fa21899c32d57ba6aeff778a9e3ffcd7dba30838d7ea4137454fe8bd8"
+  },
+  "tall/the-wanderer.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The wanderer",
+    "Pack light, walk far and never get lost unless you want to.",
+    "Hex says",
+    "It is just over that hill. So is the next thing. I may have fibbed about the distance.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "eb1ef8c0afc309a357b83c19c6273777154a0e41541478cc940d1c13b4f8c8d4"
+  },
+  "tall/cozy-farmer.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The cozy farmer",
+    "Plant things. Pet things. Watch the rain. Nothing bad happens.",
+    "Hex says",
+    "Plant a turnip. Just one. You can stop any time. That is what the last farmer said.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "9a053117d725344857cd9de626706042b9c184f2c3ca0e852c486223afce2fe8"
+  },
+  "tall/wizard-dropout.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Wizard school dropout",
+    "Spells that mostly work, a wand with opinions and a familiar who judges you.",
+    "Hex says",
+    "Read the spell twice before you cast it. Or do not. I am not your teacher.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "7262d5ee79177f032752b13c6bdc627f71f9b272aa106dd88afb5fae72599c7c"
+  },
+  "tall/beast-friend.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Beast friend",
+    "Tame it, saddle it, feed it snacks. Leave with a small parade behind you.",
+    "Hex says",
+    "It followed you home. So did the other nine. You live in a zoo now.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "723a410ff1ea2a29e7dfa7244a44eccc9abb56515eb1a275c1e5c0c5681aabc8"
+  },
+  "tall/factory-goblin.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Factory goblin",
+    "Belts, gears and machines that sort your chests while you sleep.",
+    "Hex says",
+    "You will never carry a potato by hand again. You will also never sleep again.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "7ff93af3618b6841f8ff5c1c49874aa57f8d6af2692d2eb29017ded49ee9de98"
+  },
+  "tall/scenic-route.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The scenic route",
+    "Waterfalls, waves, northern lights and falling leaves. Nothing to fight. Just a lot to look at.",
+    "Hex says",
+    "You walked for an hour and did nothing but look at water. I am calling that a win.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "5317b9430124d896e7628eb7a423c83153c90ec64fa53c5aa03ee2c77afa2971"
+  },
+  "tall/gone-fishing.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Gone fishing",
+    "A rod, a boat and a very patient morning. The fish are in no hurry either.",
+    "Hex says",
+    "Sit in a boat. Stare at water. Call it a hobby. I will be on the dock judging your knots.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "a0ca2eee8e78a01eeccf941cb8550554bc4e73e9fb04b31ed9e60ac286a9640b"
+  },
+  "tall/whole-circus.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The whole circus",
+    "A bit of every playstyle at once. Farm, fight, build and wander, all before lunch.",
+    "Hex says",
+    "Farm in the morning, fight a boss at lunch, redecorate by tea. Bring a planner.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "098d18c4c5f3a76473bafae7e1f5a3d297d8f4db3fe1efe4781e2a908b01c813"
+  },
+  "tall/hard-mode-hermit.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Hard mode hermit",
+    "Hunger, cold and one single life. For players who think the game is too kind.",
+    "Hex says",
+    "One life. Use it wisely. Or use it in the first four minutes, like everyone else.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "0febbe23cd4e878200266d43c15bd403fb977ffae6791b319a744b6308d7f465"
+  },
+  "tall/knights-and-dragons.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Knights and dragons",
+    "Shiny armor, a proper castle and something large asleep on the roof.",
+    "Hex says",
+    "You wanted a castle. The dragon wanted the same castle. I suggest sharing.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "75049fff41c3f318dd4494868f652c3fe847bb80793d09b17bc725498530a979"
+  },
+  "tall/road-trip.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Are we there yet",
+    "Carts, boats, rails and shortcuts. Everything you need to go a very long way.",
+    "Hex says",
+    "A cart, a boat and a train. Three ways to get lost faster.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "9de1d49033521767ceeb802b696fe5c1f2aaa70371add6def36e0c346b7ed7ef"
+  },
+  "tall/deep-miner.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The deep miner",
+    "Go down. Keep going down. Come back up with pockets full of shiny rocks.",
+    "Hex says",
+    "It is a hole. You dug it. You live here now. At least the rocks are pretty.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "5777af63e7337f689356f456330ddf88e010a58893715e8704bf19f47014e1fa"
+  },
+  "tall/cat-cafe.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The cat cafe",
+    "Cats on every shelf, something warm in the oven, and one dog who wandered in.",
+    "Hex says",
+    "Open a cafe. Fill it with cats. Sell nothing, because the cats sat on the menu.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "750e8a48b616219e4ac4d466b0fab21d8bc5ddff97751f0e4462bfd1d5fd39b0"
+  },
+  "tall/middle-of-the-world.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The middle of the world",
+    "Straight down, past the caves, until the map gives up. Bring a rope and a light.",
+    "Hex says",
+    "You packed a rope, a light and no plan. The map stopped helping an hour ago. So did I.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "4e84fcdd121eec76f56bf6efdb9a57afc819db7e173e68ca60798727400f8edf"
+  },
+  "tall/potion-problem.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "A potion problem",
+    "Mix things. Bottle things. Find out what the green one does the hard way.",
+    "Hex says",
+    "Drink the blue one. No, the other blue one. Well. It will wear off by Tuesday.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "28e6c5aceedc7c82ef940354893e9bb2740e6a4efe34b7d0e95005b320a3c499"
+  },
+  "tall/plushie-hoarder.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "The plushie hoarder",
+    "Soft toys, paintings, statues and music. A room with far too much in it, on purpose.",
+    "Hex says",
+    "You have forty plushies and one bed. The plushies have voted. You sleep on the floor.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "3f6dc0c28888aa34a4e8781ec0df627f8c52301abec14771578100b034b3f6ea"
+  },
+  "tall/pack-rat.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Pack rat",
+    "More chests, bigger bags and labels on everything. You will never throw anything away again.",
+    "Hex says",
+    "You kept the stick. And the other stick. Hex kept a list of your sticks.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "d20d623a6a90955d6ec90c533d918291c2329d43f0aa68d1194518d3fbcde73e"
+  },
+  "tall/sharpshooter.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Sharpshooter",
+    "Bows, crossbows and a great many arrows. Stand far away and be very good at it.",
+    "Hex says",
+    "Why walk over there and hit it when you can stay here and miss it?",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "647b76d5159f15f3cc915950febb8282af71861c7bfaf913d760654f63f872c7"
+  },
+  "tall/dino-rider.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Dino rider",
+    "Dinosaurs. You can ride some of them. The others have not agreed yet.",
+    "Hex says",
+    "It is as tall as a house and you want to put a saddle on it. I respect the confidence.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "559783ca83a203ca936c22a9cd12a8889f636598bcc23b2aa1c3778d904cafa7"
+  },
+  "tall/garden-party.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Garden party",
+    "Flowers, bees, lanterns and a bench. Nothing needs fighting. Possibly a wasp.",
+    "Hex says",
+    "You planted one flower. Now there are four hundred. This is the bees' garden now.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "1b1ff38477db862d6d9a750b57df25f041b0253c587f7ce259d70c21b304945f"
+  },
+  "tall/side-quest.jpg": {
+   "w": 1080,
+   "h": 1350,
+   "texts": [
+    "HyMeta",
+    "A playpack for Hytale",
+    "Side quest champion",
+    "Quests, skills, levels and a whole town of people who need a favor.",
+    "Hex says",
+    "Save the world? Later. First this man needs eleven mushrooms and will not say why.",
+    "Picked by Hex",
+    "hymeta.vercel.app",
+    "\u00b7",
+    "An unofficial fan site"
+   ],
+   "problems": 0,
+   "sha256": "b21c3884ca9504bb8b9cac5b3d08580b2c44066a06701ebe44f84b0cab5e0f65"
+  }
+ }
+}
