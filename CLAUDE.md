@@ -56,6 +56,19 @@ project, redraw, and run `npm test`.
   not before: teasers show the site and what membership gets you, never an upcoming playpack.
 - When the site's address changes, change `site` in `promo/promo.config.js` and run the command again.
 
+## Selling the app or company (Ligia, 2026-11-28: applies to every project)
+Whenever selling comes up (this app, its code, its content or Lumina Art House, LLC itself, a buyer,
+licensing, or a business customer), first run a sale-readiness check and report it in plain words:
+- Ownership: Lumina Art House, LLC owns the code, art, names and content. Every outside font, image,
+  sound, model and package has a license that allows a sale, and any outside work has a written assignment.
+- Privacy law: what personal data the app collects and where it goes, US state privacy laws (such as
+  California's), COPPA if children under 13 could use it, and whether the privacy policy matches what the
+  app really does.
+- Security records: how data is protected, who can reach it, backups, and a record of any incidents.
+- Formal certifications: say whether SOC 2, ISO 27001 or HIPAA would apply, and why. SOC 2 and ISO 27001
+  are paid outside audits that business buyers often ask for. HIPAA applies only when health information
+  is handled for a doctor, insurer or health plan. None is bought or started without Ligia's approval.
+
 ## Always
 - Extra, unasked-for improvements are paused (Ligia, November 26, 2026: "it's in a good spot"). Do not add any
   until she asks for them to restart. When restarted: add one to each build and tell her what it was.
