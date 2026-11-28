@@ -208,6 +208,10 @@ details.plain>summary{min-height:44px;display:flex;align-items:center;cursor:poi
 .sentline svg.ic{width:16px;height:16px;vertical-align:-3px}
 .sentline .linkbtn{min-height:44px;padding:0}
 a.busy{cursor:progress}
+.autobox{display:flex;flex-direction:column;gap:10px;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg3)}
+.autohead{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#inst-progress{width:100%;height:10px;accent-color:var(--gold)}
+.autobox .row{gap:8px}
 .qrow{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--line-soft)}
 .mod{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;align-items:start;border-top:1px solid var(--line-soft)}
 .mod .iconbtn{margin-top:8px}
@@ -1236,8 +1240,8 @@ function openSheet(title, html){
   if (!was) sheet.showModal();
   $("#sheet-title").focus();
 }
-function closeSheet(){ timers.forEach(clearTimeout); timers = []; clearTimeout(sendTimer); sendTimer = null; if (sheet.open) sheet.close(); }
-sheet.addEventListener("close", function(){ if (opener && document.contains(opener)) opener.focus(); else { var h = $("#view h1"); if (h) h.focus(); } });
+function closeSheet(){ timers.forEach(clearTimeout); timers = []; clearTimeout(sendTimer); sendTimer = null; S.auto = null; S.autoPaused = false; if (sheet.open) sheet.close(); }
+sheet.addEventListener("close", function(){ clearTimeout(sendTimer); sendTimer = null; S.auto = null; S.autoPaused = false; if (opener && document.contains(opener)) opener.focus(); else { var h = $("#view h1"); if (h) h.focus(); } });
 sheet.addEventListener("click", function(e){ if (e.target === sheet) closeSheet(); });
 
 // Installing for real: each mod is handed to the CurseForge app, which downloads it and puts it in
@@ -1261,10 +1265,19 @@ function sentLine(p){
 }
 function installBody(p){
   var ids = allMods(p), done = installedIn(p), next = ids.filter(function(i){ return done.indexOf(i) < 0; })[0];
-  var top = next
-    ? '<p class="small muted" id="inst-tip">Open CurseForge first, and let it finish any update, then click Install.</p>' + sentLine(p) +
-      '<a class="btn btn-primary btn-big btn-full" id="inst-next" href="' + appLink(next) + '" data-action="instnext" data-id="' + p.id + '" data-mod="' + next + '">' + ic("down") + "<span>Install " + esc(MOD[next].name) + "</span></a>" +
-      '<p class="small muted" id="inst-count">' + done.length + " of " + ids.length + " sent. Each tap hands one mod to the CurseForge app.</p>"
+  var auto = next && S.auto === p.id, held = !!sendTimer; // a send still opening keeps the button held, even if the sheet is redrawn
+  var nextBtn = next ? '<a class="btn btn-primary btn-big btn-full' + (held ? " busy" : "") + '" id="inst-next" href="' + appLink(next) + '" data-action="instnext" data-id="' + p.id + '" data-mod="' + next + '"' + (held ? ' aria-disabled="true"' : "") + ">" + ic("down") + "<span>" + (held ? "Opening CurseForge\u2026" : (auto ? "Send " : "Install ") + esc(MOD[next].name)) + "</span></a>" : "";
+  if (!next && S.auto === p.id) S.auto = null; // everything is sent: send-all mode ends by itself
+  var top = auto
+    ? '<div class="autobox" id="inst-auto"><p class="autohead"><strong>Sending all' + (S.autoPaused ? " (paused)" : "") + '</strong><span id="inst-count">' + done.length + " of " + ids.length + " sent</span></p>" +
+      '<progress id="inst-progress" max="' + ids.length + '" value="' + done.length + '" aria-label="Mods sent to CurseForge">' + done.length + " of " + ids.length + "</progress>" +
+      '<p class="small muted">Open CurseForge first, and let it finish any update.</p>' + sentLine(p) + nextBtn +
+      '<p class="small muted" id="inst-auto-note">' + (S.autoPaused ? "Paused. HyMeta will not get the next mod ready when you come back." : "After each one, come back to HyMeta (Alt+Tab, or Cmd+Tab on a Mac) and press Enter to send the next.") + "</p>" +
+      '<div class="row"><button type="button" class="btn btn-ghost" data-action="autopause" data-id="' + p.id + '">' + (S.autoPaused ? "Resume" : "Pause") + '</button><button type="button" class="btn btn-ghost" data-action="autostop" data-id="' + p.id + '">Stop</button></div></div>'
+    : next
+    ? '<p class="small muted" id="inst-tip">Open CurseForge first, and let it finish any update, then click Install.</p>' + sentLine(p) + nextBtn +
+      '<p class="small muted" id="inst-count">' + done.length + " of " + ids.length + " sent. Each tap hands one mod to the CurseForge app.</p>" +
+      (ids.length - done.length > 1 ? '<button type="button" class="btn btn-ghost btn-full" id="inst-all" data-action="autostart" data-id="' + p.id + '">Send all, one after another</button>' : "")
     : sentLine(p) + '<div id="inst-done" class="sec"><p><strong>All ' + ids.length + " mods are in.</strong> One last step, because Hytale keeps mods switched off until you say so:</p>" +
       '<ol class="steps"><li>Open Hytale and go to <strong>Worlds</strong>.</li><li><strong>Right-click</strong> your world and choose <strong>Mods</strong>. For a new world, use the settings cog while creating it.</li><li>Tick the mods to switch these mods on, then choose <strong>Save World Settings</strong>.</li></ol>' +
       '<p class="small muted">Hytale has no single list of installed mods. They only show inside each world\'s Mods screen.</p>' + hex(say("installed")) +
@@ -1281,6 +1294,27 @@ function holdLink(b, text){
   b.setAttribute("aria-disabled", "true"); b.classList.add("busy");
   var label = b.querySelector("span") || b; label.textContent = text;
 }
+// Send all: browsers only open an app link after a tap or a key press, so HyMeta cannot send the next mod
+// by itself. Instead, each time you come back to the tab, the next mod is ready: one press of Enter sends it.
+S.auto = null; S.autoPaused = false;
+function autoReady(){
+  if (!S.auto || S.autoPaused || sendTimer || !sheet.open || document.visibilityState !== "visible") return;
+  var b = $("#inst-next"); if (!b || b.getAttribute("data-id") !== S.auto || b.getAttribute("aria-disabled") === "true") return;
+  b.focus(); var msg = "Next up: " + MOD[b.getAttribute("data-mod")].name + ". Press Enter to send it.";
+  if ($("#toast").hidden || $("#toast").textContent !== msg) toast(msg); // coming back fires two events: say it once
+}
+document.addEventListener("visibilitychange", autoReady);
+window.addEventListener("focus", autoReady);
+function autoTip(p){
+  openSheet("Play " + esc(p.name), '<div class="sec" id="auto-tip"><h3>Send all, one after another</h3>' +
+    "<p>CurseForge will jump in front each time. Press <strong>Alt+Tab</strong> (<strong>Cmd+Tab</strong> on a Mac) to come back, then press <strong>Enter</strong> and the next mod is on its way.</p>" +
+    '<div class="row"><button type="button" class="btn btn-primary" data-action="autogo" data-id="' + p.id + '">Got it, start</button><button type="button" class="btn btn-ghost" data-action="playmode" data-mode="here" data-id="' + p.id + '">Not now</button></div></div>');
+  $("#auto-tip h3").setAttribute("tabindex", "-1"); $("#auto-tip h3").focus();
+}
+function autoStart(p){
+  S.auto = p.id; S.autoPaused = false; store.set("autotip", true);
+  openSheet("Play " + esc(p.name), playBody(p, "here")); var b = $("#inst-next"); if (b) b.focus();
+}
 var sendTimer = null; // the one send that is waiting; closing the sheet cancels the redraw (the send itself is already saved)
 function sendMod(p, mod, b){
   markInstalled(p, mod, true); S.lastSent[p.id] = mod; store.set("lastsent", S.lastSent);
@@ -1291,6 +1325,7 @@ function sendMod(p, mod, b){
     if (!sheet.open || !$("#inst-list") || $("#inst-list input").getAttribute("data-inst") !== p.id) return;
     openSheet("Play " + esc(p.name), playBody(p, "here")); var nx = $("#inst-next") || $("#inst-again") || $("#sheet-title"); nx.focus();
     toast("Sent " + MOD[mod].name + " to CurseForge"); // read out by screen readers
+    if (document.visibilityState === "visible" && document.hasFocus()) autoReady(); // already back: get the next one ready now
   }, SEND_WAIT);
 }
 function sendBody(p){
@@ -1475,10 +1510,14 @@ document.addEventListener("click", function(e){
   if (a === "tier" && S.billing) return;
   if (a === "tier"){ S.tier = b.getAttribute("data-tier"); store.set("tier", S.tier); closeSheet(); render(false); toast(S.tier === "member" ? "Now showing the member view" : "Now showing the free view"); }
   else if (a === "play") openPlay(id);
-  else if (a === "playmode") openPlay(id, b.getAttribute("data-mode"));
+  else if (a === "playmode"){ if (b.getAttribute("data-mode") === "send"){ S.auto = null; S.autoPaused = false; } openPlay(id, b.getAttribute("data-mode")); }
   else if (a === "install") runInstall(id);
   else if ((a === "instnext" || a === "instagain") && b.getAttribute("aria-disabled") === "true") e.preventDefault(); // already on its way
   else if (a === "instnext") sendMod(findPack(id), b.getAttribute("data-mod"), b);
+  else if (a === "autostart"){ p = findPack(id); if (store.get("autotip", false)) autoStart(p); else autoTip(p); }
+  else if (a === "autogo") autoStart(findPack(id));
+  else if (a === "autopause"){ S.autoPaused = !S.autoPaused; p = findPack(id); openSheet("Play " + esc(p.name), playBody(p, "here")); $('[data-action="autopause"]').focus(); toast(S.autoPaused ? "Paused" : "Sending all again"); }
+  else if (a === "autostop"){ S.auto = null; S.autoPaused = false; p = findPack(id); openSheet("Play " + esc(p.name), playBody(p, "here")); var nb = $("#inst-next") || $("#sheet-title"); nb.focus(); toast("Stopped. The rest are one tap each."); }
   else if (a === "instagain"){ holdLink(b, "Opening CurseForge\u2026"); setTimeout(function(){ if (document.contains(b)){ b.removeAttribute("aria-disabled"); b.classList.remove("busy"); b.textContent = "Didn't open? Try again"; } }, SEND_WAIT); }
   else if (a === "quip" && b.parentNode.getAttribute("data-alt")){ var hx = b.parentNode, ln = hx.querySelector(".line"), was = ln.textContent; ln.textContent = hx.getAttribute("data-alt"); hx.setAttribute("data-alt", was); }
   else if (a === "quip"){ var ql = QUIPS[S.mood]; quipAt = (quipAt + 1) % ql.length; toast("Hex: " + ql[quipAt]); }

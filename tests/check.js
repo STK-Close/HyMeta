@@ -457,6 +457,48 @@ function makeAudit(p, bad) {
       await p.keyboard.press("Escape"); await p.reload(); await p.waitForSelector('.hero-side .chip:has-text("mods")');
       await p.click('[data-action="play"]'); await p.click('[data-mode="here"]'); await p.waitForSelector("#inst-list li");
       if (await count("#inst-list input:checked") !== 1 || (await p.getAttribute("#inst-again", "href")) !== first) bad("which mods were sent was forgotten after reloading");
+      // send all: a one-time tip, then each return to the tab gets the next mod ready, with progress, Pause and Stop
+      await p.click("#inst-all"); await p.waitForSelector("#auto-tip");
+      const tip = await p.textContent("#auto-tip");
+      if (!/CurseForge will jump in front each time/.test(tip) || !/Alt\+Tab/.test(tip) || !/Cmd\+Tab/.test(tip)) bad("the send-all tip does not explain how to come back: " + tip.slice(0, 120));
+      await audit("send all, the tip"); if (out) await p.screenshot({ path: `${out}/${tag}-auto-tip.png` });
+      await p.click('[data-action="autogo"]'); await p.waitForSelector("#inst-auto");
+      const prog = async () => [await p.getAttribute("#inst-progress", "value"), await p.getAttribute("#inst-progress", "max"), (await p.textContent("#inst-count")).trim()];
+      const [v0, max0, c0] = await prog();
+      if (v0 !== "1" || c0 !== "1 of " + max0 + " sent") bad("send all does not show progress: " + [v0, max0, c0].join(" / "));
+      if (!(await p.evaluate(() => document.activeElement && document.activeElement.id === "inst-next"))) bad("send all does not put the next mod under the keyboard");
+      if (!/^Send /.test((await p.textContent("#inst-next")).trim())) bad("send all does not name the next mod to send");
+      await audit("send all, ready"); if (out) await p.screenshot({ path: `${out}/${tag}-auto.png` });
+      // send by keyboard, come back to the tab, and the next one is ready to go with Enter
+      await p.evaluate(() => { window.__opened = 0; document.addEventListener("click", (e) => { if (e.target.closest("#inst-next") && !e.defaultPrevented) window.__opened++; }); }); // the page was reloaded above
+      await p.keyboard.press("Enter"); await p.keyboard.press("Enter"); await p.keyboard.press("Enter");
+      await p.waitForFunction(() => /^2 of /.test(document.querySelector("#inst-count").textContent), null, { timeout: 7000 });
+      if ((await p.evaluate(() => window.__opened)) !== 1) bad("pressing Enter several times in send-all should send exactly one mod, sent: " + await p.evaluate(() => window.__opened));
+      await p.evaluate(() => { document.activeElement.blur(); document.querySelector("#toast").textContent = ""; document.dispatchEvent(new Event("visibilitychange")); window.dispatchEvent(new Event("focus")); });
+      if (!(await p.evaluate(() => document.activeElement && document.activeElement.id === "inst-next")) || !/Next up: .*Press Enter to send it\./.test(await p.textContent("#toast"))) bad("coming back to the tab does not get the next mod ready");
+      // never the same mod twice: every sent mod is different
+      const sentIds = await p.evaluate(() => [...document.querySelectorAll("#inst-list input:checked")].map((i) => i.value));
+      if (new Set(sentIds).size !== sentIds.length || sentIds.length !== 2) bad("send all sent the same mod twice, or lost one: " + sentIds.join(","));
+      // pause: coming back no longer grabs the keyboard; resume; stop returns to one tap each
+      await p.click('[data-action="autopause"]'); if (!/paused/i.test(await p.textContent("#inst-auto"))) bad("Pause does not say it is paused");
+      await p.evaluate(() => { document.activeElement.blur(); document.dispatchEvent(new Event("visibilitychange")); });
+      if (await p.evaluate(() => document.activeElement && document.activeElement.id === "inst-next")) bad("while paused, coming back to the tab still grabs the next mod");
+      await audit("send all, paused");
+      await p.click('[data-action="autopause"]'); if (/paused/i.test(await p.textContent("#inst-auto"))) bad("Resume does not resume");
+      await p.click('[data-action="autostop"]'); await p.waitForSelector("#inst-all");
+      if (await count("#inst-auto")) bad("Stop does not leave send-all");
+      // the tip is shown once only
+      await p.click("#inst-all"); await p.waitForSelector("#inst-auto"); if (await count("#auto-tip")) bad("the send-all tip is shown every time");
+      // Pause during the hold keeps the button held (no second launch inside the 8 seconds)
+      await p.click("#inst-next"); await p.click('[data-action="autopause"]');
+      if ((await p.getAttribute("#inst-next", "aria-disabled")) !== "true") bad("pressing Pause while CurseForge was opening made the install button live again");
+      await p.waitForFunction(() => !document.querySelector("#inst-next[aria-disabled]"), null, { timeout: 7000 }); await p.click('[data-action="autopause"]');
+      // send-all ends by itself when the last mod is sent
+      while (await count("#inst-list input:not(:checked)") > 1) { await p.evaluate(() => { const i = [...document.querySelectorAll("#inst-list input:not(:checked)")].pop(); i.checked = true; i.dispatchEvent(new Event("change", { bubbles: true })); }); await p.waitForTimeout(80); }
+      await p.click("#inst-next"); await p.waitForSelector("#inst-done", { timeout: 7000 });
+      if (await count("#inst-auto")) bad("send-all did not end after the last mod was sent");
+      await p.evaluate(() => { const i = document.querySelector("#inst-list input:checked"); i.checked = false; i.dispatchEvent(new Event("change", { bubbles: true })); }); await p.waitForSelector("#inst-next");
+      if (await count("#inst-auto")) bad("send-all came back by itself after it had ended");
       while (await count("#inst-list input:not(:checked)")) { await p.locator("#inst-list input:not(:checked)").first().click(); await p.waitForTimeout(80); }
       await p.waitForSelector("#inst-done");
       const lastStep = await p.textContent("#inst-done");
